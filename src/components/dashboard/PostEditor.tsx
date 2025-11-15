@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, Undo2, Send, Sparkles } from 'lucide-react';
 import Foundi from '../Foundii';
+import VoiceInput from '../VoiceInput';
 
 interface PostEditorProps {
   initialPost: string;
@@ -119,11 +120,13 @@ export default function PostEditor({ initialPost, brandName, onClose, onSave }: 
                   <p className="text-sm text-gray-600">Founder at {brandName}</p>
                 </div>
               </div>
-              <textarea
+              <VoiceInput
                 value={editedPost}
-                onChange={(e) => setEditedPost(e.target.value)}
-                className="w-full min-h-[400px] text-[#1A1A1A] leading-relaxed resize-none outline-none font-sans"
+                onChange={(value) => setEditedPost(value)}
                 placeholder="Write your post here..."
+                multiline
+                rows={15}
+                className="text-[#1A1A1A] leading-relaxed font-sans"
               />
             </div>
             <div className="text-sm text-gray-500">
@@ -193,13 +196,11 @@ export default function PostEditor({ initialPost, brandName, onClose, onSave }: 
                 ))}
               </div>
               <div className="flex items-center gap-2">
-                <input
-                  type="text"
+                <VoiceInput
                   value={userMessage}
-                  onChange={(e) => setUserMessage(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                  onChange={(value) => setUserMessage(value)}
                   placeholder="Ask Foundi to refine your post..."
-                  className="flex-1 px-4 py-3 rounded-xl border border-gray-200 focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all outline-none text-sm"
+                  className="flex-1 text-sm"
                 />
                 <button
                   onClick={() => handleSendMessage()}

@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { X, ArrowRight, Instagram, Video, Image as ImageIcon, LayoutGrid, Users, Sparkles, RefreshCw, Edit, Save, TrendingUp, Clock, Target, BarChart3 } from 'lucide-react';
+import { X, ArrowRight, Instagram, Video, Image as ImageIcon, LayoutGrid, Users, Sparkles, RefreshCw, Edit, Save, TrendingUp, Clock, Target, BarChart3, ArrowLeft } from 'lucide-react';
 import Foundi from '../Foundii';
+import VoiceInput from '../VoiceInput';
 import InstagramAdEditor from './InstagramAdEditor';
 import InstagramPreviewModal from './InstagramPreviewModal';
 
@@ -20,6 +21,13 @@ export default function InstagramAdGenerator({ isOpen, onClose }: InstagramAdGen
     valueProps: ['Fast delivery', 'Expert team', 'Proven results']
   });
   const [selectedAdType, setSelectedAdType] = useState('');
+  const [preferences, setPreferences] = useState({
+    goal: 'Awareness',
+    audience: '',
+    brandMessage: '',
+    tone: 'Bold',
+    cta: 'Learn More'
+  });
   const [adContent, setAdContent] = useState({
     caption: '',
     cta: '',
@@ -87,19 +95,41 @@ export default function InstagramAdGenerator({ isOpen, onClose }: InstagramAdGen
     setStep(3);
   };
 
+  const handleGenerateFromPreferences = () => {
+    setIsGenerating(true);
+    setTimeout(() => {
+      handleGenerateAd();
+      setStep(4);
+    }, 2000);
+  };
+
   const handleGenerateAd = () => {
     setIsGenerating(true);
     setTimeout(() => {
+      const toneModifiers = {
+        'Bold': '🚀 STOP SCROLLING.\n\n',
+        'Friendly': '👋 Hey there!\n\n',
+        'Founder-Story': 'Here\'s what nobody tells you...\n\n',
+        'Emotional': '❤️ This one hits different.\n\n'
+      };
+
+      const goalModifiers = {
+        'Awareness': 'Discover ',
+        'Traffic': 'Click to explore ',
+        'Sales': 'Shop now and get ',
+        'Leads': 'Join thousands who '
+      };
+
       const mockCaptions = {
-        'video-reel': '🚀 Ready to transform your brand visibility?\n\nIn just 30 seconds, discover how we help founders like you stand out in a crowded market.\n\n✨ No fluff. Just results.\n\n👉 Tap below to get started',
-        'image-text': '💡 Your brand deserves to be seen.\n\nWe help ambitious founders build visibility that converts.\n\n✅ Strategic positioning\n✅ Authentic storytelling\n✅ Measurable growth\n\nReady to make your mark?',
-        'carousel': 'Swipe to see how we transform brands 👉\n\n1️⃣ Discover your unique story\n2️⃣ Craft compelling content\n3️⃣ Amplify your reach\n4️⃣ Track real results\n5️⃣ Scale with confidence\n\nYour brand breakthrough starts here.',
-        'ugc-testimonial': '"Before working with them, I was invisible in my industry.\n\nNow? I\'m the go-to expert everyone wants to work with."\n\n- Sarah, Tech Founder\n\n✨ Real stories. Real results.\n\nYour transformation is next.'
+        'video-reel': `${toneModifiers[preferences.tone as keyof typeof toneModifiers]}${goalModifiers[preferences.goal as keyof typeof goalModifiers]}how we transform ${preferences.audience || 'founders'}.\n\nIn just 30 seconds, see real results.\n\n${preferences.brandMessage ? preferences.brandMessage + '\n\n' : ''}✨ No fluff. Just impact.\n\n👉 ${preferences.cta} below`,
+        'image-text': `${toneModifiers[preferences.tone as keyof typeof toneModifiers]}Your brand deserves to be seen by ${preferences.audience || 'the right people'}.\n\n${goalModifiers[preferences.goal as keyof typeof goalModifiers]}strategic visibility that converts.\n\n${preferences.brandMessage ? '💡 ' + preferences.brandMessage + '\n\n' : ''}✅ Proven results\n✅ Authentic approach\n✅ Measurable growth`,
+        'carousel': `${toneModifiers[preferences.tone as keyof typeof toneModifiers]}Swipe to see the transformation 👉\n\n1️⃣ ${goalModifiers[preferences.goal as keyof typeof goalModifiers]}your story\n2️⃣ Connect with ${preferences.audience || 'your audience'}\n3️⃣ ${preferences.brandMessage || 'Amplify your reach'}\n4️⃣ Track real results\n5️⃣ Scale with confidence`,
+        'ugc-testimonial': `${toneModifiers[preferences.tone as keyof typeof toneModifiers]}"Before: invisible in my industry.\n\nNow? The go-to expert for ${preferences.audience || 'my niche'}."\n\n${preferences.brandMessage ? '💬 ' + preferences.brandMessage + '\n\n' : ''}✨ Real stories. Real results.\n\nYour transformation starts here.`
       };
 
       setAdContent({
         caption: mockCaptions[selectedAdType as keyof typeof mockCaptions] || mockCaptions['video-reel'],
-        cta: 'Learn More',
+        cta: preferences.cta,
         videoUrl: selectedAdType.includes('video') ? '/mock-video-url' : '',
         imageUrl: !selectedAdType.includes('video') ? '/mock-image-url' : ''
       });
@@ -139,7 +169,7 @@ export default function InstagramAdGenerator({ isOpen, onClose }: InstagramAdGen
               </div>
               <div>
                 <h2 className="text-xl font-semibold text-[#1A1A1A]">Create Instagram Ad</h2>
-                <p className="text-xs text-gray-500">Step {step} of 3</p>
+                <p className="text-xs text-gray-500">Step {step} of 4</p>
               </div>
             </div>
             <button
@@ -167,12 +197,10 @@ export default function InstagramAdGenerator({ isOpen, onClose }: InstagramAdGen
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Brand Name
                     </label>
-                    <input
-                      type="text"
+                    <VoiceInput
                       value={brandData.name}
-                      onChange={(e) => setBrandData({ ...brandData, name: e.target.value })}
+                      onChange={(value) => setBrandData({ ...brandData, name: value })}
                       placeholder="Your Company Name"
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all outline-none text-[#1A1A1A]"
                     />
                   </div>
 
@@ -180,12 +208,10 @@ export default function InstagramAdGenerator({ isOpen, onClose }: InstagramAdGen
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Website URL
                     </label>
-                    <input
-                      type="url"
+                    <VoiceInput
                       value={brandData.website}
-                      onChange={(e) => setBrandData({ ...brandData, website: e.target.value })}
+                      onChange={(value) => setBrandData({ ...brandData, website: value })}
                       placeholder="https://yourwebsite.com"
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all outline-none text-[#1A1A1A]"
                     />
                   </div>
 
@@ -260,55 +286,150 @@ export default function InstagramAdGenerator({ isOpen, onClose }: InstagramAdGen
 
             {step === 3 && (
               <div className="p-8 space-y-6 animate-slide-in">
-                {!adContent.caption ? (
-                  <div className="text-center space-y-6">
-                    <div className="text-center mb-8">
-                      <h3 className="text-2xl font-semibold text-[#1A1A1A] mb-2">
-                        Generate Your Ad
-                      </h3>
-                      <p className="text-gray-600">
-                        Let AI create a high-performing ad for your brand
-                      </p>
+                <div className="flex items-center gap-3 mb-6">
+                  <button
+                    onClick={() => setStep(2)}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <ArrowLeft className="w-5 h-5 text-gray-600" />
+                  </button>
+                  <div className="text-center flex-1">
+                    <h3 className="text-2xl font-semibold text-[#1A1A1A] mb-2">
+                      Help Foundi Personalize Your Ad
+                    </h3>
+                    <p className="text-gray-600">
+                      Answer a few questions to create your perfect ad
+                    </p>
+                  </div>
+                </div>
+
+                <div className="max-w-2xl mx-auto space-y-6">
+                  <div className="bg-white rounded-2xl p-6 border border-gray-200 space-y-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-3">
+                        What is the goal of this ad?
+                      </label>
+                      <div className="grid grid-cols-2 gap-3">
+                        {['Awareness', 'Traffic', 'Sales', 'Leads'].map((goal) => (
+                          <button
+                            key={goal}
+                            onClick={() => setPreferences({ ...preferences, goal })}
+                            className={`px-4 py-3 rounded-xl border-2 transition-all font-medium ${
+                              preferences.goal === goal
+                                ? 'border-[#1A1A1A] bg-gray-50 text-[#1A1A1A]'
+                                : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                            }`}
+                          >
+                            {goal}
+                          </button>
+                        ))}
+                      </div>
                     </div>
 
-                    <button
-                      onClick={handleGenerateAd}
-                      disabled={isGenerating}
-                      className="w-full max-w-md mx-auto bg-[#1A1A1A] text-white py-4 px-6 rounded-xl font-medium hover:bg-gray-800 transition-all hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 group"
-                    >
-                      {isGenerating ? (
-                        <>
-                          <RefreshCw className="w-5 h-5 animate-spin" />
-                          <span>Crafting your ad...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="w-5 h-5" />
-                          <span>Generate Ad Content</span>
-                        </>
-                      )}
-                    </button>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Who is the target audience?
+                      </label>
+                      <VoiceInput
+                        value={preferences.audience}
+                        onChange={(value) => setPreferences({ ...preferences, audience: value })}
+                        placeholder="e.g., Tech founders, Marketing professionals, Small business owners..."
+                      />
+                    </div>
 
-                    {isGenerating && (
-                      <div className="flex justify-center mt-8">
-                        <div className="relative">
-                          <Foundi size={60} animate={true} gesture="thinking" />
-                          <div className="absolute -top-16 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 max-w-xs">
-                            <p className="text-xs text-gray-700">Analyzing trends and crafting your perfect ad...</p>
-                          </div>
-                        </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Any must-include brand messages?
+                      </label>
+                      <VoiceInput
+                        value={preferences.brandMessage}
+                        onChange={(value) => setPreferences({ ...preferences, brandMessage: value })}
+                        placeholder="e.g., We're trusted by 10,000+ customers, Free trial available..."
+                        multiline
+                        rows={3}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-3">
+                        Preferred ad tone?
+                      </label>
+                      <div className="grid grid-cols-2 gap-3">
+                        {['Bold', 'Friendly', 'Founder-Story', 'Emotional'].map((tone) => (
+                          <button
+                            key={tone}
+                            onClick={() => setPreferences({ ...preferences, tone })}
+                            className={`px-4 py-3 rounded-xl border-2 transition-all font-medium ${
+                              preferences.tone === tone
+                                ? 'border-[#1A1A1A] bg-gray-50 text-[#1A1A1A]'
+                                : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                            }`}
+                          >
+                            {tone}
+                          </button>
+                        ))}
                       </div>
-                    )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Preferred CTA?
+                      </label>
+                      <select
+                        value={preferences.cta}
+                        onChange={(e) => setPreferences({ ...preferences, cta: e.target.value })}
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all outline-none text-[#1A1A1A]"
+                      >
+                        {ctaOptions.map((cta) => (
+                          <option key={cta} value={cta}>{cta}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
-                ) : (
-                  <div>
-                    <div className="flex items-center justify-between mb-6">
+
+                  <button
+                    onClick={handleGenerateFromPreferences}
+                    disabled={isGenerating}
+                    className="w-full bg-[#1A1A1A] text-white py-4 px-6 rounded-xl font-medium hover:bg-gray-800 transition-all hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 group"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <RefreshCw className="w-5 h-5 animate-spin" />
+                        <span>Crafting your personalized ad...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-5 h-5" />
+                        <span>Generate My Ad</span>
+                        <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                      </>
+                    )}
+                  </button>
+
+                  {isGenerating && (
+                    <div className="flex justify-center mt-8">
                       <div className="relative">
-                        <Foundi size={40} animate={true} gesture="celebrate" />
-                        <div className="absolute -top-12 left-12 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 whitespace-nowrap">
-                          <p className="text-xs text-gray-700">Here's a high-performing Instagram ad crafted for your brand.</p>
+                        <Foundi size={60} animate={true} gesture="thinking" />
+                        <div className="absolute -top-16 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 max-w-xs">
+                          <p className="text-xs text-gray-700">Crafting your perfect ad based on your preferences...</p>
                         </div>
                       </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {step === 4 && (
+              <div className="p-8 space-y-6 animate-slide-in">
+                <div>
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="relative">
+                      <Foundi size={40} animate={true} gesture="celebrate" />
+                      <div className="absolute -top-12 left-12 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 whitespace-nowrap">
+                        <p className="text-xs text-gray-700">Here's your personalized Instagram ad. Want to tweak it?</p>
+                      </div>
+                    </div>
                       <div className="flex gap-2">
                         <button
                           onClick={handleGenerateAd}
@@ -403,18 +524,17 @@ export default function InstagramAdGenerator({ isOpen, onClose }: InstagramAdGen
 
                         <div className="bg-white rounded-2xl p-6 border border-gray-200">
                           <h4 className="font-semibold text-[#1A1A1A] mb-3">Caption</h4>
-                          <textarea
+                          <VoiceInput
                             value={adContent.caption}
-                            onChange={(e) => setAdContent({ ...adContent, caption: e.target.value })}
+                            onChange={(value) => setAdContent({ ...adContent, caption: value })}
+                            multiline
                             rows={8}
-                            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all outline-none text-[#1A1A1A] resize-none text-sm"
                           />
                           <p className="text-xs text-gray-500 mt-2">{adContent.caption.length} characters</p>
                         </div>
                       </div>
                     </div>
                   </div>
-                )}
               </div>
             )}
           </div>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, ArrowRight, RefreshCw, Edit, Sparkles, TrendingUp, BookOpen, Lightbulb, FileText, Rocket, Calendar, Zap, Image, Video, LayoutGrid, Send } from 'lucide-react';
 import Foundi from '../Foundii';
+import VoiceInput from '../VoiceInput';
 import PostEditor from './PostEditor';
 import PublishModal from './PublishModal';
 
@@ -175,12 +176,10 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Website Name
                     </label>
-                    <input
-                      type="text"
+                    <VoiceInput
                       value={brandData.name}
-                      onChange={(e) => setBrandData({ ...brandData, name: e.target.value })}
+                      onChange={(value) => setBrandData({ ...brandData, name: value })}
                       placeholder="e.g., Acme Inc."
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all outline-none text-[#1A1A1A]"
                     />
                   </div>
 
@@ -188,12 +187,10 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Website URL
                     </label>
-                    <input
-                      type="url"
+                    <VoiceInput
                       value={brandData.url}
-                      onChange={(e) => setBrandData({ ...brandData, url: e.target.value })}
+                      onChange={(value) => setBrandData({ ...brandData, url: value })}
                       placeholder="https://example.com"
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all outline-none text-[#1A1A1A]"
                     />
                   </div>
 
@@ -266,12 +263,10 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Post topic or idea
                     </label>
-                    <input
-                      type="text"
+                    <VoiceInput
                       value={context.topic}
-                      onChange={(e) => setContext({ ...context, topic: e.target.value })}
+                      onChange={(value) => setContext({ ...context, topic: value })}
                       placeholder="e.g., Why most startups fail at brand visibility"
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all outline-none text-[#1A1A1A]"
                     />
                   </div>
 
@@ -279,12 +274,12 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Optional context (audience, tone, goal)
                     </label>
-                    <textarea
+                    <VoiceInput
                       value={context.details}
-                      onChange={(e) => setContext({ ...context, details: e.target.value })}
+                      onChange={(value) => setContext({ ...context, details: value })}
                       placeholder="Add any specific details, target audience, or key points you want to include..."
+                      multiline
                       rows={4}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all outline-none text-[#1A1A1A] resize-none"
                     />
                   </div>
 

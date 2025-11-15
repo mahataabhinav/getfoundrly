@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, Send, Video, Image as ImageIcon, Sparkles } from 'lucide-react';
 import Foundi from '../Foundii';
+import VoiceInput from '../VoiceInput';
 
 interface InstagramAdEditorProps {
   isOpen: boolean;
@@ -115,11 +116,11 @@ export default function InstagramAdEditor({ isOpen, onClose, adContent, onSave, 
 
             <div className="bg-white rounded-2xl p-6 border border-gray-200">
               <h3 className="font-semibold text-[#1A1A1A] mb-4">Caption</h3>
-              <textarea
+              <VoiceInput
                 value={content.caption}
-                onChange={(e) => setContent({ ...content, caption: e.target.value })}
+                onChange={(value) => setContent({ ...content, caption: value })}
+                multiline
                 rows={10}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all outline-none text-[#1A1A1A] resize-none text-sm"
               />
               <p className="text-xs text-gray-500 mt-2">{content.caption.length} characters</p>
             </div>
@@ -204,13 +205,11 @@ export default function InstagramAdEditor({ isOpen, onClose, adContent, onSave, 
 
             <div className="p-6 border-t border-gray-200 bg-white/50 backdrop-blur-sm">
               <div className="flex gap-2">
-                <input
-                  type="text"
+                <VoiceInput
                   value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                  onChange={(value) => setChatInput(value)}
                   placeholder="Ask Foundi to refine your ad..."
-                  className="flex-1 px-4 py-3 rounded-xl border border-gray-200 focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all outline-none text-[#1A1A1A]"
+                  className="flex-1"
                 />
                 <button
                   onClick={handleSendMessage}
