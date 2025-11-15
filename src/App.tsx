@@ -9,10 +9,11 @@ import MascotSection from './components/MascotSection';
 import Testimonials from './components/Testimonials';
 import Footer from './components/Footer';
 import AuthPage from './pages/AuthPage';
+import Dashboard from './pages/Dashboard';
 
 function App() {
   const [scrollY, setScrollY] = useState(0);
-  const [currentPage, setCurrentPage] = useState<'home' | 'login' | 'signup'>('home');
+  const [currentPage, setCurrentPage] = useState<'home' | 'login' | 'signup' | 'dashboard'>('home');
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
@@ -20,12 +21,16 @@ function App() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  if (currentPage === 'dashboard') {
+    return <Dashboard />;
+  }
+
   if (currentPage === 'login') {
-    return <AuthPage initialMode="login" onBack={() => setCurrentPage('home')} />;
+    return <AuthPage initialMode="login" onBack={() => setCurrentPage('home')} onSuccess={() => setCurrentPage('dashboard')} />;
   }
 
   if (currentPage === 'signup') {
-    return <AuthPage initialMode="signup" onBack={() => setCurrentPage('home')} />;
+    return <AuthPage initialMode="signup" onBack={() => setCurrentPage('home')} onSuccess={() => setCurrentPage('dashboard')} />;
   }
 
   return (

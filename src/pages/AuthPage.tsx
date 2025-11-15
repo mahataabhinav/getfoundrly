@@ -5,9 +5,10 @@ import Foundii from '../components/Foundii';
 interface AuthPageProps {
   initialMode?: 'login' | 'signup';
   onBack: () => void;
+  onSuccess: () => void;
 }
 
-export default function AuthPage({ initialMode = 'login', onBack }: AuthPageProps) {
+export default function AuthPage({ initialMode = 'login', onBack, onSuccess }: AuthPageProps) {
   const [mode, setMode] = useState<'login' | 'signup'>(initialMode);
   const [formData, setFormData] = useState({
     name: '',
@@ -17,9 +18,11 @@ export default function AuthPage({ initialMode = 'login', onBack }: AuthPageProp
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    onSuccess();
   };
 
   const handleGoogleLogin = () => {
+    onSuccess();
   };
 
   return (

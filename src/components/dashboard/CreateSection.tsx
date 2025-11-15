@@ -1,0 +1,70 @@
+import { FileText, Mail, Instagram, Video, Newspaper, MessageSquare, Globe, Sparkles } from 'lucide-react';
+
+export default function CreateSection() {
+  const contentTools = [
+    { title: 'LinkedIn Posts', icon: FileText, description: 'Professional thought leadership', color: 'from-blue-500 to-blue-600' },
+    { title: 'Newsletters', icon: Mail, description: 'Email campaigns that convert', color: 'from-purple-500 to-purple-600' },
+    { title: 'Instagram Ads', icon: Instagram, description: 'Visual brand storytelling', color: 'from-pink-500 to-pink-600' },
+    { title: 'Video Scripts', icon: Video, description: 'Engaging UGC content', color: 'from-red-500 to-red-600' },
+    { title: 'Blog Posts', icon: Newspaper, description: 'SEO-optimized articles', color: 'from-green-500 to-green-600' },
+    { title: 'Social Captions', icon: MessageSquare, description: 'Scroll-stopping copy', color: 'from-cyan-500 to-cyan-600' },
+    { title: 'Website Copy', icon: Globe, description: 'Landing page content', color: 'from-indigo-500 to-indigo-600' },
+    { title: 'Ad Campaigns', icon: Sparkles, description: 'Multi-platform ads', color: 'from-orange-500 to-orange-600' },
+  ];
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-3xl font-semibold text-[#1A1A1A] mb-2">Create Content</h1>
+        <p className="text-gray-600">AI-powered branded content from your website URL</p>
+      </div>
+
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {contentTools.map((tool) => {
+          const Icon = tool.icon;
+          return (
+            <div
+              key={tool.title}
+              className="group bg-white rounded-2xl p-6 border border-gray-100 hover:shadow-xl hover:scale-[1.02] transition-all cursor-pointer"
+            >
+              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${tool.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                <Icon className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="font-semibold text-[#1A1A1A] mb-1">{tool.title}</h3>
+              <p className="text-sm text-gray-600 mb-4">{tool.description}</p>
+              <button className="w-full bg-gray-900 text-white py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition-all">
+                Generate
+              </button>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="bg-gradient-to-br from-slate-50 to-blue-50/30 rounded-2xl p-8 border border-gray-100">
+        <div className="max-w-2xl">
+          <h3 className="text-xl font-semibold text-[#1A1A1A] mb-3">How It Works</h3>
+          <div className="space-y-3 text-gray-700">
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full bg-[#1A1A1A] text-white flex items-center justify-center text-sm font-medium flex-shrink-0">
+                1
+              </div>
+              <p>Enter your website URL or upload brand guidelines</p>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full bg-[#1A1A1A] text-white flex items-center justify-center text-sm font-medium flex-shrink-0">
+                2
+              </div>
+              <p>Choose your content format and target platform</p>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full bg-[#1A1A1A] text-white flex items-center justify-center text-sm font-medium flex-shrink-0">
+                3
+              </div>
+              <p>AI generates on-brand content in seconds</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
