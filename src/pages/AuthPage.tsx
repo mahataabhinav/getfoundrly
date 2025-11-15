@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Logo from '../components/Logo';
 import Foundii from '../components/Foundii';
+import { supabase } from '../lib/supabase';
 
 interface AuthPageProps {
   initialMode?: 'login' | 'signup';
@@ -15,14 +16,72 @@ export default function AuthPage({ initialMode = 'login', onBack, onSuccess }: A
     email: '',
     password: '',
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSuccess();
+    setError('');
+    setMessage('');
+    setLoading(true);
+
+    try {
+      if (mode === 'signup') {
+        const { data, error: signUpError } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: {
+            data: {
+              name: formData.name
+            }
+          }
+        });
+
+        if (signUpError) throw signUpError;
+
+        if (data.user && !data.session) {
+          setMessage('Check your email to confirm your account.');
+        } else if (data.session) {
+          onSuccess();
+        }
+      } else {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password
+        });
+
+        if (signInError) throw signInError;
+        onSuccess();
+      }
+    } catch (err: any) {
+      if (mode === 'login') {
+        setError('Invalid email or password');
+      } else {
+        setError(err.message || 'An error occurred during sign up');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleGoogleLogin = () => {
-    onSuccess();
+  const handleGoogleLogin = async () => {
+    setError('');
+    setLoading(true);
+
+    try {
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`
+        }
+      });
+
+      if (oauthError) throw oauthError;
+    } catch (err: any) {
+      setError(err.message || 'An error occurred with Google login');
+      setLoading(false);
+    }
   };
 
   return (
@@ -41,6 +100,18 @@ export default function AuthPage({ initialMode = 'login', onBack, onSuccess }: A
                 {mode === 'login' ? 'Welcome back' : 'Create your account'}
               </h1>
 
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
+                  {error}
+                </div>
+              )}
+
+              {message && (
+                <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-xl text-sm">
+                  {message}
+                </div>
+              )}
+
               <form onSubmit={handleSubmit} className="space-y-5">
                 {mode === 'signup' && (
                   <div>
@@ -55,6 +126,7 @@ export default function AuthPage({ initialMode = 'login', onBack, onSuccess }: A
                       className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all outline-none text-[#1A1A1A]"
                       placeholder="Enter your name"
                       required
+                      disabled={loading}
                     />
                   </div>
                 )}
@@ -71,6 +143,7 @@ export default function AuthPage({ initialMode = 'login', onBack, onSuccess }: A
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all outline-none text-[#1A1A1A]"
                     placeholder="Enter your email"
                     required
+                    disabled={loading}
                   />
                 </div>
 
@@ -86,13 +159,15 @@ export default function AuthPage({ initialMode = 'login', onBack, onSuccess }: A
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all outline-none text-[#1A1A1A]"
                     placeholder="Enter your password"
                     required
+                    disabled={loading}
                   />
                 </div>
 
                 <button
                   type="button"
                   onClick={handleGoogleLogin}
-                  className="w-full py-3 px-4 rounded-xl border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all flex items-center justify-center gap-3 text-[#1A1A1A] font-medium"
+                  disabled={loading}
+                  className="w-full py-3 px-4 rounded-xl border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all flex items-center justify-center gap-3 text-[#1A1A1A] font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -114,9 +189,16 @@ export default function AuthPage({ initialMode = 'login', onBack, onSuccess }: A
 
                 <button
                   type="submit"
-                  className="w-full py-3 px-4 rounded-xl bg-[#1A1A1A] text-white font-medium hover:bg-gray-800 transition-all hover:shadow-lg hover:scale-[1.02]"
+                  disabled={loading}
+                  className="w-full py-3 px-4 rounded-xl bg-[#1A1A1A] text-white font-medium hover:bg-gray-800 transition-all hover:shadow-lg hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
                 >
-                  {mode === 'login' ? 'Login' : 'Create Account'}
+                  {loading && (
+                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  )}
+                  {loading ? 'Loading...' : (mode === 'login' ? 'Login' : 'Create Account')}
                 </button>
               </form>
 

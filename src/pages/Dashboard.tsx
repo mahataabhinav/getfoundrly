@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Menu } from 'lucide-react';
 import TopNav from '../components/dashboard/TopNav';
 import Sidebar from '../components/dashboard/Sidebar';
@@ -8,10 +8,46 @@ import AnalyzeSection from '../components/dashboard/AnalyzeSection';
 import GrowSection from '../components/dashboard/GrowSection';
 import FoundiiSection from '../components/dashboard/FoundiiSection';
 import Foundii from '../components/Foundii';
+import { supabase } from '../lib/supabase';
 
-export default function Dashboard() {
+interface DashboardProps {
+  onLogout: () => void;
+}
+
+export default function Dashboard({ onLogout }: DashboardProps) {
   const [activeTab, setActiveTab] = useState('Home');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    checkSession();
+  }, []);
+
+  const checkSession = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
+        onLogout();
+      } else {
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Error checking session:', error);
+      onLogout();
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/20 flex items-center justify-center">
+        <div className="text-center">
+          <Foundii size={80} animate={true} gesture="wave" />
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   const renderContent = () => {
     switch (activeTab) {
