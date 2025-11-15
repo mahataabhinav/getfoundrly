@@ -4,9 +4,11 @@ import Logo from './Logo';
 
 interface HeaderProps {
   scrollY: number;
+  onLoginClick: () => void;
+  onSignupClick: () => void;
 }
 
-export default function Header({ scrollY }: HeaderProps) {
+export default function Header({ scrollY, onLoginClick, onSignupClick }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [hoveredMenu, setHoveredMenu] = useState<string | null>(null);
 
@@ -61,10 +63,10 @@ export default function Header({ scrollY }: HeaderProps) {
           </div>
 
           <div className="hidden lg:flex items-center gap-4">
-            <button className="text-gray-700 hover:text-gray-900 transition-colors px-4 py-2">
+            <button onClick={onLoginClick} className="text-gray-700 hover:text-gray-900 transition-colors px-4 py-2">
               Login
             </button>
-            <button className="bg-gray-900 text-white px-6 py-2.5 rounded-full hover:bg-gray-800 transition-all hover:shadow-lg hover:scale-105 flex items-center gap-2 group">
+            <button onClick={onSignupClick} className="bg-gray-900 text-white px-6 py-2.5 rounded-full hover:bg-gray-800 transition-all hover:shadow-lg hover:scale-105 flex items-center gap-2 group">
               <span>Try for Free</span>
               <span className="transform transition-transform group-hover:translate-x-1">→</span>
             </button>
@@ -86,8 +88,8 @@ export default function Header({ scrollY }: HeaderProps) {
               <a href="#pricing" className="text-gray-700 hover:text-gray-900">Pricing</a>
               <a href="#resources" className="text-gray-700 hover:text-gray-900">Resources</a>
               <a href="#about" className="text-gray-700 hover:text-gray-900">About</a>
-              <a href="#login" className="text-gray-700 hover:text-gray-900">Login</a>
-              <button className="bg-gray-900 text-white px-6 py-2.5 rounded-full w-full">
+              <button onClick={onLoginClick} className="text-gray-700 hover:text-gray-900">Login</button>
+              <button onClick={onSignupClick} className="bg-gray-900 text-white px-6 py-2.5 rounded-full w-full">
                 Try for Free →
               </button>
             </div>

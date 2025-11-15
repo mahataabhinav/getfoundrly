@@ -1,17 +1,4 @@
 import { useState, useEffect } from 'react';
-import {
-  Menu,
-  X,
-  ArrowRight,
-  Play,
-  Sparkles,
-  TrendingUp,
-  Users,
-  Target,
-  BarChart3,
-  Zap,
-  CheckCircle
-} from 'lucide-react';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import ProblemSection from './components/ProblemSection';
@@ -21,9 +8,11 @@ import HowItWorks from './components/HowItWorks';
 import MascotSection from './components/MascotSection';
 import Testimonials from './components/Testimonials';
 import Footer from './components/Footer';
+import AuthPage from './pages/AuthPage';
 
 function App() {
   const [scrollY, setScrollY] = useState(0);
+  const [currentPage, setCurrentPage] = useState<'home' | 'login' | 'signup'>('home');
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
@@ -31,10 +20,18 @@ function App() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  if (currentPage === 'login') {
+    return <AuthPage initialMode="login" onBack={() => setCurrentPage('home')} />;
+  }
+
+  if (currentPage === 'signup') {
+    return <AuthPage initialMode="signup" onBack={() => setCurrentPage('home')} />;
+  }
+
   return (
     <div className="min-h-screen bg-white text-gray-900 overflow-x-hidden">
-      <Header scrollY={scrollY} />
-      <Hero />
+      <Header scrollY={scrollY} onLoginClick={() => setCurrentPage('login')} onSignupClick={() => setCurrentPage('signup')} />
+      <Hero onSignupClick={() => setCurrentPage('signup')} />
       <ProblemSection />
       <SolutionSection />
       <DashboardTeaser />

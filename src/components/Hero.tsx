@@ -2,7 +2,11 @@ import { Play } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Foundii from './Foundii';
 
-export default function Hero() {
+interface HeroProps {
+  onSignupClick: () => void;
+}
+
+export default function Hero({ onSignupClick }: HeroProps) {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -53,7 +57,7 @@ export default function Hero() {
         </div>
 
         <div className={`flex flex-col sm:flex-row items-center justify-center gap-4 mb-20 transition-all duration-1000 delay-300 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          <button className="group relative bg-gray-900 text-white px-8 py-4 rounded-full text-lg font-medium transition-all hover:shadow-2xl hover:scale-105 flex items-center gap-2 overflow-hidden">
+          <button onClick={onSignupClick} className="group relative bg-gray-900 text-white px-8 py-4 rounded-full text-lg font-medium transition-all hover:shadow-2xl hover:scale-105 flex items-center gap-2 overflow-hidden">
             <span className="absolute inset-0 bg-gradient-to-r from-blue-600 to-slate-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <span className="relative z-10">Try for Free</span>
             <span className="relative z-10 transform transition-transform group-hover:translate-x-1">→</span>
