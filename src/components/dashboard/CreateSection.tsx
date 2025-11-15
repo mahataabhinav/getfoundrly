@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { FileText, Mail, Instagram, Video, Newspaper, MessageSquare, Globe, Sparkles } from 'lucide-react';
 import LinkedInPostGenerator from './LinkedInPostGenerator';
 import InstagramAdGenerator from './InstagramAdGenerator';
+import NewsletterGenerator from './NewsletterGenerator';
 
 export default function CreateSection() {
   const [isLinkedInModalOpen, setIsLinkedInModalOpen] = useState(false);
   const [isInstagramModalOpen, setIsInstagramModalOpen] = useState(false);
+  const [isNewsletterModalOpen, setIsNewsletterModalOpen] = useState(false);
   const contentTools = [
     { title: 'LinkedIn Posts', icon: FileText, description: 'Professional thought leadership', color: 'from-blue-500 to-blue-600' },
     { title: 'Newsletters', icon: Mail, description: 'Email campaigns that convert', color: 'from-purple-500 to-purple-600' },
@@ -43,6 +45,7 @@ export default function CreateSection() {
                 onClick={() => {
                   if (isLinkedIn) setIsLinkedInModalOpen(true);
                   if (isInstagram) setIsInstagramModalOpen(true);
+                  if (tool.title === 'Newsletters') setIsNewsletterModalOpen(true);
                 }}
                 className="w-full bg-gray-900 text-white py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition-all"
               >
@@ -61,6 +64,11 @@ export default function CreateSection() {
       <InstagramAdGenerator
         isOpen={isInstagramModalOpen}
         onClose={() => setIsInstagramModalOpen(false)}
+      />
+
+      <NewsletterGenerator
+        isOpen={isNewsletterModalOpen}
+        onClose={() => setIsNewsletterModalOpen(false)}
       />
 
       <div className="bg-gradient-to-br from-slate-50 to-blue-50/30 rounded-2xl p-8 border border-gray-100">
