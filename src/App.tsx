@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import Header from './components/Header';
-import Hero from './components/Hero';
-import ProblemSection from './components/ProblemSection';
-import SolutionSection from './components/SolutionSection';
-import DashboardTeaser from './components/DashboardTeaser';
-import HowItWorks from './components/HowItWorks';
-import MascotSection from './components/MascotSection';
-import Testimonials from './components/Testimonials';
+import HeroEnhanced from './components/home/HeroEnhanced';
+import WhatFoundrlyDoes from './components/home/WhatFoundrlyDoes';
+import HowItWorks from './components/home/HowItWorks';
+import LiveProductGlimpses from './components/home/LiveProductGlimpses';
+import SmartScheduling from './components/home/SmartScheduling';
+import DashboardGlance from './components/home/DashboardGlance';
+import BuiltForFounders from './components/home/BuiltForFounders';
+import FinalCTA from './components/home/FinalCTA';
 import Footer from './components/Footer';
 import AuthPage from './pages/AuthPage';
 import Dashboard from './pages/Dashboard';
@@ -71,16 +72,30 @@ function App() {
     return <AuthPage initialMode="signup" onBack={() => setCurrentPage('home')} onSuccess={() => setCurrentPage('dashboard')} />;
   }
 
+  const scrollToHowItWorks = () => {
+    const element = document.getElementById('how-it-works');
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white text-gray-900 overflow-x-hidden">
       <Header scrollY={scrollY} onLoginClick={() => setCurrentPage('login')} onSignupClick={() => setCurrentPage('signup')} />
-      <Hero onSignupClick={() => setCurrentPage('signup')} />
-      <ProblemSection />
-      <SolutionSection />
-      <DashboardTeaser />
+      <HeroEnhanced
+        onSignupClick={() => setCurrentPage('signup')}
+        onSeeHowItWorks={scrollToHowItWorks}
+      />
+      <WhatFoundrlyDoes onCardClick={scrollToHowItWorks} />
       <HowItWorks />
-      <MascotSection />
-      <Testimonials />
+      <LiveProductGlimpses />
+      <SmartScheduling />
+      <DashboardGlance />
+      <BuiltForFounders />
+      <FinalCTA
+        onSignupClick={() => setCurrentPage('signup')}
+        onLoginClick={() => setCurrentPage('login')}
+      />
       <Footer />
     </div>
   );
