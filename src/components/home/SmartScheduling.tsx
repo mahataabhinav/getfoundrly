@@ -110,26 +110,44 @@ export default function SmartScheduling() {
             <p className="text-gray-600">Your brand's reach and engagement, trending up</p>
           </div>
 
-          <div className="relative h-64 flex items-end justify-between gap-2">
-            {[45, 52, 48, 65, 71, 68, 78, 82, 76, 89, 92, 88].map((value, index) => (
-              <div key={index} className="flex-1 flex flex-col items-center">
-                <div
-                  className="w-full bg-gradient-to-t from-blue-500 to-blue-400 rounded-t-lg transition-all duration-500 hover:from-blue-600 hover:to-blue-500"
-                  style={{ height: `${value}%` }}
-                />
-                {index === 11 && (
-                  <div className="absolute top-0 right-0 bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold">
-                    +45% this month
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+          <div className="relative h-80 bg-gradient-to-b from-blue-50/50 to-transparent rounded-2xl p-8">
+            <svg className="w-full h-full" viewBox="0 0 600 200" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#3b82f6" />
+                  <stop offset="100%" stopColor="#06b6d4" />
+                </linearGradient>
+                <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.3" />
+                  <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.05" />
+                </linearGradient>
+              </defs>
 
-          <div className="flex justify-between mt-4 text-xs text-gray-500">
-            <span>Week 1</span>
-            <span>Week 6</span>
-            <span>Week 12</span>
+              <path
+                d="M 0,150 L 50,140 L 100,145 L 150,125 L 200,115 L 250,120 L 300,100 L 350,85 L 400,95 L 450,70 L 500,55 L 550,60 L 600,50"
+                fill="none"
+                stroke="url(#lineGradient)"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+
+              <path
+                d="M 0,150 L 50,140 L 100,145 L 150,125 L 200,115 L 250,120 L 300,100 L 350,85 L 400,95 L 450,70 L 500,55 L 550,60 L 600,50 L 600,200 L 0,200 Z"
+                fill="url(#areaGradient)"
+              />
+
+              <circle cx="450" cy="70" r="6" fill="#10b981" stroke="white" strokeWidth="2" />
+            </svg>
+
+            <div className="absolute top-16 right-16 bg-green-500 text-white px-4 py-2 rounded-xl shadow-lg text-sm font-bold">
+              +24% Lift with AI Scheduling
+            </div>
+
+            <div className="absolute bottom-4 left-8 right-8 flex justify-between text-xs text-gray-500 font-medium">
+              <span>Last 30 Days</span>
+              <span className="text-gray-400">Visibility Score</span>
+            </div>
           </div>
         </div>
       </div>

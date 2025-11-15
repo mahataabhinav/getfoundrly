@@ -132,10 +132,10 @@ export default function DashboardGlance() {
                   <h4 className="font-bold text-white">Foundi's Suggestion</h4>
                 </div>
                 <p className="text-white/90 text-sm leading-relaxed mb-4">
-                  You haven't posted on LinkedIn in 3 days. Want me to draft something based on your latest blog post?
+                  I'll help you create and optimize content that reaches your audience at the perfect time.
                 </p>
                 <button className="bg-white text-gray-900 px-4 py-2 rounded-xl text-sm font-medium hover:bg-gray-100 transition-colors">
-                  Yes, create it
+                  Get Started
                 </button>
               </div>
             </div>

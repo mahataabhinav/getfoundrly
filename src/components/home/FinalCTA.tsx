@@ -55,7 +55,7 @@ export default function FinalCTA({ onSignupClick, onLoginClick }: FinalCTAProps)
                 <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 -translate-y-full">
                   <div className="bg-white/95 backdrop-blur-sm px-6 py-3 rounded-2xl shadow-xl border border-gray-200/50 whitespace-nowrap">
                     <p className="text-sm font-medium text-gray-900">
-                      I'll be with you inside.
+                      Ready when you are.
                     </p>
                   </div>
                 </div>

@@ -75,14 +75,14 @@ export default function HeroEnhanced({ onSignupClick, onSeeHowItWorks }: HeroEnh
           </div>
 
           <div className={`relative flex justify-center lg:justify-end transition-all duration-1000 delay-200 ${isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}`}>
-            <div className="relative group">
-              <div className="absolute -inset-10 bg-gradient-to-br from-cyan-400/10 to-blue-400/10 rounded-full blur-2xl" />
+            <div className="relative">
+              <div className="absolute -inset-8 bg-gradient-to-br from-cyan-400/10 to-blue-400/10 rounded-full blur-2xl" />
               <div className="relative">
-                <Foundii size={220} animate={true} gesture="wave" />
-                <div className="absolute top-0 right-0 transform translate-x-8 -translate-y-8">
-                  <div className="bg-white/95 backdrop-blur-sm px-6 py-4 rounded-2xl shadow-xl border border-gray-200/50 max-w-xs">
-                    <p className="text-sm font-medium text-gray-900">
-                      I'll handle the content. You focus on the business.
+                <Foundii size={140} animate={true} gesture="idle" />
+                <div className="absolute -top-2 right-0 transform translate-x-4">
+                  <div className="bg-white/95 backdrop-blur-sm px-5 py-3 rounded-2xl shadow-lg border border-gray-200/50">
+                    <p className="text-sm font-medium text-gray-900 whitespace-nowrap">
+                      Let's build your visibility.
                     </p>
                   </div>
                 </div>
