@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { X, ArrowRight, RefreshCw, Edit, Sparkles, TrendingUp, BookOpen, Lightbulb, FileText, Rocket, Calendar, Zap, Image, Video, LayoutGrid, Send } from 'lucide-react';
-import Foundii from '../Foundii';
+import Foundi from '../Foundii';
 import PostEditor from './PostEditor';
 import PublishModal from './PublishModal';
 
@@ -209,7 +209,7 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
 
                 <div className="flex justify-center mt-8">
                   <div className="relative">
-                    <Foundii size={60} animate={true} gesture="wave" />
+                    <Foundi size={60} animate={true} gesture="wave" />
                     <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 whitespace-nowrap">
                       <p className="text-xs text-gray-700">Let me scan your brand in seconds.</p>
                     </div>
@@ -398,7 +398,7 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
 
                   <div className="flex justify-center">
                     <div className="relative">
-                      <Foundii size={60} animate={true} gesture="thinking" />
+                      <Foundi size={60} animate={true} gesture="thinking" />
                       <div className="absolute -top-12 right-0 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 whitespace-nowrap">
                         <p className="text-xs text-gray-700">Want something different? Try regenerate or edit.</p>
                       </div>
@@ -436,6 +436,8 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
         isOpen={showPublishModal}
         onClose={() => setShowPublishModal(false)}
         onPublish={handlePublish}
+        post={generatedPost}
+        brandName={brandData.name}
       />
     </>
   );

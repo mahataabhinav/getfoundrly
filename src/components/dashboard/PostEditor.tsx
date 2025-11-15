@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { X, Undo2, Send, Sparkles } from 'lucide-react';
-import Foundii from '../Foundii';
+import Foundi from '../Foundii';
 
 interface PostEditorProps {
   initialPost: string;
@@ -134,9 +134,9 @@ export default function PostEditor({ initialPost, brandName, onClose, onSave }: 
           <div className="flex flex-col bg-gradient-to-br from-slate-50 to-blue-50/30 rounded-2xl border border-gray-100 overflow-hidden">
             <div className="p-6 border-b border-gray-200 bg-white/50 backdrop-blur-sm">
               <div className="flex items-center gap-3">
-                <Foundii size={40} animate={true} gesture="thinking" />
+                <Foundi size={40} animate={true} gesture="thinking" />
                 <div>
-                  <h3 className="font-semibold text-[#1A1A1A]">Refine with Foundii</h3>
+                  <h3 className="font-semibold text-[#1A1A1A]">Refine with Foundi</h3>
                   <p className="text-sm text-gray-600">Ask me to adjust your post</p>
                 </div>
               </div>
@@ -150,7 +150,7 @@ export default function PostEditor({ initialPost, brandName, onClose, onSave }: 
                 >
                   {msg.role === 'foundii' && (
                     <div className="flex-shrink-0">
-                      <Foundii size={32} animate={false} gesture="idle" />
+                      <Foundi size={32} animate={false} gesture="idle" />
                     </div>
                   )}
                   <div
@@ -167,7 +167,7 @@ export default function PostEditor({ initialPost, brandName, onClose, onSave }: 
               {isProcessing && (
                 <div className="flex items-start gap-3">
                   <div className="flex-shrink-0">
-                    <Foundii size={32} animate={true} gesture="thinking" />
+                    <Foundi size={32} animate={true} gesture="thinking" />
                   </div>
                   <div className="bg-white rounded-2xl rounded-tl-sm p-4 shadow-sm">
                     <div className="flex gap-1">
@@ -198,7 +198,7 @@ export default function PostEditor({ initialPost, brandName, onClose, onSave }: 
                   value={userMessage}
                   onChange={(e) => setUserMessage(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                  placeholder="Ask Foundii to refine your post..."
+                  placeholder="Ask Foundi to refine your post..."
                   className="flex-1 px-4 py-3 rounded-xl border border-gray-200 focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all outline-none text-sm"
                 />
                 <button
