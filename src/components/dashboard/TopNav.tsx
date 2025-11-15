@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Bell, User, LogOut } from 'lucide-react';
 import Logo from '../Logo';
 import { supabase } from '../../lib/supabase';
@@ -10,6 +10,22 @@ interface TopNavProps {
 
 export default function TopNav({ activeTab, onTabChange }: TopNavProps) {
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [userName, setUserName] = useState('U');
+
+  useEffect(() => {
+    getUserName();
+  }, []);
+
+  const getUserName = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user?.user_metadata?.name) {
+      setUserName(user.user_metadata.name.charAt(0).toUpperCase());
+    } else if (user?.user_metadata?.full_name) {
+      setUserName(user.user_metadata.full_name.charAt(0).toUpperCase());
+    } else if (user?.email) {
+      setUserName(user.email.charAt(0).toUpperCase());
+    }
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -50,7 +66,7 @@ export default function TopNav({ activeTab, onTabChange }: TopNavProps) {
                 className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-lg transition-all"
               >
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-800 to-gray-600 flex items-center justify-center text-white text-sm font-medium">
-                  U
+                  {userName}
                 </div>
               </button>
               {showUserMenu && (

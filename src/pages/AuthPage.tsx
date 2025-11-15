@@ -33,12 +33,23 @@ export default function AuthPage({ initialMode = 'login', onBack, onSuccess }: A
           password: formData.password,
           options: {
             data: {
-              name: formData.name
+              name: formData.name,
+              display_name: formData.name,
+              full_name: formData.name
             }
           }
         });
 
         if (signUpError) throw signUpError;
+
+        if (data.user) {
+          await supabase.auth.updateUser({
+            data: {
+              display_name: formData.name,
+              full_name: formData.name
+            }
+          });
+        }
 
         if (data.user && !data.session) {
           setMessage('Check your email to confirm your account.');
