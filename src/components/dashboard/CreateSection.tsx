@@ -1,6 +1,9 @@
+import { useState } from 'react';
 import { FileText, Mail, Instagram, Video, Newspaper, MessageSquare, Globe, Sparkles } from 'lucide-react';
+import LinkedInPostGenerator from './LinkedInPostGenerator';
 
 export default function CreateSection() {
+  const [isLinkedInModalOpen, setIsLinkedInModalOpen] = useState(false);
   const contentTools = [
     { title: 'LinkedIn Posts', icon: FileText, description: 'Professional thought leadership', color: 'from-blue-500 to-blue-600' },
     { title: 'Newsletters', icon: Mail, description: 'Email campaigns that convert', color: 'from-purple-500 to-purple-600' },
@@ -22,6 +25,7 @@ export default function CreateSection() {
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
         {contentTools.map((tool) => {
           const Icon = tool.icon;
+          const isLinkedIn = tool.title === 'LinkedIn Posts';
           return (
             <div
               key={tool.title}
@@ -32,13 +36,21 @@ export default function CreateSection() {
               </div>
               <h3 className="font-semibold text-[#1A1A1A] mb-1">{tool.title}</h3>
               <p className="text-sm text-gray-600 mb-4">{tool.description}</p>
-              <button className="w-full bg-gray-900 text-white py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition-all">
+              <button
+                onClick={() => isLinkedIn && setIsLinkedInModalOpen(true)}
+                className="w-full bg-gray-900 text-white py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition-all"
+              >
                 Generate
               </button>
             </div>
           );
         })}
       </div>
+
+      <LinkedInPostGenerator
+        isOpen={isLinkedInModalOpen}
+        onClose={() => setIsLinkedInModalOpen(false)}
+      />
 
       <div className="bg-gradient-to-br from-slate-50 to-blue-50/30 rounded-2xl p-8 border border-gray-100">
         <div className="max-w-2xl">
