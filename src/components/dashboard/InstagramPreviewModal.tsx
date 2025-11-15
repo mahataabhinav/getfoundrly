@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Heart, MessageCircle, Send as SendIcon, Bookmark, MoreHorizontal, Instagram, Check, TrendingUp, Clock, BarChart3, Moon, Sparkles, ArrowLeft, Facebook } from 'lucide-react';
+import { X, Heart, MessageCircle, Send as SendIcon, Bookmark, MoreHorizontal, Instagram, Check, TrendingUp, Clock, BarChart3, Moon, Sparkles, ArrowLeft, Facebook, Image as ImageIcon } from 'lucide-react';
 import Foundi from '../Foundii';
 
 interface InstagramPreviewModalProps {
