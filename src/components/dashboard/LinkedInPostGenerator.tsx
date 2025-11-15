@@ -300,7 +300,7 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
 
                 <div className="flex justify-center mt-8">
                   <div className="relative">
-                    <Foundii size={60} animate={true} gesture="thinking" />
+                    <Foundi size={60} animate={true} gesture="thinking" />
                     <div className="absolute -top-16 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 max-w-xs">
                       <p className="text-xs text-gray-700">Give me anything — even a rough thought — I'll turn it into gold.</p>
                     </div>
