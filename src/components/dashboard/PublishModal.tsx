@@ -11,43 +11,65 @@ interface PublishModalProps {
 }
 
 export default function PublishModal({ isOpen, onClose, onPublish, post, brandName }: PublishModalProps) {
-  const [step, setStep] = useState<'connect' | 'preview' | 'schedule'>('connect');
+  const [step, setStep] = useState<'connect' | 'preview' | 'schedule' | 'confirmPublish'>('preview');
   const [linkedinEmail, setLinkedinEmail] = useState('');
   const [isConnected, setIsConnected] = useState(false);
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
 
+  const getUpcomingDates = () => {
+    const dates = [];
+    const today = new Date();
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+      dates.push(date);
+    }
+    return dates;
+  };
+
+  const upcomingDates = getUpcomingDates();
+
   const recommendedTimes = [
     {
+      dayOfWeek: upcomingDates[0].toLocaleDateString('en-US', { weekday: 'long' }),
+      fullDate: upcomingDates[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
       time: '9:12 AM',
+      emoji: '⭐',
       label: 'Highest engagement window',
       metrics: [
         'Predicted +24% more reach',
-        '+18% more likes vs your median',
-        'Based on your last 10 posts'
+        '+18% likes vs your median'
       ],
-      reason: 'Best for thought leadership'
+      reason: 'Best for thought-leadership posts',
+      engagement: 92
     },
     {
+      dayOfWeek: upcomingDates[1].toLocaleDateString('en-US', { weekday: 'long' }),
+      fullDate: upcomingDates[1].toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
       time: '12:58 PM',
+      emoji: '✨',
       label: 'Peak founder visibility',
       metrics: [
-        'Predicted +19% more reach',
-        '+22% more comments',
-        'High decision-maker activity'
+        '+19% impressions',
+        '+22% more comments'
       ],
-      reason: 'Great for founder stories'
+      reason: 'Strong for awareness content',
+      engagement: 87
     },
     {
+      dayOfWeek: upcomingDates[2].toLocaleDateString('en-US', { weekday: 'long' }),
+      fullDate: upcomingDates[2].toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
       time: '5:21 PM',
+      emoji: '🌙',
       label: 'Maximum scroll time',
       metrics: [
-        'Predicted +16% more reach',
-        '+15% higher engagement rate',
-        'Evening wind-down period'
+        '+21% engagement clicks',
+        'Great for testimonials/UGC'
       ],
-      reason: 'Peak scroll time in your audience region'
+      reason: 'Evening engagement peak',
+      engagement: 84
     },
   ];
 
@@ -56,12 +78,20 @@ export default function PublishModal({ isOpen, onClose, onPublish, post, brandNa
     setTimeout(() => {
       setIsConnected(true);
       setTimeout(() => {
-        setStep('preview');
+        setStep('confirmPublish');
       }, 1000);
     }, 800);
   };
 
   const handlePublishNow = () => {
+    if (isConnected) {
+      setStep('confirmPublish');
+    } else {
+      setStep('connect');
+    }
+  };
+
+  const handleConfirmPublish = () => {
     setShowSuccess(true);
     setTimeout(() => {
       onPublish(false);
@@ -298,6 +328,83 @@ export default function PublishModal({ isOpen, onClose, onPublish, post, brandNa
             </div>
           )}
 
+          {step === 'confirmPublish' && (
+            <div className="space-y-6 animate-slide-in">
+              <div className="text-center mb-6">
+                <h3 className="text-2xl font-semibold text-[#1A1A1A] mb-2">
+                  Ready to publish?
+                </h3>
+                <p className="text-gray-600">This is how your post will appear on LinkedIn</p>
+              </div>
+
+              <div className="bg-white border border-gray-200 rounded-2xl p-6">
+                <div className="flex items-start gap-3 mb-4">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold">
+                    {brandName.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-[#1A1A1A]">{brandName}</p>
+                    <p className="text-sm text-gray-600">Founder • Just now</p>
+                  </div>
+                  <button className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
+                    <MoreHorizontal className="w-5 h-5 text-gray-600" />
+                  </button>
+                </div>
+
+                <p className="text-[#1A1A1A] whitespace-pre-wrap mb-4 leading-relaxed">{post}</p>
+
+                <div className="flex items-center gap-6 pt-4 border-t border-gray-100 text-gray-600">
+                  <button className="flex items-center gap-2 hover:text-blue-600 transition-colors">
+                    <ThumbsUp className="w-5 h-5" />
+                    <span className="text-sm">Like</span>
+                  </button>
+                  <button className="flex items-center gap-2 hover:text-blue-600 transition-colors">
+                    <MessageCircle className="w-5 h-5" />
+                    <span className="text-sm">Comment</span>
+                  </button>
+                  <button className="flex items-center gap-2 hover:text-blue-600 transition-colors">
+                    <Repeat2 className="w-5 h-5" />
+                    <span className="text-sm">Repost</span>
+                  </button>
+                  <button className="flex items-center gap-2 hover:text-blue-600 transition-colors">
+                    <SendIcon className="w-5 h-5" />
+                    <span className="text-sm">Send</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex justify-center">
+                <div className="relative">
+                  <Foundi size={60} animate={true} gesture="celebrate" />
+                  <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 whitespace-nowrap">
+                    <p className="text-xs text-gray-700">Ready to publish! Let's make it live.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setStep('preview')}
+                  className="px-6 py-3 text-gray-600 hover:text-[#1A1A1A] transition-colors font-medium"
+                >
+                  Back
+                </button>
+                <button
+                  onClick={onClose}
+                  className="px-6 py-3 text-gray-600 hover:text-[#1A1A1A] transition-colors font-medium"
+                >
+                  Edit in Editor
+                </button>
+                <button
+                  onClick={handleConfirmPublish}
+                  className="flex-1 bg-[#1A1A1A] text-white py-3 px-6 rounded-xl font-medium hover:bg-gray-800 transition-all hover:shadow-lg"
+                >
+                  Confirm Publish
+                </button>
+              </div>
+            </div>
+          )}
+
           {step === 'schedule' && (
             <div className="space-y-6 animate-slide-in">
               <div className="flex items-center gap-3">
@@ -359,14 +466,13 @@ export default function PublishModal({ isOpen, onClose, onPublish, post, brandNa
                           <Clock className="w-5 h-5 text-blue-600" />
                         </div>
                         <div className="flex-1">
-                          <div className="flex items-center justify-between mb-1">
-                            <p className="font-semibold text-[#1A1A1A]">{rec.time}</p>
-                            <div className="flex items-center gap-1 text-xs text-blue-600 font-medium">
-                              <BarChart3 className="w-3 h-3" />
-                              <span>Optimal</span>
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="font-bold text-[#1A1A1A] text-base">{rec.emoji} {rec.dayOfWeek} • {rec.fullDate} • {rec.time}</p>
+                            <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 rounded-full">
+                              <BarChart3 className="w-3 h-3 text-blue-600" />
+                              <span className="text-xs font-bold text-blue-700">{rec.engagement}% match</span>
                             </div>
                           </div>
-                          <p className="text-sm font-medium text-gray-700 mb-2">⭐ {rec.label}</p>
                           <div className="space-y-1">
                             {rec.metrics.map((metric, mIndex) => (
                               <p key={mIndex} className="text-xs text-gray-600">• {metric}</p>
@@ -378,7 +484,7 @@ export default function PublishModal({ isOpen, onClose, onPublish, post, brandNa
                       <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all"
-                          style={{ width: `${85 - (index * 10)}%` }}
+                          style={{ width: `${rec.engagement}%` }}
                         />
                       </div>
                     </button>
@@ -387,9 +493,12 @@ export default function PublishModal({ isOpen, onClose, onPublish, post, brandNa
               </div>
 
               <div className="bg-gradient-to-br from-slate-50 to-blue-50 rounded-xl p-4 border border-gray-200">
-                <p className="text-sm text-gray-700 text-center">
-                  Pick a recommended time to maximize your visibility. I'll handle the rest.
-                </p>
+                <div className="flex items-center justify-center gap-2">
+                  <Sparkles className="w-4 h-4 text-blue-600" />
+                  <p className="text-sm text-gray-700">
+                    Pick a recommended slot to maximize visibility. I'll handle the publishing.
+                  </p>
+                </div>
               </div>
 
               <div className="flex justify-center">

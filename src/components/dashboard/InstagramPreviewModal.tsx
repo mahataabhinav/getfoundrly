@@ -16,50 +16,66 @@ interface InstagramPreviewModalProps {
 }
 
 export default function InstagramPreviewModal({ isOpen, onClose, adContent, brandName, adType }: InstagramPreviewModalProps) {
-  const [step, setStep] = useState<'preview' | 'connect' | 'schedule' | 'success'>('preview');
+  const [step, setStep] = useState<'preview' | 'connect' | 'schedule' | 'confirmPublish' | 'success'>('preview');
   const [instagramEmail, setInstagramEmail] = useState('');
   const [isConnected, setIsConnected] = useState(false);
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
   const [connectionMethod, setConnectionMethod] = useState<'email' | 'facebook'>('email');
 
+  const getUpcomingDates = () => {
+    const dates = [];
+    const today = new Date();
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+      dates.push(date);
+    }
+    return dates;
+  };
+
+  const upcomingDates = getUpcomingDates();
+
   const recommendedTimes = [
     {
+      dayOfWeek: upcomingDates[0].toLocaleDateString('en-US', { weekday: 'long' }),
+      fullDate: upcomingDates[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
       time: '11:32 AM',
       emoji: '⭐',
       label: 'Highest Conversion Window',
       metrics: [
-        'Predicted +31% more engagement',
-        '+22% more video completions vs brand average',
-        'Audience peak: 65% online'
+        'Predicted +24% more reach',
+        '+18% likes vs your median'
       ],
-      reason: 'Best for CTAs like Shop Now',
+      reason: 'Best for thought-leadership posts',
       engagement: 92,
       color: 'from-yellow-400 to-orange-500'
     },
     {
+      dayOfWeek: upcomingDates[1].toLocaleDateString('en-US', { weekday: 'long' }),
+      fullDate: upcomingDates[1].toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
       time: '3:47 PM',
       emoji: '✨',
       label: 'High Awareness Window',
       metrics: [
-        '+18% impressions',
-        '+11% saves',
-        'Strong discovery potential'
+        '+19% impressions',
+        '+12% saves'
       ],
-      reason: 'Best for educational or founder-story ads',
+      reason: 'Strong for awareness content',
       engagement: 78,
       color: 'from-blue-400 to-purple-500'
     },
     {
+      dayOfWeek: upcomingDates[3].toLocaleDateString('en-US', { weekday: 'long' }),
+      fullDate: upcomingDates[3].toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
       time: '8:04 PM',
       emoji: '🌙',
       label: 'After-Work Spike',
       metrics: [
-        '+14% higher watch time',
-        '+20% more link clicks',
-        'Evening leisure browsing'
+        '+21% link clicks',
+        'Great for testimonials/UGC'
       ],
-      reason: 'Best for testimonials & UGC',
+      reason: 'Evening engagement peak',
       engagement: 85,
       color: 'from-indigo-400 to-purple-600'
     }
@@ -70,12 +86,20 @@ export default function InstagramPreviewModal({ isOpen, onClose, adContent, bran
     setTimeout(() => {
       setIsConnected(true);
       setTimeout(() => {
-        setStep('preview');
+        setStep('confirmPublish');
       }, 1500);
     }, 1000);
   };
 
   const handlePublishNow = () => {
+    if (isConnected) {
+      setStep('confirmPublish');
+    } else {
+      setStep('connect');
+    }
+  };
+
+  const handleConfirmPublish = () => {
     setStep('success');
     setTimeout(() => {
       onClose();
@@ -254,6 +278,151 @@ export default function InstagramPreviewModal({ isOpen, onClose, adContent, bran
     );
   }
 
+  if (step === 'confirmPublish') {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm">
+        <div className="bg-white rounded-3xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden animate-scale-in">
+          <div className="flex items-center justify-between px-8 py-6 border-b border-gray-100">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500 flex items-center justify-center">
+                <Instagram className="w-5 h-5 text-white" />
+              </div>
+              <h2 className="text-xl font-semibold text-[#1A1A1A]">Confirm Publish</h2>
+            </div>
+            <button
+              onClick={() => setStep('preview')}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <X className="w-5 h-5 text-gray-600" />
+            </button>
+          </div>
+
+          <div className="p-8 space-y-6 overflow-y-auto max-h-[calc(90vh-88px)]">
+            <div className="text-center mb-6">
+              <h3 className="text-xl font-semibold text-[#1A1A1A] mb-2">
+                This is how your ad will appear on Instagram
+              </h3>
+            </div>
+
+            <div className="flex justify-center">
+              <div className="w-[375px] bg-black rounded-[3rem] p-3 shadow-2xl border-[14px] border-gray-900">
+                <div className="bg-white rounded-[2.5rem] overflow-hidden h-[750px] overflow-y-auto">
+                  <div className="bg-white border-b border-gray-200">
+                    <div className="flex items-center justify-between px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-semibold text-sm">
+                          {brandName.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <p className="font-semibold text-sm text-[#1A1A1A]">{brandName.toLowerCase().replace(/\s/g, '')}</p>
+                          </div>
+                          <p className="text-xs text-gray-500">Sponsored</p>
+                        </div>
+                      </div>
+                      <button className="p-1">
+                        <MoreHorizontal className="w-5 h-5 text-gray-600" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-purple-100 via-pink-100 to-orange-100 aspect-square flex items-center justify-center">
+                    {adType.includes('video') ? (
+                      <div className="text-center">
+                        <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center mx-auto mb-3 shadow-lg">
+                          <div className="w-0 h-0 border-t-[12px] border-t-transparent border-l-[20px] border-l-gray-800 border-b-[12px] border-b-transparent ml-1" />
+                        </div>
+                        <p className="text-sm font-medium text-gray-700">Video Ad</p>
+                        <p className="text-xs text-gray-500 mt-1">Tap to play</p>
+                      </div>
+                    ) : (
+                      <div className="text-center">
+                        <ImageIcon className="w-16 h-16 text-pink-600 mx-auto mb-3" />
+                        <p className="text-sm font-medium text-gray-700">Image Ad</p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="px-4 py-3">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-4">
+                        <button className="hover:opacity-50 transition-opacity">
+                          <Heart className="w-6 h-6" />
+                        </button>
+                        <button className="hover:opacity-50 transition-opacity">
+                          <MessageCircle className="w-6 h-6" />
+                        </button>
+                        <button className="hover:opacity-50 transition-opacity">
+                          <SendIcon className="w-6 h-6" />
+                        </button>
+                      </div>
+                      <button className="hover:opacity-50 transition-opacity">
+                        <Bookmark className="w-6 h-6" />
+                      </button>
+                    </div>
+
+                    <p className="text-xs font-semibold text-[#1A1A1A] mb-2">2,847 views</p>
+
+                    <div className="mb-3">
+                      <p className="text-sm">
+                        <span className="font-semibold text-[#1A1A1A]">{brandName.toLowerCase().replace(/\s/g, '')} </span>
+                        <span className="text-gray-800 whitespace-pre-wrap text-xs leading-relaxed">
+                          {adContent.caption.substring(0, 100)}
+                          {adContent.caption.length > 100 && '...'}
+                        </span>
+                      </p>
+                      {adContent.caption.length > 100 && (
+                        <button className="text-xs text-gray-500 mt-1">more</button>
+                      )}
+                    </div>
+
+                    {adContent.cta && (
+                      <button className="w-full py-2 px-4 bg-[#0095F6] text-white rounded-lg font-semibold text-sm hover:bg-[#1877F2] transition-colors">
+                        {adContent.cta}
+                      </button>
+                    )}
+
+                    <p className="text-xs text-gray-400 mt-3">2 hours ago</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-center">
+              <div className="relative">
+                <Foundi size={60} animate={true} gesture="celebrate" />
+                <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 whitespace-nowrap">
+                  <p className="text-xs text-gray-700">Ready to publish! Let's make it live.</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3 max-w-2xl mx-auto">
+              <button
+                onClick={() => setStep('preview')}
+                className="px-6 py-3 text-gray-600 hover:text-[#1A1A1A] transition-colors font-medium"
+              >
+                Back
+              </button>
+              <button
+                onClick={onClose}
+                className="px-6 py-3 text-gray-600 hover:text-[#1A1A1A] transition-colors font-medium"
+              >
+                Edit in Editor
+              </button>
+              <button
+                onClick={handleConfirmPublish}
+                className="flex-1 bg-[#1A1A1A] text-white py-3 px-6 rounded-xl font-medium hover:bg-gray-800 transition-all hover:shadow-lg"
+              >
+                Confirm Publish
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (step === 'schedule') {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm">
@@ -322,14 +491,13 @@ export default function InstagramPreviewModal({ isOpen, onClose, adContent, bran
                         {rec.emoji}
                       </div>
                       <div className="flex-1">
-                        <div className="flex items-center justify-between mb-1">
-                          <p className="font-bold text-[#1A1A1A] text-lg">{rec.time}</p>
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="font-bold text-[#1A1A1A] text-lg">{rec.emoji} {rec.dayOfWeek} • {rec.fullDate} • {rec.time}</p>
                           <div className="flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-purple-100 to-pink-100 rounded-full">
                             <BarChart3 className="w-3.5 h-3.5 text-purple-600" />
                             <span className="text-xs font-bold text-purple-700">{rec.engagement}% match</span>
                           </div>
                         </div>
-                        <p className="text-base font-semibold text-gray-800 mb-3">{rec.emoji} {rec.label}</p>
                         <div className="space-y-1.5 mb-3">
                           {rec.metrics.map((metric, mIndex) => (
                             <p key={mIndex} className="text-sm text-gray-600 flex items-start gap-2">
@@ -358,7 +526,7 @@ export default function InstagramPreviewModal({ isOpen, onClose, adContent, bran
               <div className="flex items-start gap-3">
                 <Sparkles className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
                 <p className="text-sm text-gray-700 leading-relaxed">
-                  I've analyzed your past content and audience patterns. Pick a recommended time to maximize your ROI.
+                  Pick a recommended slot to maximize visibility. I'll handle the publishing.
                 </p>
               </div>
             </div>
@@ -522,7 +690,7 @@ export default function InstagramPreviewModal({ isOpen, onClose, adContent, bran
               Schedule for Later
             </button>
             <button
-              onClick={() => setStep('connect')}
+              onClick={handlePublishNow}
               className="flex-1 bg-[#1A1A1A] text-white py-3 px-6 rounded-xl font-medium hover:bg-gray-800 transition-all hover:shadow-lg"
             >
               Publish Now
