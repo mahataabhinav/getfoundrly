@@ -67,7 +67,7 @@ export default function MascotSection() {
               {isHovered && (
                 <div className="absolute -top-16 left-1/2 transform -translate-x-1/2 bg-white text-gray-900 px-8 py-4 rounded-2xl shadow-2xl animate-fade-in whitespace-nowrap font-bold border-2 border-blue-200">
                   <span className="text-2xl mr-2">👋</span>
-                  Hi there! Let's create something amazing
+                  Hey I'm Foundi, your AI assistant!
                 </div>
               )}
             </div>

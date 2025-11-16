@@ -28,7 +28,7 @@ export default function FoundiiSection() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-semibold text-[#1A1A1A] mb-2">Chat with Foundii</h1>
+        <h1 className="text-3xl font-semibold text-[#1A1A1A] mb-2">Chat with Foundi</h1>
         <p className="text-gray-600">Your AI creative co-founder, always ready to help</p>
       </div>
 
@@ -37,7 +37,7 @@ export default function FoundiiSection() {
           <div className="p-6 border-b border-gray-100 flex items-center gap-4">
             <RobotChatbot size={48} animate={true} gesture="wave" />
             <div>
-              <h3 className="font-semibold text-[#1A1A1A]">Foundii</h3>
+              <h3 className="font-semibold text-[#1A1A1A]">Foundi</h3>
               <p className="text-sm text-green-600 flex items-center gap-1">
                 <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                 Online
@@ -52,7 +52,7 @@ export default function FoundiiSection() {
               </div>
               <div className="bg-gray-100 rounded-2xl rounded-tl-sm p-4 max-w-md">
                 <p className="text-sm text-gray-700">
-                  Hi Sarah! I'm Foundii, your creative co-founder. I can help you create content, analyze performance, and grow your visibility. What would you like to work on today?
+                  Hi Sarah! I'm Foundi, your AI assistant. I can help you create content, analyze performance, and grow your visibility. What would you like to work on today?
                 </p>
               </div>
             </div>
@@ -117,7 +117,7 @@ export default function FoundiiSection() {
           </div>
 
           <div className="bg-white rounded-2xl p-6 border border-gray-100">
-            <h3 className="font-semibold text-[#1A1A1A] mb-4">What Foundii Can Do</h3>
+            <h3 className="font-semibold text-[#1A1A1A] mb-4">What Foundi Can Do</h3>
             <ul className="space-y-3 text-sm text-gray-700">
               <li className="flex items-start gap-2">
                 <span className="text-blue-500 mt-0.5">✓</span>

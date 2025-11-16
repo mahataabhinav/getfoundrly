@@ -223,44 +223,48 @@ export default function RobotChatbot({
           )}
         </g>
 
-        <g className={gesture === 'wave' ? 'animate-robot-arm-wave' : ''} style={{ transformOrigin: '75px 210px' }}>
+        <g className={gesture === 'wave' ? 'animate-robot-arm-wave' : ''} style={{ transformOrigin: '75px 220px' }}>
           <rect
             x="60"
-            y="210"
-            width="30"
-            height="50"
-            rx="15"
+            y="220"
+            width="28"
+            height="45"
+            rx="14"
             fill="url(#metalGradient)"
             stroke="#94A3B8"
             strokeWidth="2"
           />
-          <circle cx="75" cy="220" r="10" fill="#64748B" />
+          <circle cx="74" cy="230" r="9" fill="#64748B" />
+          <line x1="74" y1="239" x2="74" y2="260" stroke="#64748B" strokeWidth="4" strokeLinecap="round" />
 
-          <g className={gesture === 'wave' ? 'animate-robot-hand-rotate' : ''} style={{ transformOrigin: '70px 270px' }}>
-            <ellipse cx="70" cy="270" rx="12" ry="18" fill="url(#metalGradient)" stroke="#94A3B8" strokeWidth="2" />
-            <rect x="64" y="255" width="3" height="12" rx="1.5" fill="#CBD5E1" />
-            <rect x="68" y="252" width="3" height="15" rx="1.5" fill="#CBD5E1" />
-            <rect x="72" y="255" width="3" height="12" rx="1.5" fill="#CBD5E1" />
+          <g className={gesture === 'wave' ? 'animate-robot-hand-rotate' : ''} style={{ transformOrigin: '74px 268px' }}>
+            <ellipse cx="74" cy="268" rx="11" ry="14" fill="url(#metalGradient)" stroke="#94A3B8" strokeWidth="2" />
+            <circle cx="74" cy="265" r="4" fill="#CBD5E1" />
+            <rect x="69" y="275" width="3" height="8" rx="1.5" fill="#CBD5E1" />
+            <rect x="73" y="277" width="3" height="10" rx="1.5" fill="#CBD5E1" />
+            <rect x="77" y="275" width="3" height="8" rx="1.5" fill="#CBD5E1" />
           </g>
         </g>
 
-        <g className={gesture === 'excited' || gesture === 'celebrate' ? 'animate-robot-arm-wave' : ''} style={{ transformOrigin: '225px 210px' }}>
+        <g className={gesture === 'excited' || gesture === 'celebrate' ? 'animate-robot-arm-wave' : ''} style={{ transformOrigin: '225px 220px' }}>
           <rect
-            x="210"
-            y="210"
-            width="30"
-            height="50"
-            rx="15"
+            x="212"
+            y="220"
+            width="28"
+            height="45"
+            rx="14"
             fill="url(#metalGradient)"
             stroke="#94A3B8"
             strokeWidth="2"
           />
-          <circle cx="225" cy="220" r="10" fill="#64748B" />
+          <circle cx="226" cy="230" r="9" fill="#64748B" />
+          <line x1="226" y1="239" x2="226" y2="260" stroke="#64748B" strokeWidth="4" strokeLinecap="round" />
 
-          <ellipse cx="230" cy="270" rx="12" ry="18" fill="url(#metalGradient)" stroke="#94A3B8" strokeWidth="2" />
-          <rect x="224" y="255" width="3" height="12" rx="1.5" fill="#CBD5E1" />
-          <rect x="228" y="252" width="3" height="15" rx="1.5" fill="#CBD5E1" />
-          <rect x="232" y="255" width="3" height="12" rx="1.5" fill="#CBD5E1" />
+          <ellipse cx="226" cy="268" rx="11" ry="14" fill="url(#metalGradient)" stroke="#94A3B8" strokeWidth="2" />
+          <circle cx="226" cy="265" r="4" fill="#CBD5E1" />
+          <rect x="221" y="275" width="3" height="8" rx="1.5" fill="#CBD5E1" />
+          <rect x="225" y="277" width="3" height="10" rx="1.5" fill="#CBD5E1" />
+          <rect x="229" y="275" width="3" height="8" rx="1.5" fill="#CBD5E1" />
         </g>
 
         <g className={animate && gesture === 'idle' ? 'animate-robot-head-nod' : gesture === 'thinking' ? 'animate-robot-thinking' : ''} style={{ transformOrigin: '150px 190px' }}>
@@ -381,22 +385,16 @@ export default function RobotChatbot({
             )}
           </g>
 
-          {(gesture === 'wave' || gesture === 'excited' || gesture === 'celebrate' || isHovered) && (
-            <path
-              d="M 135 178 Q 150 188, 165 178"
-              stroke="#475569"
-              strokeWidth="3"
-              strokeLinecap="round"
-              fill="none"
-            />
-          )}
+          <path
+            d="M 130 178 Q 150 192, 170 178"
+            stroke="#475569"
+            strokeWidth="3.5"
+            strokeLinecap="round"
+            fill="none"
+          />
 
           {gesture === 'thinking' && (
             <ellipse cx="150" cy="180" rx="10" ry="6" fill="#475569" opacity="0.4" />
-          )}
-
-          {gesture === 'idle' && !isHovered && (
-            <line x1="138" y1="180" x2="162" y2="180" stroke="#475569" strokeWidth="2" strokeLinecap="round" />
           )}
 
           <circle cx="118" cy="145" r="2" fill="#3B82F6" opacity="0.5" />

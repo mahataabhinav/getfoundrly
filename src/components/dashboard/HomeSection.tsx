@@ -37,7 +37,7 @@ export default function HomeSection() {
         </div>
         <div className="mt-6 bg-white/60 backdrop-blur-sm rounded-2xl p-4 border border-gray-100 inline-block">
           <p className="text-sm text-gray-700">
-            <span className="font-medium">Foundii says:</span> "Ready to boost visibility today?"
+            <span className="font-medium">Foundi says:</span> "Ready to boost visibility today?"
           </p>
         </div>
       </div>
@@ -90,7 +90,7 @@ export default function HomeSection() {
       <div className="bg-gradient-to-br from-blue-50/50 to-slate-50/50 rounded-2xl p-6 border border-gray-100">
         <div className="flex items-start justify-between mb-4">
           <div>
-            <h3 className="font-semibold text-[#1A1A1A] mb-2">Foundii Recommendations</h3>
+            <h3 className="font-semibold text-[#1A1A1A] mb-2">Foundi Recommendations</h3>
             <p className="text-gray-700 leading-relaxed">
               Based on your audience trends, posting about <span className="font-medium">'AI productivity for SMBs'</span> may drive <span className="font-medium text-blue-600">+34% engagement</span>.
             </p>
