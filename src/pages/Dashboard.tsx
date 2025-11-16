@@ -100,7 +100,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         <div className="relative group cursor-pointer">
           <div className="absolute -inset-4 bg-gradient-to-br from-blue-100/50 to-slate-100/50 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
           <div className="relative animate-float">
-            <Foundii size={80} animate={true} gesture="wave" />
+            <RobotChatbot size={80} animate={true} gesture="wave" />
           </div>
           <div className="absolute -top-16 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
             <div className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 whitespace-nowrap">
