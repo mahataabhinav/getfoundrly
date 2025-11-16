@@ -7,7 +7,7 @@ import CreateSection from '../components/dashboard/CreateSection';
 import AnalyzeSection from '../components/dashboard/AnalyzeSection';
 import GrowSection from '../components/dashboard/GrowSection';
 import FoundiiSection from '../components/dashboard/FoundiiSection';
-import Foundii from '../components/Foundii';
+import RobotChatbot from '../components/RobotChatbot';
 import { supabase } from '../lib/supabase';
 
 interface DashboardProps {
@@ -42,7 +42,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/20 flex items-center justify-center">
         <div className="text-center">
-          <Foundii size={80} animate={true} gesture="wave" />
+          <RobotChatbot size={80} animate={true} gesture="wave" />
           <p className="mt-4 text-gray-600">Loading...</p>
         </div>
       </div>

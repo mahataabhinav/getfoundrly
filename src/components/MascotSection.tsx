@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { Sparkles } from 'lucide-react';
-import Foundii from './Foundii';
+import RobotChatbot from './RobotChatbot';
 
 export default function MascotSection() {
   const [isHovered, setIsHovered] = useState(false);
 
   const taglines = [
     "Finally, a co-founder who gets your brand.",
-    "You build. Foundi amplifies.",
+    "You build. I amplify.",
     "Your story, told intelligently."
   ];
 
@@ -23,10 +23,10 @@ export default function MascotSection() {
         <div className="grid md:grid-cols-2 gap-16 items-center">
           <div>
             <h2 className="text-4xl md:text-6xl font-bold mb-6 tracking-tight bg-gradient-to-r from-white via-blue-100 to-white bg-clip-text text-transparent">
-              Meet Foundi
+              Meet Your AI Co-Founder
             </h2>
             <p className="text-2xl text-gray-300 mb-8 font-medium">
-              Your creative co-founder.
+              Your creative companion, always ready to help.
             </p>
 
             <div className="space-y-4 mb-10">
@@ -57,8 +57,8 @@ export default function MascotSection() {
               <div className="absolute -inset-20 bg-gradient-to-br from-cyan-400/20 to-blue-400/20 rounded-full blur-3xl animate-pulse" />
 
               <div className="relative transform transition-all duration-500 hover:scale-105">
-                <Foundii
-                  size={280}
+                <RobotChatbot
+                  size={300}
                   animate={true}
                   gesture={isHovered ? 'wave' : 'idle'}
                 />

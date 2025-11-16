@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { X, Undo2, Send, Sparkles } from 'lucide-react';
-import Foundi from '../Foundii';
+import RobotChatbot from '../RobotChatbot';
 import VoiceInput from '../VoiceInput';
 
 interface PostEditorProps {
@@ -137,7 +137,7 @@ export default function PostEditor({ initialPost, brandName, onClose, onSave }: 
           <div className="flex flex-col bg-gradient-to-br from-slate-50 to-blue-50/30 rounded-2xl border border-gray-100 overflow-hidden">
             <div className="p-6 border-b border-gray-200 bg-white/50 backdrop-blur-sm">
               <div className="flex items-center gap-3">
-                <Foundi size={40} animate={true} gesture="thinking" />
+                <RobotChatbot size={40} animate={true} gesture="thinking" />
                 <div>
                   <h3 className="font-semibold text-[#1A1A1A]">Refine with Foundi</h3>
                   <p className="text-sm text-gray-600">Ask me to adjust your post</p>
@@ -153,7 +153,7 @@ export default function PostEditor({ initialPost, brandName, onClose, onSave }: 
                 >
                   {msg.role === 'foundii' && (
                     <div className="flex-shrink-0">
-                      <Foundi size={32} animate={false} gesture="idle" />
+                      <RobotChatbot size={32} animate={false} gesture="idle" />
                     </div>
                   )}
                   <div
@@ -170,7 +170,7 @@ export default function PostEditor({ initialPost, brandName, onClose, onSave }: 
               {isProcessing && (
                 <div className="flex items-start gap-3">
                   <div className="flex-shrink-0">
-                    <Foundi size={32} animate={true} gesture="thinking" />
+                    <RobotChatbot size={32} animate={true} gesture="thinking" />
                   </div>
                   <div className="bg-white rounded-2xl rounded-tl-sm p-4 shadow-sm">
                     <div className="flex gap-1">

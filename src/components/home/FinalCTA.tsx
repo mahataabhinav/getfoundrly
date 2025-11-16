@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import Foundii from '../Foundii';
+import RobotChatbot from '../RobotChatbot';
 
 interface FinalCTAProps {
   onSignupClick: () => void;
@@ -51,7 +51,7 @@ export default function FinalCTA({ onSignupClick, onLoginClick }: FinalCTAProps)
             <div className="relative group">
               <div className="absolute -inset-10 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-full blur-2xl" />
               <div className="relative">
-                <Foundii size={140} animate={true} gesture="wave" />
+                <RobotChatbot size={140} animate={true} gesture="wave" />
                 <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 -translate-y-full">
                   <div className="bg-white/95 backdrop-blur-sm px-6 py-3 rounded-2xl shadow-xl border border-gray-200/50 whitespace-nowrap">
                     <p className="text-sm font-medium text-gray-900">

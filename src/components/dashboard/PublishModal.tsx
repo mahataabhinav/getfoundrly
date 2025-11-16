@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { X, Linkedin, Calendar, Clock, Check, Sparkles, ArrowLeft, Globe, MoreHorizontal, ThumbsUp, MessageCircle, Repeat2, Send as SendIcon, TrendingUp, BarChart3 } from 'lucide-react';
-import Foundi from '../Foundii';
+import RobotChatbot from '../RobotChatbot';
 
 interface PublishModalProps {
   isOpen: boolean;
@@ -138,7 +138,7 @@ export default function PublishModal({ isOpen, onClose, onPublish, post, brandNa
             You can track performance in Analytics.
           </p>
           <div className="flex justify-center">
-            <Foundi size={80} animate={true} gesture="celebrate" />
+            <RobotChatbot size={80} animate={true} gesture="celebrate" />
           </div>
         </div>
       </div>
@@ -195,7 +195,7 @@ export default function PublishModal({ isOpen, onClose, onPublish, post, brandNa
                 </button>
               </div>
               <div className="flex justify-center mt-8">
-                <Foundi size={60} animate={true} gesture="wave" />
+                <RobotChatbot size={60} animate={true} gesture="wave" />
               </div>
             </div>
           )}
@@ -213,7 +213,7 @@ export default function PublishModal({ isOpen, onClose, onPublish, post, brandNa
               </div>
               <div className="flex justify-center">
                 <div className="relative">
-                  <Foundi size={60} animate={true} gesture="celebrate" />
+                  <RobotChatbot size={60} animate={true} gesture="celebrate" />
                   <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 whitespace-nowrap">
                     <p className="text-xs text-gray-700">Connected! Ready to publish.</p>
                   </div>
@@ -292,7 +292,7 @@ export default function PublishModal({ isOpen, onClose, onPublish, post, brandNa
 
               <div className="flex justify-center">
                 <div className="relative">
-                  <Foundi size={60} animate={true} gesture="thinking" />
+                  <RobotChatbot size={60} animate={true} gesture="thinking" />
                   <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 whitespace-nowrap">
                     <p className="text-xs text-gray-700">Looks good? Let's publish or schedule it.</p>
                   </div>
@@ -375,7 +375,7 @@ export default function PublishModal({ isOpen, onClose, onPublish, post, brandNa
 
               <div className="flex justify-center">
                 <div className="relative">
-                  <Foundi size={60} animate={true} gesture="celebrate" />
+                  <RobotChatbot size={60} animate={true} gesture="celebrate" />
                   <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 whitespace-nowrap">
                     <p className="text-xs text-gray-700">Ready to publish! Let's make it live.</p>
                   </div>
@@ -503,7 +503,7 @@ export default function PublishModal({ isOpen, onClose, onPublish, post, brandNa
 
               <div className="flex justify-center">
                 <div className="relative">
-                  <Foundi size={60} animate={true} gesture="thinking" />
+                  <RobotChatbot size={60} animate={true} gesture="thinking" />
                   <div className="absolute -top-12 right-0 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 max-w-xs">
                     <p className="text-xs text-gray-700">I'll publish automatically at the optimal time.</p>
                   </div>

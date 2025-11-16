@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { X, Heart, MessageCircle, Send as SendIcon, Bookmark, MoreHorizontal, Instagram, Check, TrendingUp, Clock, BarChart3, Moon, Sparkles, ArrowLeft, Facebook, Image as ImageIcon } from 'lucide-react';
-import Foundi from '../Foundii';
+import RobotChatbot from '../RobotChatbot';
 
 interface InstagramPreviewModalProps {
   isOpen: boolean;
@@ -145,7 +145,7 @@ export default function InstagramPreviewModal({ isOpen, onClose, adContent, bran
             You can track performance in Analytics.
           </p>
           <div className="flex justify-center">
-            <Foundi size={80} animate={true} gesture="celebrate" />
+            <RobotChatbot size={80} animate={true} gesture="celebrate" />
           </div>
         </div>
       </div>
@@ -248,7 +248,7 @@ export default function InstagramPreviewModal({ isOpen, onClose, adContent, bran
                 </button>
 
                 <div className="flex justify-center mt-8">
-                  <Foundi size={60} animate={true} gesture="wave" />
+                  <RobotChatbot size={60} animate={true} gesture="wave" />
                 </div>
               </div>
             ) : (
@@ -264,7 +264,7 @@ export default function InstagramPreviewModal({ isOpen, onClose, adContent, bran
                 </div>
                 <div className="flex justify-center">
                   <div className="relative">
-                    <Foundi size={60} animate={true} gesture="celebrate" />
+                    <RobotChatbot size={60} animate={true} gesture="celebrate" />
                     <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 whitespace-nowrap">
                       <p className="text-xs text-gray-700">Connected! Ready to publish.</p>
                     </div>
@@ -390,7 +390,7 @@ export default function InstagramPreviewModal({ isOpen, onClose, adContent, bran
 
             <div className="flex justify-center">
               <div className="relative">
-                <Foundi size={60} animate={true} gesture="celebrate" />
+                <RobotChatbot size={60} animate={true} gesture="celebrate" />
                 <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 whitespace-nowrap">
                   <p className="text-xs text-gray-700">Ready to publish! Let's make it live.</p>
                 </div>
@@ -663,7 +663,7 @@ export default function InstagramPreviewModal({ isOpen, onClose, adContent, bran
 
           <div className="flex justify-center">
             <div className="relative">
-              <Foundi size={60} animate={true} gesture="thinking" />
+              <RobotChatbot size={60} animate={true} gesture="thinking" />
               <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 whitespace-nowrap">
                 <p className="text-xs text-gray-700">Ready to launch? Let's make it happen!</p>
               </div>

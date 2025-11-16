@@ -1,5 +1,5 @@
 import { BarChart3, TrendingUp, Eye, Calendar, Sparkles } from 'lucide-react';
-import Foundii from '../Foundii';
+import RobotChatbot from '../RobotChatbot';
 
 export default function DashboardGlance() {
   return (
@@ -123,7 +123,7 @@ export default function DashboardGlance() {
 
               <div className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 backdrop-blur-sm rounded-2xl p-6 border border-white/20 relative overflow-hidden">
                 <div className="absolute top-4 right-4">
-                  <Foundii size={80} animate={true} gesture="thinking" />
+                  <RobotChatbot size={80} animate={true} gesture="thinking" />
                 </div>
                 <div className="flex items-center gap-3 mb-4">
                   <div className="p-3 bg-white/20 rounded-xl">

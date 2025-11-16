@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { X, Send, Sparkles } from 'lucide-react';
-import Foundi from '../Foundii';
+import RobotChatbot from '../RobotChatbot';
 import VoiceInput from '../VoiceInput';
 
 interface BlogPostEditorProps {
@@ -176,7 +176,7 @@ export default function BlogPostEditor({ isOpen, onClose, blogContent, onSave, b
           <div className="flex flex-col bg-gradient-to-br from-slate-50 to-green-50/30">
             <div className="p-6 border-b border-gray-200 bg-white/50 backdrop-blur-sm">
               <div className="flex items-center gap-3">
-                <Foundi size={40} animate={true} gesture="thinking" />
+                <RobotChatbot size={40} animate={true} gesture="thinking" />
                 <div>
                   <h3 className="font-semibold text-[#1A1A1A]">Refine with Foundi</h3>
                   <p className="text-sm text-gray-600">Ask me to improve your article</p>
@@ -200,7 +200,7 @@ export default function BlogPostEditor({ isOpen, onClose, blogContent, onSave, b
                   className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   {msg.role === 'assistant' && (
-                    <Foundi size={32} animate={false} gesture="wave" />
+                    <RobotChatbot size={32} animate={false} gesture="wave" />
                   )}
                   <div
                     className={`max-w-[80%] px-4 py-3 rounded-2xl ${

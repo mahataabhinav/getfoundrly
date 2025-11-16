@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { X, ArrowRight, Instagram, Video, Image as ImageIcon, LayoutGrid, Users, Sparkles, RefreshCw, Edit, Save, TrendingUp, Clock, Target, BarChart3, ArrowLeft } from 'lucide-react';
-import Foundi from '../Foundii';
+import RobotChatbot from '../RobotChatbot';
 import VoiceInput from '../VoiceInput';
 import InstagramAdEditor from './InstagramAdEditor';
 import InstagramPreviewModal from './InstagramPreviewModal';
@@ -237,7 +237,7 @@ export default function InstagramAdGenerator({ isOpen, onClose }: InstagramAdGen
                 {isGenerating && (
                   <div className="flex justify-center mt-8">
                     <div className="relative">
-                      <Foundi size={60} animate={true} gesture="thinking" />
+                      <RobotChatbot size={60} animate={true} gesture="thinking" />
                       <div className="absolute -top-16 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 max-w-xs">
                         <p className="text-xs text-gray-700">Perfect. Let me pull your brand essence to craft high-performing Instagram ads.</p>
                       </div>
@@ -279,7 +279,7 @@ export default function InstagramAdGenerator({ isOpen, onClose }: InstagramAdGen
                 </div>
 
                 <div className="flex justify-center mt-8">
-                  <Foundi size={60} animate={true} gesture="wave" />
+                  <RobotChatbot size={60} animate={true} gesture="wave" />
                 </div>
               </div>
             )}
@@ -409,7 +409,7 @@ export default function InstagramAdGenerator({ isOpen, onClose }: InstagramAdGen
                   {isGenerating && (
                     <div className="flex justify-center mt-8">
                       <div className="relative">
-                        <Foundi size={60} animate={true} gesture="thinking" />
+                        <RobotChatbot size={60} animate={true} gesture="thinking" />
                         <div className="absolute -top-16 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 max-w-xs">
                           <p className="text-xs text-gray-700">Crafting your perfect ad based on your preferences...</p>
                         </div>
@@ -425,7 +425,7 @@ export default function InstagramAdGenerator({ isOpen, onClose }: InstagramAdGen
                 <div>
                   <div className="flex items-center justify-between mb-6">
                     <div className="relative">
-                      <Foundi size={40} animate={true} gesture="celebrate" />
+                      <RobotChatbot size={40} animate={true} gesture="celebrate" />
                       <div className="absolute -top-12 left-12 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 whitespace-nowrap">
                         <p className="text-xs text-gray-700">Here's your personalized Instagram ad. Want to tweak it?</p>
                       </div>

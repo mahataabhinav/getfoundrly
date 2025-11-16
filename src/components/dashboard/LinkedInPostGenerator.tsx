@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { X, ArrowRight, RefreshCw, Edit, Sparkles, TrendingUp, BookOpen, Lightbulb, FileText, Rocket, Calendar, Zap, Image, Video, LayoutGrid, Send } from 'lucide-react';
-import Foundi from '../Foundii';
+import RobotChatbot from '../RobotChatbot';
 import VoiceInput from '../VoiceInput';
 import PostEditor from './PostEditor';
 import PublishModal from './PublishModal';
@@ -206,7 +206,7 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
 
                 <div className="flex justify-center mt-8">
                   <div className="relative">
-                    <Foundi size={60} animate={true} gesture="wave" />
+                    <RobotChatbot size={60} animate={true} gesture="wave" />
                     <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 whitespace-nowrap">
                       <p className="text-xs text-gray-700">Let me scan your brand in seconds.</p>
                     </div>
@@ -295,7 +295,7 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
 
                 <div className="flex justify-center mt-8">
                   <div className="relative">
-                    <Foundi size={60} animate={true} gesture="thinking" />
+                    <RobotChatbot size={60} animate={true} gesture="thinking" />
                     <div className="absolute -top-16 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 max-w-xs">
                       <p className="text-xs text-gray-700">Give me anything — even a rough thought — I'll turn it into gold.</p>
                     </div>
@@ -393,7 +393,7 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
 
                   <div className="flex justify-center">
                     <div className="relative">
-                      <Foundi size={60} animate={true} gesture="thinking" />
+                      <RobotChatbot size={60} animate={true} gesture="thinking" />
                       <div className="absolute -top-12 right-0 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 whitespace-nowrap">
                         <p className="text-xs text-gray-700">Want something different? Try regenerate or edit.</p>
                       </div>

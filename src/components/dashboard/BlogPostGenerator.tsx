@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { X, ArrowRight, RefreshCw, Edit, Sparkles, Newspaper, FileText, List, HelpCircle, GitCompare, BookOpen, Lightbulb, TrendingUp, Target } from 'lucide-react';
-import Foundi from '../Foundii';
+import RobotChatbot from '../RobotChatbot';
 import VoiceInput from '../VoiceInput';
 import BlogPostEditor from './BlogPostEditor';
 import BlogPostPreview from './BlogPostPreview';
@@ -567,7 +567,7 @@ export default function BlogPostGenerator({ isOpen, onClose }: BlogPostGenerator
 
               <div className="flex justify-center mt-8">
                 <div className="relative">
-                  <Foundi size={60} animate={true} gesture="wave" />
+                  <RobotChatbot size={60} animate={true} gesture="wave" />
                   <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 whitespace-nowrap">
                     <p className="text-xs text-gray-700">Let's craft content that ranks!</p>
                   </div>
@@ -607,7 +607,7 @@ export default function BlogPostGenerator({ isOpen, onClose }: BlogPostGenerator
               </div>
 
               <div className="flex justify-center mt-8">
-                <Foundi size={60} animate={true} gesture="thinking" />
+                <RobotChatbot size={60} animate={true} gesture="thinking" />
               </div>
             </div>
           )}
@@ -627,7 +627,7 @@ export default function BlogPostGenerator({ isOpen, onClose }: BlogPostGenerator
 
                   <div className="flex justify-center mt-8">
                     <div className="relative">
-                      <Foundi size={80} animate={true} gesture="thinking" />
+                      <RobotChatbot size={80} animate={true} gesture="thinking" />
                       <div className="absolute -top-16 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 max-w-xs">
                         <p className="text-xs text-gray-700">Analyzing keywords, researching topics, and crafting SEO-optimized content...</p>
                       </div>
@@ -644,7 +644,7 @@ export default function BlogPostGenerator({ isOpen, onClose }: BlogPostGenerator
                   <div className="space-y-4">
                     <div className="flex items-center justify-between mb-4">
                       <div className="relative">
-                        <Foundi size={40} animate={true} gesture="celebrate" />
+                        <RobotChatbot size={40} animate={true} gesture="celebrate" />
                         <div className="absolute -top-12 left-12 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 whitespace-nowrap">
                           <p className="text-xs text-gray-700">Your article is ready!</p>
                         </div>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { X, Mail, Check, ArrowLeft, Sparkles, Clock, TrendingUp, BarChart3 } from 'lucide-react';
-import Foundi from '../Foundii';
+import RobotChatbot from '../RobotChatbot';
 
 interface NewsletterPreviewProps {
   isOpen: boolean;
@@ -137,7 +137,7 @@ export default function NewsletterPreview({ isOpen, onClose, newsletterContent, 
             Your newsletter is on its way to your subscribers.
           </p>
           <div className="flex justify-center mt-6">
-            <Foundi size={60} animate={true} gesture="celebrate" />
+            <RobotChatbot size={60} animate={true} gesture="celebrate" />
           </div>
         </div>
       </div>
@@ -196,7 +196,7 @@ export default function NewsletterPreview({ isOpen, onClose, newsletterContent, 
                 </button>
 
                 <div className="flex justify-center mt-8">
-                  <Foundi size={60} animate={true} gesture="wave" />
+                  <RobotChatbot size={60} animate={true} gesture="wave" />
                 </div>
               </div>
             ) : (
@@ -212,7 +212,7 @@ export default function NewsletterPreview({ isOpen, onClose, newsletterContent, 
                 </div>
                 <div className="flex justify-center">
                   <div className="relative">
-                    <Foundi size={60} animate={true} gesture="celebrate" />
+                    <RobotChatbot size={60} animate={true} gesture="celebrate" />
                     <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 whitespace-nowrap">
                       <p className="text-xs text-gray-700">All set! Let's publish.</p>
                     </div>
@@ -276,7 +276,7 @@ export default function NewsletterPreview({ isOpen, onClose, newsletterContent, 
 
             <div className="flex justify-center">
               <div className="relative">
-                <Foundi size={60} animate={true} gesture="celebrate" />
+                <RobotChatbot size={60} animate={true} gesture="celebrate" />
                 <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 whitespace-nowrap">
                   <p className="text-xs text-gray-700">Ready to send! Your subscribers will love this.</p>
                 </div>
@@ -504,7 +504,7 @@ export default function NewsletterPreview({ isOpen, onClose, newsletterContent, 
 
           <div className="flex justify-center">
             <div className="relative">
-              <Foundi size={60} animate={true} gesture="thinking" />
+              <RobotChatbot size={60} animate={true} gesture="thinking" />
               <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 whitespace-nowrap">
                 <p className="text-xs text-gray-700">Looking good! Ready to send?</p>
               </div>

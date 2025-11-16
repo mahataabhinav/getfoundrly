@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { X, Newspaper, Check, ArrowLeft, Sparkles, Clock, TrendingUp, BarChart3, Calendar, User } from 'lucide-react';
-import Foundi from '../Foundii';
+import RobotChatbot from '../RobotChatbot';
 
 interface BlogPostPreviewProps {
   isOpen: boolean;
@@ -142,7 +142,7 @@ export default function BlogPostPreview({ isOpen, onClose, blogContent, brandNam
             Your blog post is now live on your website.
           </p>
           <div className="flex justify-center mt-6">
-            <Foundi size={60} animate={true} gesture="celebrate" />
+            <RobotChatbot size={60} animate={true} gesture="celebrate" />
           </div>
         </div>
       </div>
@@ -222,7 +222,7 @@ export default function BlogPostPreview({ isOpen, onClose, blogContent, brandNam
                 </button>
 
                 <div className="flex justify-center mt-8">
-                  <Foundi size={60} animate={true} gesture="wave" />
+                  <RobotChatbot size={60} animate={true} gesture="wave" />
                 </div>
               </div>
             ) : (
@@ -238,7 +238,7 @@ export default function BlogPostPreview({ isOpen, onClose, blogContent, brandNam
                 </div>
                 <div className="flex justify-center">
                   <div className="relative">
-                    <Foundi size={60} animate={true} gesture="celebrate" />
+                    <RobotChatbot size={60} animate={true} gesture="celebrate" />
                     <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 whitespace-nowrap">
                       <p className="text-xs text-gray-700">All set! Let's publish.</p>
                     </div>
@@ -298,7 +298,7 @@ export default function BlogPostPreview({ isOpen, onClose, blogContent, brandNam
 
             <div className="flex justify-center">
               <div className="relative">
-                <Foundi size={60} animate={true} gesture="celebrate" />
+                <RobotChatbot size={60} animate={true} gesture="celebrate" />
                 <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 whitespace-nowrap">
                   <p className="text-xs text-gray-700">Ready to publish! Your readers will love this.</p>
                 </div>
@@ -560,7 +560,7 @@ export default function BlogPostPreview({ isOpen, onClose, blogContent, brandNam
 
           <div className="flex justify-center">
             <div className="relative">
-              <Foundi size={60} animate={true} gesture="thinking" />
+              <RobotChatbot size={60} animate={true} gesture="thinking" />
               <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 whitespace-nowrap">
                 <p className="text-xs text-gray-700">Ready to publish?</p>
               </div>

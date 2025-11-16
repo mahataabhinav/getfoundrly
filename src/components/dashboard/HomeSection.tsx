@@ -1,5 +1,5 @@
 import { ArrowRight, TrendingUp, ArrowUp, ArrowDown, Calendar, FileText } from 'lucide-react';
-import Foundii from '../Foundii';
+import RobotChatbot from '../RobotChatbot';
 
 export default function HomeSection() {
   const quickActions = [
@@ -32,7 +32,7 @@ export default function HomeSection() {
             <p className="text-gray-600">Here's what's happening with your visibility today</p>
           </div>
           <div className="hidden md:block">
-            <Foundii size={80} animate={true} gesture="wave" />
+            <RobotChatbot size={80} animate={true} gesture="wave" />
           </div>
         </div>
         <div className="mt-6 bg-white/60 backdrop-blur-sm rounded-2xl p-4 border border-gray-100 inline-block">

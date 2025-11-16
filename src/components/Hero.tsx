@@ -1,6 +1,6 @@
 import { Play } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import Foundii from './Foundii';
+import RobotChatbot from './RobotChatbot';
 
 interface HeroProps {
   onSignupClick: () => void;
@@ -73,7 +73,7 @@ export default function Hero({ onSignupClick }: HeroProps) {
           <div className="relative group">
             <div className="absolute -inset-10 bg-gradient-to-br from-cyan-400/10 to-blue-400/10 rounded-full blur-2xl" />
             <div className="relative">
-              <Foundii size={160} animate={true} gesture="idle" />
+              <RobotChatbot size={160} animate={true} gesture="idle" />
               <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <div className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg border border-gray-200/50">
                   <div className="text-xs font-bold text-gray-900">Meet Foundi</div>

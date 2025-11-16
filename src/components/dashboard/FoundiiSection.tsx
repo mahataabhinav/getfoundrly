@@ -1,6 +1,6 @@
 import { Send, Sparkles } from 'lucide-react';
 import { useState } from 'react';
-import Foundii from '../Foundii';
+import RobotChatbot from '../RobotChatbot';
 
 export default function FoundiiSection() {
   const [message, setMessage] = useState('');
@@ -35,7 +35,7 @@ export default function FoundiiSection() {
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 flex flex-col h-[600px]">
           <div className="p-6 border-b border-gray-100 flex items-center gap-4">
-            <Foundii size={48} animate={true} gesture="wave" />
+            <RobotChatbot size={48} animate={true} gesture="wave" />
             <div>
               <h3 className="font-semibold text-[#1A1A1A]">Foundii</h3>
               <p className="text-sm text-green-600 flex items-center gap-1">
@@ -48,7 +48,7 @@ export default function FoundiiSection() {
           <div className="flex-1 overflow-y-auto p-6 space-y-4">
             <div className="flex items-start gap-3">
               <div className="flex-shrink-0">
-                <Foundii size={32} animate={false} gesture="idle" />
+                <RobotChatbot size={32} animate={false} gesture="idle" />
               </div>
               <div className="bg-gray-100 rounded-2xl rounded-tl-sm p-4 max-w-md">
                 <p className="text-sm text-gray-700">
@@ -64,7 +64,7 @@ export default function FoundiiSection() {
               >
                 {msg.role === 'foundii' && (
                   <div className="flex-shrink-0">
-                    <Foundii size={32} animate={false} gesture="idle" />
+                    <RobotChatbot size={32} animate={false} gesture="idle" />
                   </div>
                 )}
                 <div
