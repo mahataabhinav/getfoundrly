@@ -22,7 +22,7 @@ export default function HomeSection() {
   ];
 
   return (
-    <div className="space-y-8 mt-2">
+    <div className="space-y-8">
       <div className="bg-gradient-to-br from-slate-50 to-blue-50/30 rounded-3xl p-6 md:p-8 border border-gray-100">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">

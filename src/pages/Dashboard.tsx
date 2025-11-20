@@ -87,12 +87,12 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
       <button
         onClick={() => setSidebarOpen(true)}
-        className="fixed left-4 top-20 z-30 lg:hidden p-2 bg-white rounded-lg shadow-lg border border-gray-100"
+        className="fixed left-4 top-[85px] z-30 lg:hidden p-2 bg-white rounded-lg shadow-lg border border-gray-100 hover:bg-gray-50 transition-colors"
       >
         <Menu className="w-5 h-5 text-gray-700" />
       </button>
 
-      <main className="lg:ml-64 pt-24 p-6 lg:p-8">
+      <main className="lg:ml-64 pt-[97px] px-4 sm:px-6 lg:px-8 pb-24">
         <div className="max-w-7xl mx-auto">{renderContent()}</div>
       </main>
 

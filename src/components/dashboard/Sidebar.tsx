@@ -27,11 +27,11 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }: Sid
       )}
 
       <aside
-        className={`fixed left-0 top-[73px] bottom-0 w-64 bg-white border-r border-gray-100 z-40 transition-transform duration-300 ${
+        className={`fixed left-0 top-[73px] bottom-0 w-64 bg-white border-r border-gray-100 z-40 transition-transform duration-300 overflow-y-auto ${
           isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
-        <div className="p-6 space-y-1">
+        <div className="p-6 space-y-1 pb-8">
           {menuItems.map((item) => {
             const Icon = item.icon;
             return (

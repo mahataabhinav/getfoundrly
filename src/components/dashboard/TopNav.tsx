@@ -34,9 +34,9 @@ export default function TopNav({ activeTab, onTabChange }: TopNavProps) {
   const tabs = ['Home', 'Create', 'Analyze', 'Grow', 'Foundii'];
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100">
-      <div className="px-6 py-4">
-        <div className="flex items-center justify-between">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100 h-[73px]">
+      <div className="px-6 h-full flex items-center">
+        <div className="flex items-center justify-between w-full">
           <Logo variant="dark" iconSize={28} showWordmark={true} />
 
           <div className="hidden md:flex items-center gap-1">
