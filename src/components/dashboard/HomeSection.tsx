@@ -1,7 +1,36 @@
+import { useState, useEffect } from 'react';
 import { ArrowRight, TrendingUp, ArrowUp, ArrowDown, Calendar, FileText } from 'lucide-react';
 import RobotChatbot from '../RobotChatbot';
+import { supabase } from '../../lib/supabase';
 
 export default function HomeSection() {
+  const [firstName, setFirstName] = useState<string>('');
+  const [loadingUser, setLoadingUser] = useState(true);
+
+  useEffect(() => {
+    fetchUserData();
+  }, []);
+
+  const fetchUserData = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (session?.user) {
+        const metadata = session.user.user_metadata;
+        const fullName = metadata?.full_name || metadata?.name || metadata?.display_name || '';
+
+        if (fullName) {
+          const firstNameExtracted = fullName.split(' ')[0];
+          setFirstName(firstNameExtracted);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    } finally {
+      setLoadingUser(false);
+    }
+  };
+
   const quickActions = [
     { title: 'Create LinkedIn Post', type: 'LinkedIn', preview: '📱' },
     { title: 'Create Instagram Ad', type: 'Instagram', preview: '📸' },
@@ -21,13 +50,20 @@ export default function HomeSection() {
     { title: 'Brand Authority Checklist', status: 'Posted', date: 'Jan 15, 2:00 PM', platform: 'Instagram' },
   ];
 
+  const getWelcomeMessage = () => {
+    if (loadingUser) {
+      return 'Welcome back 👋';
+    }
+    return firstName ? `Welcome back, ${firstName} 👋` : 'Welcome back 👋';
+  };
+
   return (
     <div className="space-y-8">
       <div className="bg-gradient-to-br from-slate-50 to-blue-50/30 rounded-3xl p-6 md:p-8 border border-gray-100">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
             <h1 className="text-2xl md:text-3xl font-semibold text-[#1A1A1A] mb-2 break-words">
-              Welcome back, Sarah 👋
+              {getWelcomeMessage()}
             </h1>
             <p className="text-sm md:text-base text-gray-600">Here's what's happening with your visibility today</p>
           </div>
