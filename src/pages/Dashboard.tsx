@@ -92,7 +92,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         <Menu className="w-5 h-5 text-gray-700" />
       </button>
 
-      <main className="lg:ml-64 pt-[73px] p-6 lg:p-8">
+      <main className="lg:ml-64 pt-24 p-6 lg:p-8">
         <div className="max-w-7xl mx-auto">{renderContent()}</div>
       </main>
 

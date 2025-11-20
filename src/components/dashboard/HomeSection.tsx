@@ -22,16 +22,16 @@ export default function HomeSection() {
   ];
 
   return (
-    <div className="space-y-8">
-      <div className="bg-gradient-to-br from-slate-50 to-blue-50/30 rounded-3xl p-8 border border-gray-100">
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-3xl font-semibold text-[#1A1A1A] mb-2">
+    <div className="space-y-8 mt-2">
+      <div className="bg-gradient-to-br from-slate-50 to-blue-50/30 rounded-3xl p-6 md:p-8 border border-gray-100">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl md:text-3xl font-semibold text-[#1A1A1A] mb-2 break-words">
               Welcome back, Sarah 👋
             </h1>
-            <p className="text-gray-600">Here's what's happening with your visibility today</p>
+            <p className="text-sm md:text-base text-gray-600">Here's what's happening with your visibility today</p>
           </div>
-          <div className="hidden md:block">
+          <div className="hidden md:block flex-shrink-0">
             <RobotChatbot size={80} animate={true} gesture="wave" />
           </div>
         </div>
