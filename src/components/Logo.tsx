@@ -54,7 +54,7 @@ export default function Logo({ variant = 'dark', iconSize = 32, showWordmark = t
 
       {showWordmark && (
         <span
-          className={`text-2xl font-bold tracking-tight ${textColor} -ml-1`}
+          className={`text-2xl font-bold tracking-tight ${textColor} -ml-3`}
           style={{
             fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif',
             letterSpacing: '-0.04em'
