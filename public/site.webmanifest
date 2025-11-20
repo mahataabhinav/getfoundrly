@@ -1,0 +1,25 @@
+{
+  "name": "Foundrly",
+  "short_name": "Foundrly",
+  "description": "Turn invisible brands into undeniable ones. Your AI co-founder for content creation and analytics.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3B82F6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/logo-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "32x32",
+      "type": "image/svg+xml"
+    }
+  ],
+  "categories": ["business", "productivity", "marketing"],
+  "screenshots": []
+}
