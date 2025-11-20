@@ -14,10 +14,10 @@ export default function Logo({ variant = 'dark', iconSize = 32, showWordmark = t
   };
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center">
       <svg
-        width={iconSize}
-        height={iconSize}
+        width={iconSize * 1.4}
+        height={iconSize * 1.4}
         viewBox="0 0 100 100"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -54,10 +54,10 @@ export default function Logo({ variant = 'dark', iconSize = 32, showWordmark = t
 
       {showWordmark && (
         <span
-          className={`text-2xl font-bold tracking-tight ${textColor}`}
+          className={`text-2xl font-bold tracking-tight ${textColor} -ml-1`}
           style={{
             fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif',
-            letterSpacing: '-0.02em'
+            letterSpacing: '-0.04em'
           }}
         >
           <span className="font-bold">oundrly</span>
