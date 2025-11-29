@@ -1,17 +1,29 @@
 import { useState } from 'react';
-import { X, Undo2, Send, Sparkles } from 'lucide-react';
+import { refinePostContent } from '../../lib/openai';
+import { X, Undo2, Send, Sparkles, Image as ImageIcon, XCircle } from 'lucide-react';
 import RobotChatbot from '../RobotChatbot';
 import VoiceInput from '../VoiceInput';
+import type { GeneratedImage } from '../../lib/asset-generator';
 
 interface PostEditorProps {
   initialPost: string;
   brandName: string;
+  selectedImage?: GeneratedImage | null;
   onClose: () => void;
-  onSave: (post: string) => void;
+  onSave: (post: string, image?: GeneratedImage | null) => void;
+  onImageChange?: (image: GeneratedImage | null) => void;
 }
 
-export default function PostEditor({ initialPost, brandName, onClose, onSave }: PostEditorProps) {
+export default function PostEditor({ 
+  initialPost, 
+  brandName, 
+  selectedImage,
+  onClose, 
+  onSave,
+  onImageChange 
+}: PostEditorProps) {
   const [editedPost, setEditedPost] = useState(initialPost);
+  const [currentImage, setCurrentImage] = useState<GeneratedImage | null>(selectedImage || null);
   const [chatMessages, setChatMessages] = useState([
     { role: 'foundii', text: 'Hi! I can help refine your post. Try asking me to make it shorter, more bold, add a CTA, or anything else!' }
   ]);
@@ -31,7 +43,7 @@ export default function PostEditor({ initialPost, brandName, onClose, onSave }: 
     handleSendMessage(action);
   };
 
-  const handleSendMessage = (message?: string) => {
+  const handleSendMessage = async (message?: string) => {
     const msgToSend = message || userMessage;
     if (!msgToSend.trim()) return;
 
@@ -39,29 +51,24 @@ export default function PostEditor({ initialPost, brandName, onClose, onSave }: 
     setUserMessage('');
     setIsProcessing(true);
 
-    setTimeout(() => {
-      let newPost = editedPost;
-      const lowerMsg = msgToSend.toLowerCase();
-
-      if (lowerMsg.includes('shorter') || lowerMsg.includes('concise')) {
-        newPost = editedPost.split('\n').slice(0, 15).join('\n') + '\n\n#Leadership #Growth';
-      } else if (lowerMsg.includes('bold') || lowerMsg.includes('confident')) {
-        newPost = editedPost.replace('Here\'s what', '💥 Here\'s what').replace('Over the past', '🔥 Over the past');
-      } else if (lowerMsg.includes('professional')) {
-        newPost = editedPost.replace(/🚀|💥|🔥|👇/g, '');
-      } else if (lowerMsg.includes('cta') || lowerMsg.includes('call to action')) {
-        newPost = editedPost + '\n\n📩 Want help with your visibility strategy? DM me "GROW" and let\'s talk.';
-      } else if (lowerMsg.includes('intro') || lowerMsg.includes('beginning')) {
-        newPost = `💡 ${context.topic}\n\nLet me share something that changed everything for my clients:\n\n` + editedPost.split('\n').slice(2).join('\n');
-      }
-
-      setEditedPost(newPost);
+    try {
+      // Use AI to refine the post
+      const refinedPost = await refinePostContent(editedPost, msgToSend, brandName);
+      setEditedPost(refinedPost);
+      
       setChatMessages(prev => [...prev, {
         role: 'foundii',
         text: 'Done! I\'ve updated your post. Check the preview on the left. Want any other changes?'
       }]);
+    } catch (error) {
+      console.error('Error refining post:', error);
+      setChatMessages(prev => [...prev, {
+        role: 'foundii',
+        text: 'Sorry, I encountered an error. Please try again or rephrase your request.'
+      }]);
+    } finally {
       setIsProcessing(false);
-    }, 1500);
+    }
   };
 
   const handleUndo = () => {
@@ -73,8 +80,13 @@ export default function PostEditor({ initialPost, brandName, onClose, onSave }: 
   };
 
   const handleSaveAndClose = () => {
-    onSave(editedPost);
+    onSave(editedPost, currentImage);
     onClose();
+  };
+
+  const handleRemoveImage = () => {
+    setCurrentImage(null);
+    onImageChange?.(null);
   };
 
   return (
@@ -120,6 +132,28 @@ export default function PostEditor({ initialPost, brandName, onClose, onSave }: 
                   <p className="text-sm text-gray-600">Founder at {brandName}</p>
                 </div>
               </div>
+              
+              {/* Selected Image Display */}
+              {currentImage && (
+                <div className="mb-4 relative group">
+                  <img
+                    src={currentImage.url}
+                    alt="Post image"
+                    className="w-full rounded-lg object-cover max-h-64"
+                  />
+                  <button
+                    onClick={handleRemoveImage}
+                    className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1.5 transition-all opacity-0 group-hover:opacity-100"
+                    title="Remove image"
+                  >
+                    <XCircle className="w-5 h-5" />
+                  </button>
+                  <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+                    {currentImage.variation}
+                  </div>
+                </div>
+              )}
+              
               <VoiceInput
                 value={editedPost}
                 onChange={(value) => setEditedPost(value)}
@@ -129,8 +163,14 @@ export default function PostEditor({ initialPost, brandName, onClose, onSave }: 
                 className="text-[#1A1A1A] leading-relaxed font-sans"
               />
             </div>
-            <div className="text-sm text-gray-500">
-              {editedPost.length} characters
+            <div className="flex items-center justify-between text-sm text-gray-500">
+              <span>{editedPost.length} characters</span>
+              {currentImage && (
+                <div className="flex items-center gap-2 text-blue-600">
+                  <ImageIcon className="w-4 h-4" />
+                  <span>Image attached</span>
+                </div>
+              )}
             </div>
           </div>
 

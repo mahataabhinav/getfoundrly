@@ -1,6 +1,10 @@
-import { useState } from 'react';
-import { X, Linkedin, Calendar, Clock, Check, Sparkles, ArrowLeft, Globe, MoreHorizontal, ThumbsUp, MessageCircle, Repeat2, Send as SendIcon, TrendingUp, BarChart3 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, Linkedin, Calendar, Clock, Check, Sparkles, ArrowLeft, Globe, MoreHorizontal, ThumbsUp, MessageCircle, Repeat2, Send as SendIcon, TrendingUp, BarChart3, RefreshCw } from 'lucide-react';
 import RobotChatbot from '../RobotChatbot';
+import { supabase } from '../../lib/supabase';
+import { hasLinkedInConnection, getLinkedInAuthUrl, getValidAccessToken, postToLinkedIn } from '../../lib/linkedin-oauth';
+import { createContentSchedule, updateContentSchedule } from '../../lib/database';
+import { updateContentItem } from '../../lib/database';
 
 interface PublishModalProps {
   isOpen: boolean;
@@ -8,15 +12,20 @@ interface PublishModalProps {
   onPublish: (scheduled: boolean, date?: string, time?: string) => void;
   post: string;
   brandName: string;
+  brandId?: string;
+  contentItemId?: string;
 }
 
-export default function PublishModal({ isOpen, onClose, onPublish, post, brandName }: PublishModalProps) {
+export default function PublishModal({ isOpen, onClose, onPublish, post, brandName, brandId, contentItemId }: PublishModalProps) {
   const [step, setStep] = useState<'connect' | 'preview' | 'schedule' | 'confirmPublish'>('preview');
   const [linkedinEmail, setLinkedinEmail] = useState('');
   const [isConnected, setIsConnected] = useState(false);
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [isScheduling, setIsScheduling] = useState(false);
 
   const getUpcomingDates = () => {
     const dates = [];
@@ -30,6 +39,32 @@ export default function PublishModal({ isOpen, onClose, onPublish, post, brandNa
   };
 
   const upcomingDates = getUpcomingDates();
+
+  // Get current user and check LinkedIn connection
+  useEffect(() => {
+    const initialize = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUserId(user?.id || null);
+
+      // Check if LinkedIn is already connected
+      if (brandId && user?.id) {
+        const connected = await hasLinkedInConnection(brandId);
+        setIsConnected(connected);
+        if (connected) {
+          setStep('preview');
+        } else {
+          setStep('connect');
+        }
+      } else {
+        // If no brandId or userId, show connect screen
+        setStep('connect');
+      }
+    };
+    
+    if (isOpen) {
+      initialize();
+    }
+  }, [isOpen, brandId]);
 
   const recommendedTimes = [
     {
@@ -73,15 +108,43 @@ export default function PublishModal({ isOpen, onClose, onPublish, post, brandNa
     },
   ];
 
-  const handleConnect = () => {
-    if (!linkedinEmail) return;
-    setTimeout(() => {
-      setIsConnected(true);
-      setTimeout(() => {
-        setStep('confirmPublish');
-      }, 1000);
-    }, 800);
+  const handleConnect = async () => {
+    if (!userId || !brandId) {
+      alert('Please ensure you are logged in and have a brand selected.');
+      return;
+    }
+
+    try {
+      // Store brandId in sessionStorage for OAuth callback
+      sessionStorage.setItem('linkedin_brand_id', brandId);
+      
+      // Redirect to LinkedIn OAuth
+      const authUrl = getLinkedInAuthUrl();
+      window.location.href = authUrl;
+    } catch (error) {
+      console.error('Error initiating LinkedIn OAuth:', error);
+      alert('Failed to connect LinkedIn. Please try again.');
+    }
   };
+
+  // Check for OAuth success message in URL params
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const linkedinConnected = urlParams.get('linkedin_connected');
+    
+    if (linkedinConnected === 'true' && brandId) {
+      // Check if LinkedIn is now connected
+      hasLinkedInConnection(brandId).then(connected => {
+        if (connected) {
+          setIsConnected(true);
+          setStep('preview');
+        }
+      });
+      
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [brandId]);
 
   const handlePublishNow = () => {
     if (isConnected) {
@@ -91,20 +154,98 @@ export default function PublishModal({ isOpen, onClose, onPublish, post, brandNa
     }
   };
 
-  const handleConfirmPublish = () => {
-    setShowSuccess(true);
-    setTimeout(() => {
-      onPublish(false);
-      handleClose();
-    }, 2500);
+  const handleConfirmPublish = async () => {
+    if (!userId || !brandId || !contentItemId) {
+      alert('Missing required information. Please try again.');
+      return;
+    }
+
+    setIsPublishing(true);
+    try {
+      // Get valid access token
+      const accessToken = await getValidAccessToken(brandId);
+      if (!accessToken) {
+        alert('LinkedIn connection expired. Please reconnect.');
+        setStep('connect');
+        return;
+      }
+
+      // Post to LinkedIn
+      const result = await postToLinkedIn(accessToken, post);
+
+      // Update content item status
+      await updateContentItem(contentItemId, {
+        status: 'published',
+      });
+
+      // Create schedule record
+      await createContentSchedule({
+        content_id: contentItemId,
+        user_id: userId,
+        brand_id: brandId,
+        platform: 'linkedin',
+        scheduled_at: new Date().toISOString(),
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        status: 'published',
+        published_at: new Date().toISOString(),
+        external_post_id: result.id,
+        ai_recommended: false,
+      });
+
+      setShowSuccess(true);
+      setTimeout(() => {
+        onPublish(false);
+        handleClose();
+      }, 2500);
+    } catch (error) {
+      console.error('Error publishing to LinkedIn:', error);
+      alert('Failed to publish to LinkedIn. Please try again.');
+    } finally {
+      setIsPublishing(false);
+    }
   };
 
-  const handleScheduleConfirm = () => {
-    setShowSuccess(true);
-    setTimeout(() => {
-      onPublish(true, selectedDate, selectedTime);
-      handleClose();
-    }, 2500);
+  const handleScheduleConfirm = async () => {
+    if (!userId || !brandId || !contentItemId || !selectedDate || !selectedTime) {
+      alert('Please fill in all required fields.');
+      return;
+    }
+
+    setIsScheduling(true);
+    try {
+      // Combine date and time
+      const scheduledDateTime = new Date(`${selectedDate}T${selectedTime}`);
+      const scheduledAt = scheduledDateTime.toISOString();
+
+      // Update content item status
+      await updateContentItem(contentItemId, {
+        status: 'scheduled',
+      });
+
+      // Create schedule record
+      await createContentSchedule({
+        content_id: contentItemId,
+        user_id: userId,
+        brand_id: brandId,
+        platform: 'linkedin',
+        scheduled_at: scheduledAt,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        status: 'scheduled',
+        ai_recommended: true,
+        ai_recommendation_score: 85, // Mock score
+      });
+
+      setShowSuccess(true);
+      setTimeout(() => {
+        onPublish(true, selectedDate, selectedTime);
+        handleClose();
+      }, 2500);
+    } catch (error) {
+      console.error('Error scheduling post:', error);
+      alert('Failed to schedule post. Please try again.');
+    } finally {
+      setIsScheduling(false);
+    }
   };
 
   const handleClose = () => {
@@ -174,24 +315,16 @@ export default function PublishModal({ isOpen, onClose, onPublish, post, brandNa
                   Connect LinkedIn
                 </h3>
                 <p className="text-gray-600">
-                  Enter the email associated with your LinkedIn account
+                  Connect your LinkedIn account to publish posts automatically
                 </p>
               </div>
               <div className="max-w-md mx-auto">
-                <input
-                  type="email"
-                  value={linkedinEmail}
-                  onChange={(e) => setLinkedinEmail(e.target.value)}
-                  placeholder="your.email@example.com"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-gray-400 focus:ring-2 focus:ring-gray-100 transition-all outline-none text-[#1A1A1A] mb-4"
-                />
                 <button
                   onClick={handleConnect}
-                  disabled={!linkedinEmail}
-                  className="w-full bg-[#0A66C2] text-white px-8 py-3 rounded-xl font-medium hover:bg-[#004182] transition-all hover:shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-[#0A66C2] text-white px-8 py-3 rounded-xl font-medium hover:bg-[#004182] transition-all hover:shadow-lg flex items-center justify-center gap-2"
                 >
                   <Linkedin className="w-5 h-5" />
-                  Authenticate & Connect
+                  Connect with LinkedIn
                 </button>
               </div>
               <div className="flex justify-center mt-8">
@@ -397,9 +530,17 @@ export default function PublishModal({ isOpen, onClose, onPublish, post, brandNa
                 </button>
                 <button
                   onClick={handleConfirmPublish}
-                  className="flex-1 bg-[#1A1A1A] text-white py-3 px-6 rounded-xl font-medium hover:bg-gray-800 transition-all hover:shadow-lg"
+                  disabled={isPublishing}
+                  className="flex-1 bg-[#1A1A1A] text-white py-3 px-6 rounded-xl font-medium hover:bg-gray-800 transition-all hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  Confirm Publish
+                  {isPublishing ? (
+                    <>
+                      <RefreshCw className="w-5 h-5 animate-spin" />
+                      <span>Publishing...</span>
+                    </>
+                  ) : (
+                    'Confirm Publish'
+                  )}
                 </button>
               </div>
             </div>
@@ -513,10 +654,17 @@ export default function PublishModal({ isOpen, onClose, onPublish, post, brandNa
               <div className="flex gap-3">
                 <button
                   onClick={handleScheduleConfirm}
-                  disabled={!selectedDate || !selectedTime}
-                  className="flex-1 bg-[#1A1A1A] text-white py-3 px-6 rounded-xl font-medium hover:bg-gray-800 transition-all hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={!selectedDate || !selectedTime || isScheduling}
+                  className="flex-1 bg-[#1A1A1A] text-white py-3 px-6 rounded-xl font-medium hover:bg-gray-800 transition-all hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  Confirm Schedule
+                  {isScheduling ? (
+                    <>
+                      <RefreshCw className="w-5 h-5 animate-spin" />
+                      <span>Scheduling...</span>
+                    </>
+                  ) : (
+                    'Confirm Schedule'
+                  )}
                 </button>
                 <button
                   onClick={() => setStep('preview')}

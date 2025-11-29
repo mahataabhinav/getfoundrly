@@ -13,6 +13,7 @@ import ResourcesHub from './pages/resources/ResourcesHub';
 import FAQPage from './pages/resources/FAQPage';
 import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
+import AuthCallback from './pages/AuthCallback';
 import { supabase } from './lib/supabase';
 
 function AppContent() {
@@ -130,6 +131,7 @@ function AppContent() {
         <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/careers" element={<AboutPage />} />
+        <Route path="/auth/linkedin/callback" element={<AuthCallback />} />
       </Routes>
 
       {!isDashboard && !isAuthPage && <Footer />}

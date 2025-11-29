@@ -1,0 +1,348 @@
+---
+description: Ensure to apply this rule for vitejs specific files
+alwaysApply: false
+---
+# Project-Specific Development Rules
+
+## Tech Stack Overview
+
+You are an expert in **React**, **TypeScript**, **Vite**, and **Supabase** for modern full-stack web development.
+
+### Core Technologies
+- **React 18.3.1** - UI library with hooks and functional components
+- **TypeScript 5.9.3** - Type-safe JavaScript with strict mode
+- **Vite 5.4.21** - Build tool and dev server with HMR
+- **Supabase** - Backend-as-a-Service (database, auth, storage)
+- **React Router 7.9.6** - Client-side routing
+- **TailwindCSS 3.4.18** - Utility-first CSS framework
+- **OpenAI SDK** - AI-powered content generation
+- **Lucide React** - Icon library
+
+## Key Principles
+
+- Write concise, technical responses with accurate examples in **TypeScript** and **React**.
+- Follow **React** and **TypeScript** best practices and conventions.
+- Use **functional components** with React hooks (useState, useEffect, etc.).
+- Favor **composition** and **modularization** over duplication.
+- Use **descriptive and meaningful names** for variables, functions, components, and files.
+- Adhere to the project's **directory structure conventions** (see below).
+- Prioritize **type safety** with TypeScript interfaces and types.
+- Use **Supabase** for all backend operations (database, auth, storage).
+
+## Project Structure
+
+## React Best Practices
+
+### Component Structure
+- Use **functional components** exclusively (no class components).
+- Use **React hooks** for state management and side effects.
+- Keep components **small and focused** (single responsibility).
+- Extract reusable logic into **custom hooks** when appropriate.
+- Use **TypeScript interfaces** for component props.
+
+### Component Example:
+interface ComponentProps {
+  title: string;
+  onAction: () => void;
+}
+
+export default function Component({ title, onAction }: ComponentProps) {
+  const [state, setState] = useState<string>('');
+  
+  useEffect(() => {
+    // Side effects
+  }, []);
+  
+  return (
+    <div>
+      <h1>{title}</h1>
+      <button onClick={onAction}>Action</button>
+    </div>
+  );
+}### State Management
+- Use **useState** for local component state.
+- Use **useEffect** for side effects and lifecycle management.
+- Use **Supabase real-time subscriptions** for reactive data.
+- Consider **React Context** for shared state across components.
+- Avoid prop drilling; use context or composition.
+
+### Hooks Best Practices
+- Always include dependencies in `useEffect` dependency arrays.
+- Clean up subscriptions and timers in `useEffect` return functions.
+- Use `useCallback` and `useMemo` for performance optimization when needed.
+- Create custom hooks for reusable stateful logic.
+
+## TypeScript Best Practices
+
+### Type Safety
+- Use **strict mode** (enabled in tsconfig).
+- Define **interfaces** for all data structures.
+- Use **type unions** for discriminated unions.
+- Avoid `any`; use `unknown` when type is truly unknown.
+- Use **type assertions** sparingly and only when necessary.
+
+### Type Definitions
+- Keep database types in `src/types/database.ts`.
+- Define component prop types inline or in separate files.
+- Use **Supabase generated types** when available.
+- Export types from a central location for reusability.
+
+### Example:ipt
+// src/types/database.ts
+export interface Brand {
+  id: string;
+  user_id: string;
+  name: string;
+  website_url: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Component usage
+import type { Brand } from '../types/database';## Vite Best Practices
+
+### Configuration
+- Use **ES modules** (`type: "module"` in package.json).
+- Leverage **Vite's HMR** for fast development.
+- Use **environment variables** via `import.meta.env.VITE_*`.
+- Configure **path aliases** in `vite.config.ts` if needed.
+
+### Environment Variables
+- Prefix all environment variables with `VITE_` for client-side access.
+- Access via `import.meta.env.VITE_VARIABLE_NAME`.
+- Never commit `.env` files with secrets.
+- Document required environment variables in README.
+
+### Example:
+const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+if (!apiKey) {
+  console.warn('API key not configured');
+}### Build Optimization
+- Use **dynamic imports** for code splitting.
+- Lazy load routes with `React.lazy()`.
+- Optimize asset imports (images, fonts).
+- Use Vite's built-in optimizations.
+
+## Supabase Integration
+
+### Database Operations
+- Use **Supabase client** from `src/lib/supabase.ts`.
+- Create helper functions in `src/lib/database.ts` for CRUD operations.
+- Use **Row Level Security (RLS)** policies for data protection.
+- Handle errors gracefully with try-catch blocks.
+
+### Example:pescript
+import { supabase } from './supabase';
+
+export async function getBrand(id: string): Promise<Brand | null> {
+  const { data, error } = await supabase
+    .from('brands')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error) throw error;
+  return data;
+}### Authentication
+- Use **Supabase Auth** for user authentication.
+- Listen to auth state changes with `onAuthStateChange`.
+- Protect routes with authentication checks.
+- Store user session securely (handled by Supabase).
+
+### Real-time Features
+- Use **Supabase subscriptions** for real-time updates.
+- Clean up subscriptions in `useEffect` cleanup functions.
+- Handle connection errors gracefully.
+
+## React Router Best Practices
+
+### Routing
+- Define routes in `src/App.tsx` using `Routes` and `Route`.
+- Use **lazy loading** for route components when appropriate.
+- Implement **route protection** for authenticated routes.
+- Use `useNavigate` and `useLocation` hooks for navigation.
+
+### Example:
+<Routes>
+  <Route path="/" element={<HomePage />} />
+  <Route path="/dashboard" element={
+    isAuthenticated ? <Dashboard /> : <Navigate to="/login" />
+  } />
+</Routes>## Styling with TailwindCSS
+
+### Utility-First Approach
+- Use **Tailwind utility classes** for styling.
+- Create **custom components** for repeated patterns.
+- Use **responsive prefixes** (sm:, md:, lg:) for breakpoints.
+- Extend theme in `tailwind.config.js` for project-specific values.
+
+### Best Practices
+- Avoid inline styles; use Tailwind classes.
+- Use **component composition** for complex layouts.
+- Keep utility classes readable and organized.
+- Use **CSS variables** for dynamic values when needed.
+
+## Error Handling
+
+### API Calls
+- Always wrap async operations in **try-catch blocks**.
+- Provide **user-friendly error messages**.
+- Log errors to console for debugging.
+- Show loading states during async operations.
+
+### Example:cript
+const handleAction = async () => {
+  setIsLoading(true);
+  try {
+    const result = await apiCall();
+    setData(result);
+  } catch (error) {
+    console.error('Error:', error);
+    alert('Failed to perform action. Please try again.');
+  } finally {
+    setIsLoading(false);
+  }
+};## Code Organization
+
+### File Naming
+- Use **PascalCase** for component files: `ComponentName.tsx`
+- Use **camelCase** for utility files: `utilityFunction.ts`
+- Use **kebab-case** for directories: `feature-name/`
+- Match file names to default export names.
+
+### Component Organization
+- Group related components in feature folders.
+- Keep shared components in `src/components/shared/`.
+- Separate page components from reusable components.
+- Co-locate component-specific types when appropriate.
+
+### Import Organization
+- Group imports: React → Third-party → Local → Types
+- Use **absolute imports** from `src/` when configured.
+- Use **type imports** for TypeScript types: `import type { ... }`
+
+### Example:t
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
+import type { Brand } from '../types/database';## Testing Considerations
+
+### Component Testing
+- Write tests for critical user flows.
+- Test error handling and edge cases.
+- Mock Supabase calls in tests.
+- Use React Testing Library for component tests.
+
+### Type Checking
+- Run `npm run typecheck` before committing.
+- Fix all TypeScript errors before merging.
+- Use strict type checking.
+
+## Performance Optimization
+
+### React Performance
+- Use **React.memo** for expensive components.
+- Implement **virtual scrolling** for long lists.
+- Optimize re-renders with proper dependency arrays.
+- Use **code splitting** for large features.
+
+### Bundle Optimization
+- Lazy load routes and heavy components.
+- Use **dynamic imports** for large libraries.
+- Optimize images and assets.
+- Monitor bundle size with Vite build analysis.
+
+## Security Best Practices
+
+### Environment Variables
+- Never expose secrets in client-side code.
+- Use **Supabase RLS** for database security.
+- Validate user input on both client and server.
+- Sanitize user-generated content.
+
+### Authentication
+- Always verify authentication state.
+- Protect sensitive routes and API calls.
+- Use Supabase's built-in security features.
+- Implement proper session management.
+
+## Dependencies
+
+### Core Dependencies
+- `react` & `react-dom` - UI framework
+- `react-router-dom` - Routing
+- `@supabase/supabase-js` - Backend services
+- `openai` - AI content generation
+- `lucide-react` - Icons
+- `tailwindcss` - Styling
+
+### Development Dependencies
+- `typescript` - Type checking
+- `vite` - Build tool
+- `@vitejs/plugin-react` - React plugin for Vite
+- `eslint` - Linting
+- `typescript-eslint` - TypeScript linting
+
+## Key Conventions
+
+1. **Use functional components** with hooks (no class components).
+2. **Type everything** with TypeScript interfaces and types.
+3. **Organize by feature** in component directories.
+4. **Use Supabase** for all backend operations.
+5. **Follow React Router** patterns for navigation.
+6. **Use TailwindCSS** for all styling.
+7. **Handle errors gracefully** with try-catch and user feedback.
+8. **Optimize performance** with code splitting and memoization.
+9. **Maintain type safety** throughout the application.
+10. **Use environment variables** for configuration.
+
+## Common Patterns
+
+### Data Fetching Pattern:
+const [data, setData] = useState<DataType | null>(null);
+const [loading, setLoading] = useState(true);
+const [error, setError] = useState<string | null>(null);
+
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const result = await fetchFromSupabase();
+      setData(result);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+  fetchData();
+}, []);### Form Handling Pattern:cript
+const [formData, setFormData] = useState({ name: '', email: '' });
+
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  try {
+    await submitForm(formData);
+    // Success handling
+  } catch (error) {
+    // Error handling
+  }
+};
+### Modal Pattern:pescript
+interface ModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+}
+
+export default function Modal({ isOpen, onClose, children }: ModalProps) {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 z-50">
+      {/* Modal content */}
+    </div>
+  );
+}
+---
+
+**Remember:** This is a React + TypeScript + Vite + Supabase project. Follow React best practices, maintain type safety, and leverage Supabase for backend operations.
