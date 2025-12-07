@@ -1,4 +1,4 @@
-import { Home, Sparkles, BarChart3, TrendingUp, MessageCircle, Settings, X } from 'lucide-react';
+import { Home, Sparkles, BarChart3, TrendingUp, Database, Settings, X } from 'lucide-react';
 
 interface SidebarProps {
   activeTab: string;
@@ -13,7 +13,7 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }: Sid
     { id: 'Create', icon: Sparkles, label: 'Create' },
     { id: 'Analyze', icon: BarChart3, label: 'Analyze' },
     { id: 'Grow', icon: TrendingUp, label: 'Grow' },
-    { id: 'Foundii', icon: MessageCircle, label: 'Foundii' },
+    { id: 'BrandDNA', icon: Database, label: 'BrandDNA' },
     { id: 'Settings', icon: Settings, label: 'Settings' },
   ];
 

@@ -1,5 +1,11 @@
 /**
  * Utility functions for sending data to n8n webhook
+ * 
+ * NOTE: These webhooks are OPTIONAL and only used for analytics/tracking purposes.
+ * They are non-blocking and will not affect core functionality if they fail or are not configured.
+ * 
+ * Since we're using Firecrawl API directly (via MCP), n8n is not required for core functionality.
+ * You can safely remove or disable these webhook calls if you don't need analytics.
  */
 
 interface WebsiteInputData {
@@ -62,10 +68,18 @@ export async function sendWebsiteDataToN8n(data: WebsiteInputData): Promise<void
  * Sends post type selection data to webhook endpoint
  * @param data - Post type selection data to send
  * @returns Promise that resolves when the request is complete
+ * 
+ * NOTE: This is optional and only used for analytics/tracking.
+ * If VITE_N8N_POST_TYPE_WEBHOOK_URL is not set, the call is skipped.
  */
 export async function sendPostTypeSelectionToN8n(data: PostTypeSelectionData): Promise<void> {
-  // Use environment variable if set, otherwise default to the dashboard endpoint
-  const webhookUrl = import.meta.env.VITE_N8N_POST_TYPE_WEBHOOK_URL || 'http://getfoundrly.com/dashboard';
+  // Only send if webhook URL is explicitly configured
+  const webhookUrl = import.meta.env.VITE_N8N_POST_TYPE_WEBHOOK_URL;
+
+  if (!webhookUrl) {
+    // Silently skip if not configured - this is optional analytics only
+    return;
+  }
 
   try {
     const payload = {
@@ -90,7 +104,8 @@ export async function sendPostTypeSelectionToN8n(data: PostTypeSelectionData): P
     console.log('Post type selection sent successfully');
   } catch (error) {
     // Log error but don't throw - we don't want to block the user flow
-    console.error('Error sending post type selection to webhook:', error);
+    // This is optional analytics, so failures are non-critical
+    console.warn('Failed to send post type selection to webhook (non-critical):', error);
   }
 }
 

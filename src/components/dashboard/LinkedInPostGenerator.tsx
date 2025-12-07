@@ -5,9 +5,12 @@ import VoiceInput from '../VoiceInput';
 import PostEditor from './PostEditor';
 import PublishModal from './PublishModal';
 import { supabase } from '../../lib/supabase';
-import { findOrCreateBrand, createContentItem, updateContentItem, getBrand, updateBrand } from '../../lib/database';
+import { findOrCreateBrand, createContentItem, updateContentItem, getBrand, updateBrand, getContentItem } from '../../lib/database';
 import { generateLinkedInPost } from '../../lib/openai';
 import { extractBrandProfile, getCachedBrandProfile, saveBrandProfile, type BrandProfile } from '../../lib/brand-extractor';
+import { createBrandDNAFromExtraction, getBrandDNA } from '../../lib/brand-dna';
+import BrandDNAPreview from './BrandDNAPreview';
+import type { BrandDNA } from '../../types/database';
 import { generateLinkedInPostEnhanced, regenerateLinkedInPost, type LinkedInPostContent } from '../../lib/openai-enhanced';
 import { generateImages, generateVideoScript, getRecommendedAssetType, saveGeneratedImages, saveVideoScript, type GeneratedImage, type VideoScript } from '../../lib/asset-generator';
 import ImagePicker from '../ImagePicker';
@@ -43,6 +46,7 @@ export default function LinkedInPostGenerator({ isOpen, onClose }: LinkedInPostG
   const [contentItem, setContentItem] = useState<ContentItem | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
+  const [extractionStatus, setExtractionStatus] = useState<string>('');
   const [extractionError, setExtractionError] = useState<string | null>(null);
   const [selectedVariation, setSelectedVariation] = useState<'main' | 'versionA' | 'versionB'>('main');
   const [activeAssetTab, setActiveAssetTab] = useState<'images' | 'videos'>('images');
@@ -53,11 +57,13 @@ export default function LinkedInPostGenerator({ isOpen, onClose }: LinkedInPostG
   const [selectedVideo, setSelectedVideo] = useState<VideoScript | null>(null);
   const [showImagePreview, setShowImagePreview] = useState(false);
   const [showVideoPreview, setShowVideoPreview] = useState(false);
-  const [imageProvider, setImageProvider] = useState<'dalle' | 'gemini'>('dalle');
+  const [imageProvider, setImageProvider] = useState<'dalle' | 'gemini' | 'seedream'>('dalle');
   const [imageGenerationError, setImageGenerationError] = useState<string | null>(null);
   const [isGeneratingImages, setIsGeneratingImages] = useState(false);
   const [isGeneratingVideos, setIsGeneratingVideos] = useState(false);
   const [videoGenerationError, setVideoGenerationError] = useState<string | null>(null);
+  const [showBrandDNAPreview, setShowBrandDNAPreview] = useState(false);
+  const [extractedBrandDNA, setExtractedBrandDNA] = useState<BrandDNA | null>(null);
 
   const postTypes: PostType[] = [
     { id: 'thought-leadership', title: 'Thought Leadership', description: 'Share expert insights', icon: Lightbulb, color: 'from-blue-500 to-blue-600' },
@@ -90,6 +96,76 @@ export default function LinkedInPostGenerator({ isOpen, onClose }: LinkedInPostG
     };
     getUser();
   }, []);
+
+  // Detect OAuth completion and reopen modal
+  useEffect(() => {
+    const checkOAuthCompletion = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const linkedinConnected = urlParams.get('linkedin_connected');
+      const reopenModal = urlParams.get('reopen_modal');
+      const contentItemId = urlParams.get('content_item_id');
+
+      // Only proceed if we have the required params
+      // Note: We check even if LinkedInPostGenerator is not open, to ensure modal opens
+      if (linkedinConnected === 'true' && reopenModal === 'true' && contentItemId) {
+        // Immediately reopen modal (don't wait for content fetch)
+        setShowPublishModal(true);
+        
+        try {
+          // Fetch the content item from database
+          const fetchedContentItem = await getContentItem(contentItemId);
+          
+          if (fetchedContentItem) {
+            // Restore content item state
+            setContentItem(fetchedContentItem);
+            
+            // Restore generated post from content item or sessionStorage
+            const storedPost = sessionStorage.getItem('linkedin_post_content');
+            if (fetchedContentItem.content) {
+              setGeneratedPost(fetchedContentItem.content);
+            } else if (storedPost) {
+              setGeneratedPost(storedPost);
+            }
+            
+            // Restore brand data from sessionStorage or current brand state
+            const storedBrandName = sessionStorage.getItem('linkedin_brand_name');
+            if (storedBrandName) {
+              setBrandData(prev => ({ ...prev, name: storedBrandName }));
+            }
+            
+            // Ensure brand is set if we have brand_id in content item
+            if (fetchedContentItem.brand_id && !brand) {
+              const fetchedBrand = await getBrand(fetchedContentItem.brand_id);
+              if (fetchedBrand) {
+                setBrand(fetchedBrand);
+                setBrandData(prev => ({ ...prev, name: fetchedBrand.name, url: fetchedBrand.website_url || '' }));
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error reopening modal after OAuth:', error);
+          // Try to restore from sessionStorage as fallback
+          const storedPost = sessionStorage.getItem('linkedin_post_content');
+          const storedBrandName = sessionStorage.getItem('linkedin_brand_name');
+          
+          if (storedPost) {
+            setGeneratedPost(storedPost);
+          }
+          if (storedBrandName) {
+            setBrandData(prev => ({ ...prev, name: storedBrandName }));
+          }
+        } finally {
+          // Clear URL params after processing
+          window.history.replaceState({}, document.title, window.location.pathname);
+          
+          // Clean up sessionStorage (but keep for PublishModal to use)
+          // PublishModal will clean up after it processes the auto_publish flag
+        }
+      }
+    };
+
+    checkOAuthCompletion();
+  }, [brand]);
 
   const handleStep1Continue = async () => {
     if (brandData.name && brandData.url && userId) {
@@ -130,7 +206,32 @@ export default function LinkedInPostGenerator({ isOpen, onClose }: LinkedInPostG
         }
 
         setBrandProfile(profile);
+
+        // Auto-create BrandDNA if it doesn't exist
+        try {
+          const existingBrandDNA = await getBrandDNA(brandRecord.id);
+          if (!existingBrandDNA) {
+            // Create BrandDNA from extraction
+            setExtractionStatus('Scraping website with Firecrawl...');
+            const newBrandDNA = await createBrandDNAFromExtraction(brandRecord.id, userId, brandData.name, brandData.url);
+                console.log('BrandDNA created successfully');
+            setExtractedBrandDNA(newBrandDNA);
+            setExtractionStatus('');
+            // Show preview before proceeding
+            setShowBrandDNAPreview(true);
+          } else {
+            setExtractedBrandDNA(existingBrandDNA);
+            setExtractionStatus('');
+            // Show preview if BrandDNA already exists
+            setShowBrandDNAPreview(true);
+          }
+        } catch (error) {
+          // Log error but don't block the flow
+          console.error('Error checking/creating BrandDNA:', error);
+          setExtractionStatus('');
+          // Continue to next step even if BrandDNA creation fails
         setStep(2);
+        }
       } catch (error) {
         console.error('Error saving brand:', error);
         alert('Failed to save brand. Please try again.');
@@ -660,6 +761,58 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
           </div>
 
           <div className="overflow-y-auto max-h-[calc(90vh-88px)]">
+            {/* BrandDNA Preview Modal */}
+            {showBrandDNAPreview && extractedBrandDNA && (
+              <div className="fixed inset-0 z-50 flex items-start justify-center p-4 bg-black/30 backdrop-blur-sm overflow-y-auto">
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl my-4 flex flex-col max-h-[calc(100vh-2rem)] overflow-hidden">
+                  {/* Header - Fixed */}
+                  <div className="flex-shrink-0 p-6 border-b border-gray-200 bg-white">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h2 className="text-xl font-semibold text-[#1A1A1A]">BrandDNA Extracted Successfully</h2>
+                        <p className="text-sm text-gray-600 mt-1">Review the extracted brand information below</p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setShowBrandDNAPreview(false);
+                          setStep(2);
+                        }}
+                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                      >
+                        <X className="w-5 h-5 text-gray-600" />
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Scrollable Content */}
+                  <div className="flex-1 overflow-y-auto min-h-0">
+                    <div className="p-6">
+                      <BrandDNAPreview 
+                        brandDNA={extractedBrandDNA}
+                        compact={true}
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Footer - Fixed */}
+                  <div className="flex-shrink-0 p-6 border-t border-gray-200 bg-white">
+                    <div className="flex justify-end gap-3">
+                      <button
+                        onClick={() => {
+                          setShowBrandDNAPreview(false);
+                          setStep(2);
+                        }}
+                        className="px-6 py-2.5 bg-[#1A1A1A] text-white rounded-xl font-medium hover:bg-gray-800 transition-all flex items-center gap-2"
+                      >
+                        <span>Continue to Post Type</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {step === 1 && (
               <div className="p-8 space-y-6 animate-slide-in">
                 <div className="text-center mb-8">
@@ -704,7 +857,7 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
                         {isExtracting ? (
                           <>
                             <Loader2 className="w-5 h-5 animate-spin" />
-                            <span>Analyzing your brand...</span>
+                            <span>{extractionStatus || 'Analyzing your brand with Firecrawl...'}</span>
                           </>
                         ) : (
                           <>
@@ -1006,6 +1159,16 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
                               }`}
                             >
                               Gemini
+                            </button>
+                            <button
+                              onClick={() => setImageProvider('seedream')}
+                              className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
+                                imageProvider === 'seedream'
+                                  ? 'bg-white text-[#1A1A1A] shadow-sm'
+                                  : 'text-gray-600 hover:text-[#1A1A1A]'
+                              }`}
+                            >
+                              SeedDream
                             </button>
                           </div>
                         </div>
