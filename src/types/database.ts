@@ -50,6 +50,225 @@ export type ConnectionStatus =
   | 'disconnected'
   | 'error';
 
+export type BrandDNAStatus = 
+  | 'complete'
+  | 'needs_review'
+  | 'in_progress';
+
+// BrandDNA Section Interfaces
+export interface BrandDNAIdentity {
+  official_name?: string;
+  domains?: string[];
+  tagline?: string;
+  elevator_pitch?: string;
+  year_founded?: number;
+  headquarters?: string;
+  legal_entity?: string;
+  company_size?: string;
+  social_links?: {
+    twitter?: string;
+    linkedin?: string;
+    instagram?: string;
+    youtube?: string;
+  };
+  linkedin_bio?: string;
+  sources?: Array<{ field: string; url: string }>;
+}
+
+export interface BrandDNAVoice {
+  tone_descriptors?: string[];
+  examples?: {
+    micro_hook?: string;
+    short_post?: string;
+  };
+  forbidden_words?: string[];
+  preferred_emojis?: string[];
+  punctuation_rules?: string;
+  tone_intensity?: 'subtle' | 'neutral' | 'emphatic';
+  last_updated?: string;
+  trust_provenance?: string;
+}
+
+export interface BrandDNAMessaging {
+  value_props?: Array<{
+    text: string;
+    proof?: string;
+    source?: string;
+  }>;
+  pillars?: string[];
+  target_problems?: string[];
+  elevator_benefits?: Record<string, string>; // audience-specific variants
+}
+
+export interface BrandDNAProduct {
+  name: string;
+  description: string;
+  pricing_model?: string;
+  differentiators?: string[];
+  product_url?: string;
+  screenshot_url?: string;
+  logo_url?: string;
+}
+
+export interface BrandDNAPersona {
+  name: string;
+  role: string;
+  pain_points: string[];
+  goals: string[];
+  channels: string[];
+  preferred_messaging?: string;
+}
+
+export interface BrandDNAAudience {
+  primary_segments?: string[];
+  personas?: BrandDNAPersona[];
+}
+
+export interface BrandDNAProof {
+  metrics?: Array<{
+    label: string;
+    value: string;
+    source_url?: string;
+  }>;
+  testimonials?: Array<{
+    quote: string;
+    attribution: string;
+    source_url?: string;
+  }>;
+  case_studies?: Array<{
+    problem: string;
+    solution: string;
+    result: string;
+    source_url?: string;
+  }>;
+  press_mentions?: Array<{
+    title: string;
+    excerpt: string;
+    url: string;
+  }>;
+  awards?: Array<{
+    name: string;
+    year?: number;
+    url?: string;
+  }>;
+  compliance_badges?: string[];
+}
+
+export interface BrandDNAVisualIdentity {
+  logos?: Array<{
+    url: string;
+    variant: 'light' | 'dark' | 'default';
+    format: 'svg' | 'png';
+  }>;
+  color_palette?: {
+    primary?: string[];
+    secondary?: string[];
+    hex_codes?: Record<string, string>;
+    use_cases?: Record<string, string>;
+  };
+  typography?: {
+    font_families?: string[];
+    font_substitutes?: string[];
+  };
+  usage_rules?: {
+    clear_space?: string;
+    minimal_sizes?: string;
+  };
+  image_style_guide?: {
+    photography_vs_illustration?: string;
+    mood?: string;
+    filters?: string;
+  };
+  example_imagery?: string[];
+  alt_text_guidelines?: string;
+  default_alt_text_templates?: string[];
+}
+
+export interface BrandDNACreativeGuidelines {
+  post_length_preferences?: 'short' | 'medium' | 'long' | 'mixed';
+  preferred_formats?: string[];
+  cta_style?: string;
+  cta_grammar_rules?: string;
+  hashtag_strategy?: {
+    branded_hashtags?: string[];
+    banned_hashtags?: string[];
+  };
+  accessibility_rules?: {
+    contrast_ratio?: string;
+    alt_text_required?: boolean;
+  };
+}
+
+export interface BrandDNASEO {
+  top_keywords?: string[];
+  semantic_clusters?: string[];
+  negative_keywords?: string[];
+  suggested_hashtags?: Record<string, string[]>; // keyword to hashtags mapping
+}
+
+export interface BrandDNACompetitive {
+  top_competitors?: Array<{
+    name: string;
+    differentiation?: string;
+  }>;
+  market_trends?: string[];
+  positioning_statement?: string;
+}
+
+export interface BrandDNACompliance {
+  allowed_claims?: string[];
+  restricted_claims?: string[];
+  required_disclaimers?: string[];
+  ip_trademark_notes?: string;
+}
+
+export interface BrandDNAInteractionHistory {
+  post_performance?: Array<{
+    post_id: string;
+    platform: string;
+    metrics: Record<string, number>;
+    date: string;
+  }>;
+  favorite_post_styles?: string[];
+  content_calendar_preferences?: {
+    cadence?: string;
+    best_days?: string[];
+    best_times?: string[];
+  };
+}
+
+export interface BrandDNAData {
+  identity?: BrandDNAIdentity;
+  voice?: BrandDNAVoice;
+  messaging?: BrandDNAMessaging;
+  products?: BrandDNAProduct[];
+  audience?: BrandDNAAudience;
+  proof?: BrandDNAProof;
+  visual_identity?: BrandDNAVisualIdentity;
+  creative_guidelines?: BrandDNACreativeGuidelines;
+  seo?: BrandDNASEO;
+  competitive?: BrandDNACompetitive;
+  compliance?: BrandDNACompliance;
+  interaction_history?: BrandDNAInteractionHistory;
+}
+
+export interface BrandDNAProvenance {
+  field: string; // dot-notation path like "identity.tagline"
+  source_url?: string;
+  last_updated: string;
+  trust_score: number; // 0-100
+  edited_by?: string; // user_id if user edited
+  extraction_method?: 'auto' | 'user' | 'hybrid';
+}
+
+export interface BrandDNAVersion {
+  version_id: string;
+  date: string;
+  diff_summary: string;
+  author: string; // user_id
+  changes?: Record<string, { old: any; new: any }>;
+}
+
 // Database Table Types
 export interface Brand {
   id: string;
@@ -192,6 +411,20 @@ export interface PostTypeCatalog {
   updated_at: string;
 }
 
+export interface BrandDNA {
+  id: string;
+  brand_id: string;
+  user_id: string;
+  status: BrandDNAStatus;
+  completion_score: number;
+  dna_data: BrandDNAData;
+  provenance: BrandDNAProvenance[];
+  versions: BrandDNAVersion[];
+  created_at: string;
+  updated_at: string;
+  last_crawled_at?: string | null;
+}
+
 // Insert Types (for creating new records)
 export type BrandInsert = Omit<Brand, 'id' | 'created_at' | 'updated_at'>;
 export type ContentItemInsert = Omit<ContentItem, 'id' | 'created_at' | 'updated_at'>;
@@ -200,6 +433,7 @@ export type CarouselSlideInsert = Omit<CarouselSlide, 'id' | 'created_at' | 'upd
 export type ConnectionInsert = Omit<Connection, 'id' | 'created_at' | 'updated_at'>;
 export type LinkedInOAuthTokenInsert = Omit<LinkedInOAuthToken, 'id' | 'created_at' | 'updated_at'>;
 export type ContentScheduleInsert = Omit<ContentSchedule, 'id' | 'created_at' | 'updated_at'>;
+export type BrandDNAInsert = Omit<BrandDNA, 'id' | 'created_at' | 'updated_at'>;
 
 // Update Types (for updating records)
 export type BrandUpdate = Partial<Omit<Brand, 'id' | 'user_id' | 'created_at'>>;
@@ -209,5 +443,6 @@ export type CarouselSlideUpdate = Partial<Omit<CarouselSlide, 'id' | 'content_id
 export type ConnectionUpdate = Partial<Omit<Connection, 'id' | 'user_id' | 'brand_id' | 'created_at'>>;
 export type LinkedInOAuthTokenUpdate = Partial<Omit<LinkedInOAuthToken, 'id' | 'connection_id' | 'user_id' | 'brand_id' | 'created_at'>>;
 export type ContentScheduleUpdate = Partial<Omit<ContentSchedule, 'id' | 'content_id' | 'user_id' | 'brand_id' | 'created_at'>>;
+export type BrandDNAUpdate = Partial<Omit<BrandDNA, 'id' | 'user_id' | 'brand_id' | 'created_at'>>;
 
 

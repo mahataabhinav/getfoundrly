@@ -31,7 +31,7 @@ export default function TopNav({ activeTab, onTabChange }: TopNavProps) {
     await supabase.auth.signOut();
     window.location.href = '/';
   };
-  const tabs = ['Home', 'Create', 'Analyze', 'Grow', 'Foundii'];
+  const tabs = ['Home', 'Create', 'Analyze', 'Grow', 'BrandDNA'];
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100 h-[73px]">

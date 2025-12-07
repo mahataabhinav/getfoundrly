@@ -6,7 +6,7 @@ import HomeSection from '../components/dashboard/HomeSection';
 import CreateSection from '../components/dashboard/CreateSection';
 import AnalyzeSection from '../components/dashboard/AnalyzeSection';
 import GrowSection from '../components/dashboard/GrowSection';
-import FoundiiSection from '../components/dashboard/FoundiiSection';
+import BrandDNASection from '../components/dashboard/BrandDNASection';
 import RobotChatbot from '../components/RobotChatbot';
 import { supabase } from '../lib/supabase';
 
@@ -59,8 +59,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         return <AnalyzeSection />;
       case 'Grow':
         return <GrowSection />;
-      case 'Foundii':
-        return <FoundiiSection />;
+      case 'BrandDNA':
+        return <BrandDNASection />;
       case 'Settings':
         return (
           <div className="space-y-8">

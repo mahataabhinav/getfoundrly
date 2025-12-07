@@ -8,6 +8,7 @@
 import OpenAI from 'openai';
 import type { BrandProfile } from './brand-extractor';
 import { generateBrandImages as generateGeminiImages } from './geminiImage';
+import { generateBrandImages as generateSeedreamImages } from './seedreamImage';
 
 // Session-based asset cache
 const ASSET_CACHE_PREFIX = 'foundrly_asset_cache_';
@@ -28,7 +29,7 @@ export interface GeneratedImage {
     brandColors?: string[];
     style?: string;
     dimensions?: { width: number; height: number };
-    provider?: 'dalle' | 'gemini';
+    provider?: 'dalle' | 'gemini' | 'seedream';
   };
 }
 
@@ -70,7 +71,7 @@ export interface GenerateImageOptions {
   topic: string;
   contextDetails?: string;
   imagePrompt?: string; // Optional: use existing prompt from post generation
-  provider?: 'dalle' | 'gemini'; // Image generation provider
+    provider?: 'dalle' | 'gemini' | 'seedream'; // Image generation provider
 }
 
 export interface GenerateVideoOptions {
@@ -101,6 +102,8 @@ export async function generateImages(
   
   if (provider === 'gemini') {
     images = await generateImagesWithGemini(options);
+  } else if (provider === 'seedream') {
+    images = await generateImagesWithSeedream(options);
   } else {
     // Default to DALL-E
     if (!openai) {
@@ -185,6 +188,30 @@ export async function generateImagesWithGemini(
   } catch (error: any) {
     console.error('Error generating images with Gemini:', error);
     // Fallback to DALL-E if Gemini fails
+    if (openai) {
+      console.log('Falling back to DALL-E...');
+      return generateImages({ ...options, provider: 'dalle' });
+    }
+    throw error;
+  }
+}
+
+/**
+ * Generate 3 image variations using SeedDream
+ */
+export async function generateImagesWithSeedream(
+  options: GenerateImageOptions
+): Promise<GeneratedImage[]> {
+  const { brandProfile, brandName, postType, topic, contextDetails, imagePrompt } = options;
+
+  // Build prompt using SeedDream template
+  const prompt = imagePrompt || buildImagePrompt(brandProfile, brandName, postType, topic, contextDetails, undefined, 'seedream');
+
+  try {
+    return await generateSeedreamImages(prompt, brandProfile);
+  } catch (error: any) {
+    console.error('Error generating images with SeedDream:', error);
+    // Fallback to DALL-E if SeedDream fails
     if (openai) {
       console.log('Falling back to DALL-E...');
       return generateImages({ ...options, provider: 'dalle' });
@@ -368,6 +395,33 @@ Output: A single descriptive image prompt optimized for Gemini Image generation.
 }
 
 /**
+ * SeedDream Image prompt template
+ * Creates high-quality, brand-consistent promotional image prompts
+ */
+function seedreamPromptTemplate(
+  brandProfile: BrandProfile,
+  brandName: string,
+  postType: string
+): string {
+  const colors = extractBrandColors(brandProfile);
+  const colorList = colors.length > 0 ? colors.join(', ') : 'professional color palette';
+  const audience = brandProfile.targetAudience?.demographics || brandProfile.targetAudience?.psychographics || 'professional audience';
+  
+  return `Generate a high-quality, brand-consistent promotional image for LinkedIn.
+
+Details:
+- Brand: ${brandName}
+- Brand Colors: ${colorList}
+- Style: minimal, premium, aesthetic, modern professional
+- Audience: ${audience}
+- Industry context: ${brandProfile.industry || 'professional services'}
+- Scenario: ${postType} post
+- Incorporate: subtle lighting, clean focus, soft camera depth, product/brand metaphors
+
+Output: A single descriptive image prompt optimized for SeedDream 4.0 generation.`;
+}
+
+/**
  * Build enhanced image prompt from brand profile
  * Uses high-quality templates based on provider
  */
@@ -378,7 +432,7 @@ function buildImagePrompt(
   topic: string,
   contextDetails?: string,
   existingPrompt?: string,
-  provider: 'dalle' | 'gemini' = 'dalle'
+  provider: 'dalle' | 'gemini' | 'seedream' = 'dalle'
 ): string {
   // Use existing prompt if provided, otherwise use template
   if (existingPrompt) {
@@ -386,9 +440,14 @@ function buildImagePrompt(
   }
 
   // Use provider-specific template
-  const basePrompt = provider === 'gemini' 
-    ? geminiPromptTemplate(brandProfile, brandName, postType)
-    : dallePromptTemplate(brandProfile, brandName, postType);
+  let basePrompt: string;
+  if (provider === 'gemini') {
+    basePrompt = geminiPromptTemplate(brandProfile, brandName, postType);
+  } else if (provider === 'seedream') {
+    basePrompt = seedreamPromptTemplate(brandProfile, brandName, postType);
+  } else {
+    basePrompt = dallePromptTemplate(brandProfile, brandName, postType);
+  }
   
   // Add topic and context
   const parts: string[] = [basePrompt];

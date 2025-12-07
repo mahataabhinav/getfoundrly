@@ -28,6 +28,9 @@ import type {
   LinkedInOAuthTokenInsert,
   LinkedInOAuthTokenUpdate,
   PostTypeCatalog,
+  BrandDNA,
+  BrandDNAInsert,
+  BrandDNAUpdate,
 } from '../types/database';
 
 // =====================================================
@@ -97,6 +100,16 @@ export async function findOrCreateBrand(userId: string, name: string, websiteUrl
     website_url: websiteUrl,
     metadata: {},
   });
+}
+
+export async function deleteBrand(id: string): Promise<void> {
+  // Delete brand - this will cascade delete BrandDNA due to foreign key constraint
+  const { error } = await supabase
+    .from('brands')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw error;
 }
 
 // =====================================================
@@ -469,6 +482,108 @@ export async function getPostTypes(): Promise<PostTypeCatalog[]> {
 
   if (error) throw error;
   return data || [];
+}
+
+// =====================================================
+// BRAND DNA
+// =====================================================
+
+export async function createBrandDNA(data: BrandDNAInsert): Promise<BrandDNA> {
+  const { data: brandDNA, error } = await supabase
+    .from('brand_dna')
+    .insert(data)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return brandDNA;
+}
+
+export async function getBrandDNA(brandId: string): Promise<BrandDNA | null> {
+  const { data, error } = await supabase
+    .from('brand_dna')
+    .select('*')
+    .eq('brand_id', brandId)
+    .single();
+
+  if (error && error.code !== 'PGRST116') throw error; // PGRST116 = not found
+  return data;
+}
+
+export async function getBrandDNAById(id: string): Promise<BrandDNA | null> {
+  const { data, error } = await supabase
+    .from('brand_dna')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error && error.code !== 'PGRST116') throw error;
+  return data;
+}
+
+export async function getBrandDNAList(userId: string): Promise<(BrandDNA & { brands?: { name: string; website_url: string } })[]> {
+  const { data, error } = await supabase
+    .from('brand_dna')
+    .select('*')
+    .eq('user_id', userId)
+    .order('updated_at', { ascending: false });
+
+  if (error) throw error;
+  
+  // Fetch brand info separately for each BrandDNA
+  const result = await Promise.all(
+    (data || []).map(async (dna) => {
+      try {
+        const brand = await getBrand(dna.brand_id);
+        return {
+          ...dna,
+          brands: brand ? { name: brand.name, website_url: brand.website_url } : undefined,
+        };
+      } catch {
+        return { ...dna, brands: undefined };
+      }
+    })
+  );
+  
+  return result;
+}
+
+export async function updateBrandDNA(id: string, updates: BrandDNAUpdate): Promise<BrandDNA> {
+  const { data, error } = await supabase
+    .from('brand_dna')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function updateBrandDNAByBrandId(brandId: string, updates: BrandDNAUpdate): Promise<BrandDNA> {
+  const { data, error } = await supabase
+    .from('brand_dna')
+    .update(updates)
+    .eq('brand_id', brandId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteBrandDNA(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('brand_dna')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw error;
+}
+
+export async function getBrandDNAVersions(brandId: string): Promise<BrandDNA['versions']> {
+  const brandDNA = await getBrandDNA(brandId);
+  return brandDNA?.versions || [];
 }
 
 
