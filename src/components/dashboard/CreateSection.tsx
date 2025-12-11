@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FileText, Mail, Instagram, Video, Newspaper, MessageSquare, Globe, Sparkles } from 'lucide-react';
 import LinkedInPostGenerator from './LinkedInPostGenerator';
 import InstagramAdGenerator from './InstagramAdGenerator';
@@ -20,6 +20,15 @@ export default function CreateSection() {
     { title: 'Website Copy', icon: Globe, description: 'Landing page content', color: 'from-indigo-500 to-indigo-600' },
     { title: 'Ad Campaigns', icon: Sparkles, description: 'Multi-platform ads', color: 'from-orange-500 to-orange-600' },
   ];
+
+  // Check for LinkedIn OAuth redirect validation
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const reopenModal = urlParams.get('reopen_modal');
+    if (reopenModal === 'true') {
+      setIsLinkedInModalOpen(true);
+    }
+  }, []);
 
   return (
     <div className="space-y-8">

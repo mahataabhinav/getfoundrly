@@ -110,29 +110,29 @@ export default function LinkedInPostGenerator({ isOpen, onClose }: LinkedInPostG
       if (linkedinConnected === 'true' && reopenModal === 'true' && contentItemId) {
         // Immediately reopen modal (don't wait for content fetch)
         setShowPublishModal(true);
-        
+
         try {
           // Fetch the content item from database
           const fetchedContentItem = await getContentItem(contentItemId);
-          
+
           if (fetchedContentItem) {
             // Restore content item state
             setContentItem(fetchedContentItem);
-            
+
             // Restore generated post from content item or sessionStorage
             const storedPost = sessionStorage.getItem('linkedin_post_content');
-            if (fetchedContentItem.content) {
-              setGeneratedPost(fetchedContentItem.content);
+            if (fetchedContentItem.body) {
+              setGeneratedPost(fetchedContentItem.body);
             } else if (storedPost) {
               setGeneratedPost(storedPost);
             }
-            
+
             // Restore brand data from sessionStorage or current brand state
             const storedBrandName = sessionStorage.getItem('linkedin_brand_name');
             if (storedBrandName) {
               setBrandData(prev => ({ ...prev, name: storedBrandName }));
             }
-            
+
             // Ensure brand is set if we have brand_id in content item
             if (fetchedContentItem.brand_id && !brand) {
               const fetchedBrand = await getBrand(fetchedContentItem.brand_id);
@@ -147,7 +147,7 @@ export default function LinkedInPostGenerator({ isOpen, onClose }: LinkedInPostG
           // Try to restore from sessionStorage as fallback
           const storedPost = sessionStorage.getItem('linkedin_post_content');
           const storedBrandName = sessionStorage.getItem('linkedin_brand_name');
-          
+
           if (storedPost) {
             setGeneratedPost(storedPost);
           }
@@ -157,7 +157,7 @@ export default function LinkedInPostGenerator({ isOpen, onClose }: LinkedInPostG
         } finally {
           // Clear URL params after processing
           window.history.replaceState({}, document.title, window.location.pathname);
-          
+
           // Clean up sessionStorage (but keep for PublishModal to use)
           // PublishModal will clean up after it processes the auto_publish flag
         }
@@ -172,7 +172,7 @@ export default function LinkedInPostGenerator({ isOpen, onClose }: LinkedInPostG
       setIsSaving(true);
       setIsExtracting(true);
       setExtractionError(null);
-      
+
       try {
         // Find or create brand
         const brandRecord = await findOrCreateBrand(userId, brandData.name, brandData.url);
@@ -191,7 +191,7 @@ export default function LinkedInPostGenerator({ isOpen, onClose }: LinkedInPostG
 
         // Check for cached brand profile
         let profile = await getCachedBrandProfile(brandRecord.id);
-        
+
         if (!profile) {
           // Extract brand profile from website
           try {
@@ -207,6 +207,14 @@ export default function LinkedInPostGenerator({ isOpen, onClose }: LinkedInPostG
 
         setBrandProfile(profile);
 
+        // If extraction failed (empty profile), skip BrandDNA and proceed to Step 2
+        if (Object.keys(profile).length === 0) {
+          setStep(2);
+          setIsSaving(false);
+          setIsExtracting(false);
+          return;
+        }
+
         // Auto-create BrandDNA if it doesn't exist
         try {
           const existingBrandDNA = await getBrandDNA(brandRecord.id);
@@ -214,7 +222,7 @@ export default function LinkedInPostGenerator({ isOpen, onClose }: LinkedInPostG
             // Create BrandDNA from extraction
             setExtractionStatus('Scraping website with Firecrawl...');
             const newBrandDNA = await createBrandDNAFromExtraction(brandRecord.id, userId, brandData.name, brandData.url);
-                console.log('BrandDNA created successfully');
+            console.log('BrandDNA created successfully');
             setExtractedBrandDNA(newBrandDNA);
             setExtractionStatus('');
             // Show preview before proceeding
@@ -230,7 +238,7 @@ export default function LinkedInPostGenerator({ isOpen, onClose }: LinkedInPostG
           console.error('Error checking/creating BrandDNA:', error);
           setExtractionStatus('');
           // Continue to next step even if BrandDNA creation fails
-        setStep(2);
+          setStep(2);
         }
       } catch (error) {
         console.error('Error saving brand:', error);
@@ -244,7 +252,7 @@ export default function LinkedInPostGenerator({ isOpen, onClose }: LinkedInPostG
 
   const handleTypeSelect = (typeId: string) => {
     setSelectedType(typeId);
-    
+
     // Send post type selection to n8n webhook (non-blocking)
     const selectedPostType = postTypes.find(type => type.id === typeId);
     if (selectedPostType && brandData.name && brandData.url) {
@@ -258,7 +266,7 @@ export default function LinkedInPostGenerator({ isOpen, onClose }: LinkedInPostG
         console.error('Failed to send post type selection to n8n:', error);
       });
     }
-    
+
     setTimeout(() => setStep(3), 300);
   };
 
@@ -381,17 +389,17 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
       });
 
       setContentItem(contentRecord);
-      
+
       // Auto-select recommended asset type
       const recommendedType = getRecommendedAssetType(selectedType);
       setActiveAssetTab(recommendedType === 'video' ? 'videos' : 'images');
-      
+
       // Auto-generate images and videos immediately after post generation
       if (brandProfile) {
         // Generate both images and videos in parallel
         autoGenerateAssets();
       }
-      
+
       setStep(4);
     } catch (error) {
       console.error('Error generating/saving content:', error);
@@ -486,7 +494,7 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
 
       setGeneratedImages(images);
       setImageGenerationError(null);
-      
+
       // Auto-select first image
       if (images.length > 0) {
         setSelectedImage(images[0]);
@@ -530,10 +538,10 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
 
     try {
       setIsSaving(true);
-      
+
       // Save images to storage
       const savedAssets = await saveGeneratedImages([image], userId, brand.id, contentItem.id);
-      
+
       if (savedAssets.length > 0) {
         // Update content item with attached image
         await updateContentItem(contentItem.id, {
@@ -565,10 +573,10 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
 
     try {
       setIsSaving(true);
-      
+
       // Save video script to content metadata
       await saveVideoScript(video, userId, brand.id, contentItem.id);
-      
+
       // Update content item
       await updateContentItem(contentItem.id, {
         media_type: 'video',
@@ -634,19 +642,19 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
 
   const handleSaveFromEditor = async (editedPost: string, image?: GeneratedImage | null) => {
     setGeneratedPost(editedPost);
-    
+
     // Update selected image if changed
     if (image !== undefined) {
       setSelectedImage(image);
     }
-    
+
     if (contentItem) {
       try {
         const updates: any = {
           body: editedPost,
           status: 'edited',
         };
-        
+
         // Update image if provided
         if (image) {
           updates.media_url = image.url;
@@ -669,13 +677,13 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
             updates.metadata = restMetadata;
           }
         }
-        
+
         await updateContentItem(contentItem.id, updates);
       } catch (error) {
         console.error('Error saving edited post:', error);
       }
     }
-    
+
     setShowEditor(false);
   };
 
@@ -712,7 +720,7 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
 
   const getCurrentPostText = (): string => {
     if (!generatedContent) return generatedPost;
-    
+
     switch (selectedVariation) {
       case 'versionA':
         return generatedContent.variations.versionA;
@@ -783,17 +791,17 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
                       </button>
                     </div>
                   </div>
-                  
+
                   {/* Scrollable Content */}
                   <div className="flex-1 overflow-y-auto min-h-0">
                     <div className="p-6">
-                      <BrandDNAPreview 
+                      <BrandDNAPreview
                         brandDNA={extractedBrandDNA}
                         compact={true}
                       />
                     </div>
                   </div>
-                  
+
                   {/* Footer - Fixed */}
                   <div className="flex-shrink-0 p-6 border-t border-gray-200 bg-white">
                     <div className="flex justify-end gap-3">
@@ -873,7 +881,7 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
                       </>
                     )}
                   </button>
-                  
+
                   {extractionError && (
                     <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                       <p className="text-sm text-yellow-800">{extractionError}</p>
@@ -998,31 +1006,28 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
                     <div className="flex gap-2 p-2 bg-gray-50 rounded-xl">
                       <button
                         onClick={() => setSelectedVariation('main')}
-                        className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
-                          selectedVariation === 'main'
-                            ? 'bg-[#1A1A1A] text-white'
-                            : 'bg-white text-gray-700 hover:bg-gray-100'
-                        }`}
+                        className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${selectedVariation === 'main'
+                          ? 'bg-[#1A1A1A] text-white'
+                          : 'bg-white text-gray-700 hover:bg-gray-100'
+                          }`}
                       >
                         Main Version
                       </button>
                       <button
                         onClick={() => setSelectedVariation('versionA')}
-                        className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
-                          selectedVariation === 'versionA'
-                            ? 'bg-[#1A1A1A] text-white'
-                            : 'bg-white text-gray-700 hover:bg-gray-100'
-                        }`}
+                        className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${selectedVariation === 'versionA'
+                          ? 'bg-[#1A1A1A] text-white'
+                          : 'bg-white text-gray-700 hover:bg-gray-100'
+                          }`}
                       >
                         Version A
                       </button>
                       <button
                         onClick={() => setSelectedVariation('versionB')}
-                        className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
-                          selectedVariation === 'versionB'
-                            ? 'bg-[#1A1A1A] text-white'
-                            : 'bg-white text-gray-700 hover:bg-gray-100'
-                        }`}
+                        className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${selectedVariation === 'versionB'
+                          ? 'bg-[#1A1A1A] text-white'
+                          : 'bg-white text-gray-700 hover:bg-gray-100'
+                          }`}
                       >
                         Version B
                       </button>
@@ -1041,7 +1046,7 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
                           <p className="text-xs text-gray-500">Just now</p>
                         </div>
                       </div>
-                      
+
                       {/* Selected Image Preview */}
                       {selectedImage && (
                         <div className="mb-4 rounded-lg overflow-hidden">
@@ -1052,13 +1057,13 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
                           />
                         </div>
                       )}
-                      
+
                       <div className="prose prose-sm max-w-none">
                         <pre className="whitespace-pre-wrap font-sans text-[#1A1A1A] leading-relaxed">
                           {getCurrentPostText()}
                         </pre>
                       </div>
-                      
+
                       {/* Hashtags */}
                       {generatedContent && generatedContent.hashtags.length > 0 && (
                         <div className="mt-4 pt-4 border-t border-gray-100">
@@ -1109,22 +1114,20 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
                       <div className="flex gap-2 bg-gray-100 rounded-lg p-1">
                         <button
                           onClick={() => setActiveAssetTab('images')}
-                          className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
-                            activeAssetTab === 'images'
-                              ? 'bg-white text-[#1A1A1A] shadow-sm'
-                              : 'text-gray-600 hover:text-[#1A1A1A]'
-                          }`}
+                          className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${activeAssetTab === 'images'
+                            ? 'bg-white text-[#1A1A1A] shadow-sm'
+                            : 'text-gray-600 hover:text-[#1A1A1A]'
+                            }`}
                         >
                           <Image className="w-4 h-4 inline mr-1.5" />
                           Images
                         </button>
                         <button
                           onClick={() => setActiveAssetTab('videos')}
-                          className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
-                            activeAssetTab === 'videos'
-                              ? 'bg-white text-[#1A1A1A] shadow-sm'
-                              : 'text-gray-600 hover:text-[#1A1A1A]'
-                          }`}
+                          className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${activeAssetTab === 'videos'
+                            ? 'bg-white text-[#1A1A1A] shadow-sm'
+                            : 'text-gray-600 hover:text-[#1A1A1A]'
+                            }`}
                         >
                           <Video className="w-4 h-4 inline mr-1.5" />
                           Videos
@@ -1142,31 +1145,28 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
                           <div className="flex gap-2 bg-gray-100 rounded-lg p-1">
                             <button
                               onClick={() => setImageProvider('dalle')}
-                              className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
-                                imageProvider === 'dalle'
-                                  ? 'bg-white text-[#1A1A1A] shadow-sm'
-                                  : 'text-gray-600 hover:text-[#1A1A1A]'
-                              }`}
+                              className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${imageProvider === 'dalle'
+                                ? 'bg-white text-[#1A1A1A] shadow-sm'
+                                : 'text-gray-600 hover:text-[#1A1A1A]'
+                                }`}
                             >
                               DALL-E
                             </button>
                             <button
                               onClick={() => setImageProvider('gemini')}
-                              className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
-                                imageProvider === 'gemini'
-                                  ? 'bg-white text-[#1A1A1A] shadow-sm'
-                                  : 'text-gray-600 hover:text-[#1A1A1A]'
-                              }`}
+                              className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${imageProvider === 'gemini'
+                                ? 'bg-white text-[#1A1A1A] shadow-sm'
+                                : 'text-gray-600 hover:text-[#1A1A1A]'
+                                }`}
                             >
                               Gemini
                             </button>
                             <button
                               onClick={() => setImageProvider('seedream')}
-                              className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
-                                imageProvider === 'seedream'
-                                  ? 'bg-white text-[#1A1A1A] shadow-sm'
-                                  : 'text-gray-600 hover:text-[#1A1A1A]'
-                              }`}
+                              className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${imageProvider === 'seedream'
+                                ? 'bg-white text-[#1A1A1A] shadow-sm'
+                                : 'text-gray-600 hover:text-[#1A1A1A]'
+                                }`}
                             >
                               SeedDream
                             </button>
@@ -1270,9 +1270,8 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
               {[1, 2, 3, 4].map((i) => (
                 <div
                   key={i}
-                  className={`w-2 h-2 rounded-full transition-all ${
-                    i === step ? 'bg-[#1A1A1A] w-8' : 'bg-gray-300'
-                  }`}
+                  className={`w-2 h-2 rounded-full transition-all ${i === step ? 'bg-[#1A1A1A] w-8' : 'bg-gray-300'
+                    }`}
                 />
               ))}
             </div>
@@ -1296,6 +1295,16 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
         brandName={brandData.name}
         brandId={brand?.id}
         contentItemId={contentItem?.id}
+        mediaType={
+          selectedVideo ? 'video' :
+            selectedImage ? 'image' :
+              'none'
+        }
+        mediaUrls={
+          selectedVideo ? [selectedVideo.thumbnailPlaceholder] : // For video, we might want the script ID or similar, but sending thumbnail for now as placeholder
+            selectedImage ? [selectedImage.url] :
+              []
+        }
       />
 
       {/* Image Preview Modal */}
