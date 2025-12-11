@@ -109,3 +109,61 @@ export async function sendPostTypeSelectionToN8n(data: PostTypeSelectionData): P
   }
 }
 
+
+export interface PublishToN8nPayload {
+  userId: string;
+  brandId: string;
+  content: string;
+  images?: string[];
+  mediaType?: 'image' | 'video' | 'none';
+  mediaUrls?: string[];
+  scheduledAt?: string;
+  platform: 'linkedin';
+  metadata?: any;
+}
+
+/**
+ * Sends the final post content to n8n for publishing/scheduling
+ * @param data - The post data to publish
+ * @returns Promise that resolves if the webhook received the data successfully
+ */
+export async function sendPostToN8n(data: PublishToN8nPayload): Promise<void> {
+  const webhookUrl = import.meta.env.VITE_N8N_PUBLISH_WEBHOOK_URL;
+
+  if (!webhookUrl) {
+    throw new Error('N8N Publish Webhook URL is not configured (VITE_N8N_PUBLISH_WEBHOOK_URL)');
+  }
+
+  try {
+    const payload = {
+      ...data,
+      mediaType: data.mediaType || 'none',
+      mediaUrls: data.mediaUrls || data.images || [],
+      timestamp: new Date().toISOString(),
+      source: 'foundrly-app',
+    };
+
+    console.log('Preparing to send post to n8n...');
+    console.log('Target URL:', webhookUrl);
+    console.log('Payload:', payload);
+
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      // Try to get error details from response
+      const errorText = await response.text();
+      throw new Error(`N8N webhook failed: ${response.status} ${response.statusText} - ${errorText}`);
+    }
+
+    console.log('Post sent to n8n successfully');
+  } catch (error) {
+    console.error('Failed to send post to n8n:', error);
+    throw error; // Rethrow to let the UI handle the error state
+  }
+}

@@ -51,20 +51,29 @@ const LINKEDIN_SCOPES = ['w_member_social', 'openid', 'profile'];
  */
 function normalizeRedirectUri(uri: string): string {
   if (!uri) return uri;
-  
+
   // Remove trailing slash if present
   let normalized = uri.trim().replace(/\/$/, '');
-  
+
   // Ensure it's a valid URL
   try {
     const url = new URL(normalized);
     // Reconstruct with normalized path (no trailing slash)
     normalized = `${url.protocol}//${url.host}${url.pathname}${url.search}${url.hash}`;
+
+    // Fix for potentially malformed .env where other variables are appended
+    if (normalized.includes('VITE_N8N_LINKEDIN_WEBHOOK_URL')) {
+      const parts = normalized.split('VITE_N8N_LINKEDIN_WEBHOOK_URL');
+      if (parts[0]) {
+        normalized = parts[0];
+        console.warn('Sanitized corrupted Redirect URI from .env');
+      }
+    }
   } catch (e) {
     // If not a valid URL, just return trimmed version
     console.warn('Redirect URI normalization warning:', e);
   }
-  
+
   return normalized;
 }
 
@@ -115,7 +124,7 @@ export function getLinkedInAuthUrl(state?: string): string {
   // Parse the generated URL to extract the EXACT redirect_uri as LinkedIn sees it
   const urlObj = new URL(authorizationUrl);
   const redirectUriFromUrl = urlObj.searchParams.get('redirect_uri');
-  
+
   // Store the EXACT redirect_uri as it appears in the authorization URL (URL-encoded)
   // This is what LinkedIn receives and expects back
   if (redirectUriFromUrl) {
@@ -171,7 +180,7 @@ async function exchangeCodeForToken(code: string): Promise<{
   // Retrieve the exact redirect URI used in authorization from sessionStorage
   // This is the EXACT redirect_uri as it appeared in the authorization URL (URL-decoded)
   const storedRedirectUri = sessionStorage.getItem('linkedin_redirect_uri');
-  
+
   // Use the stored redirect URI if available, otherwise fall back to normalized current URI
   // The stored URI is already the decoded version from the authorization URL
   let redirectUriToUse: string;
@@ -184,11 +193,11 @@ async function exchangeCodeForToken(code: string): Promise<{
     redirectUriToUse = normalizeRedirectUri(LINKEDIN_REDIRECT_URI);
     console.warn('[LinkedIn Debug] No stored redirect_uri found in sessionStorage, using current normalized URI');
   }
-  
+
   // Debug logging with detailed comparison
   const normalizedOriginal = normalizeRedirectUri(LINKEDIN_REDIRECT_URI);
   const exactMatch = redirectUriToUse === normalizedOriginal;
-  
+
   console.log('[LinkedIn Debug]', {
     event: 'token_exchange_initiated',
     timestamp: new Date().toISOString(),
@@ -222,7 +231,7 @@ async function exchangeCodeForToken(code: string): Promise<{
 
     if (data?.error) {
       console.error('Edge Function returned error:', data.error);
-      
+
       // Debug logging for error
       console.log('[LinkedIn Debug]', {
         event: 'token_exchange_failed',
@@ -230,11 +239,11 @@ async function exchangeCodeForToken(code: string): Promise<{
         timestamp: new Date().toISOString(),
         redirect_uri_used: redirectUriToUse,
         error: data.error,
-        error_type: data.error.includes('redirect') ? 'redirect_uri_mismatch' : 
-                   data.error.includes('expired') ? 'code_expired' : 
-                   data.error.includes('appid') ? 'client_id_mismatch' : 'unknown',
+        error_type: data.error.includes('redirect') ? 'redirect_uri_mismatch' :
+          data.error.includes('expired') ? 'code_expired' :
+            data.error.includes('appid') ? 'client_id_mismatch' : 'unknown',
       });
-      
+
       throw new Error(data.error);
     }
 
@@ -254,35 +263,35 @@ async function exchangeCodeForToken(code: string): Promise<{
         'See DEPLOY_LINKEDIN_OAUTH_FUNCTION.md for instructions.'
       );
     }
-    
+
     // Fallback to client-side if Edge Function is not available
     console.warn('Edge Function not available, using client-side token exchange:', edgeFunctionError);
-    
-  const LINKEDIN_CLIENT_SECRET = import.meta.env.VITE_LINKEDIN_CLIENT_SECRET;
 
-  if (!LINKEDIN_CLIENT_SECRET) {
+    const LINKEDIN_CLIENT_SECRET = import.meta.env.VITE_LINKEDIN_CLIENT_SECRET;
+
+    if (!LINKEDIN_CLIENT_SECRET) {
       throw new Error(
         'LinkedIn client secret not configured. ' +
         'Please set VITE_LINKEDIN_CLIENT_SECRET in your environment variables, ' +
         'or deploy the linkedin-oauth Supabase Edge Function.'
       );
-  }
+    }
 
     let response: Response;
     try {
       response = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({
-      grant_type: 'authorization_code',
-      code,
-      redirect_uri: redirectUriToUse,
-      client_id: LINKEDIN_CLIENT_ID,
-      client_secret: LINKEDIN_CLIENT_SECRET,
-    }),
-  });
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          grant_type: 'authorization_code',
+          code,
+          redirect_uri: redirectUriToUse,
+          client_id: LINKEDIN_CLIENT_ID,
+          client_secret: LINKEDIN_CLIENT_SECRET,
+        }),
+      });
     } catch (networkError: any) {
       // Handle network/CORS errors
       console.error('Network error during token exchange:', networkError);
@@ -293,7 +302,7 @@ async function exchangeCodeForToken(code: string): Promise<{
       );
     }
 
-  if (!response.ok) {
+    if (!response.ok) {
       let errorMessage = 'Failed to exchange code for token';
       try {
         const errorData = await response.json();
@@ -312,11 +321,11 @@ async function exchangeCodeForToken(code: string): Promise<{
     }
 
     const tokenData = await response.json();
-    
+
     // Validate token response
     if (!tokenData.access_token) {
       throw new Error('LinkedIn did not return an access token. Please check your app configuration.');
-  }
+    }
 
     return {
       access_token: tokenData.access_token,
@@ -338,13 +347,13 @@ async function getLinkedInProfile(accessToken: string): Promise<{
   profilePicture?: { displayImage: string };
 }> {
   try {
-  const response = await fetch('https://api.linkedin.com/v2/me', {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
+    const response = await fetch('https://api.linkedin.com/v2/me', {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
 
-  if (!response.ok) {
+    if (!response.ok) {
       // If profile fetch fails (e.g., missing r_liteprofile scope), return minimal profile
       // We can still use the access token for posting
       console.warn('Could not fetch full LinkedIn profile. Using minimal profile info.');
@@ -353,9 +362,9 @@ async function getLinkedInProfile(accessToken: string): Promise<{
         firstName: { localized: { en_US: 'User' } },
         lastName: { localized: { en_US: '' } },
       };
-  }
+    }
 
-  return response.json();
+    return response.json();
   } catch (error) {
     console.warn('Error fetching LinkedIn profile:', error);
     // Return minimal profile so OAuth can complete
@@ -448,12 +457,12 @@ export async function completeLinkedInOAuth(
 ): Promise<{ connection: Connection; token: LinkedInOAuthToken }> {
   try {
     // Exchange code for token (may include profile if Edge Function is used)
-  const tokenData = await exchangeCodeForToken(code);
+    const tokenData = await exchangeCodeForToken(code);
 
     // Get user profile (optional - may fail if r_liteprofile scope not available)
     // Edge Function may have already fetched profile, so check tokenData.profile first
     let profile: { id: string; firstName: { localized: { [key: string]: string } }; lastName: { localized: { [key: string]: string } }; profilePicture?: { displayImage: string } };
-    
+
     if (tokenData.profile) {
       // Use profile from Edge Function response
       profile = tokenData.profile;
@@ -472,7 +481,7 @@ export async function completeLinkedInOAuth(
       }
     }
 
-  // Create or update connection
+    // Create or update connection
     let connection: Connection;
     try {
       connection = await findOrCreateConnection(userId, brandId, 'linkedin');
@@ -480,72 +489,72 @@ export async function completeLinkedInOAuth(
       throw new Error(`Failed to create connection: ${error?.message || error}`);
     }
 
-  // Calculate expiration dates
-  const tokenExpiresAt = new Date(Date.now() + tokenData.expires_in * 1000).toISOString();
-  const refreshTokenExpiresAt = tokenData.refresh_token_expires_in
-    ? new Date(Date.now() + tokenData.refresh_token_expires_in * 1000).toISOString()
-    : null;
+    // Calculate expiration dates
+    const tokenExpiresAt = new Date(Date.now() + tokenData.expires_in * 1000).toISOString();
+    const refreshTokenExpiresAt = tokenData.refresh_token_expires_in
+      ? new Date(Date.now() + tokenData.refresh_token_expires_in * 1000).toISOString()
+      : null;
 
-  // Check if token already exists
-  const existingToken = await getLinkedInOAuthTokenByConnection(connection.id);
+    // Check if token already exists
+    const existingToken = await getLinkedInOAuthTokenByConnection(connection.id);
 
     // Build profile name safely
     const firstName = profile.firstName?.localized?.en_US || profile.firstName?.localized?.[Object.keys(profile.firstName.localized || {})[0]] || '';
     const lastName = profile.lastName?.localized?.en_US || profile.lastName?.localized?.[Object.keys(profile.lastName.localized || {})[0]] || '';
     const profileName = `${firstName} ${lastName}`.trim() || 'LinkedIn User';
 
-  const tokenDataToStore = {
-    connection_id: connection.id,
-    user_id: userId,
-    brand_id: brandId,
-    access_token_encrypted: encryptToken(tokenData.access_token),
-    refresh_token_encrypted: tokenData.refresh_token
-      ? encryptToken(tokenData.refresh_token)
-      : null,
-    token_expires_at: tokenExpiresAt,
-    refresh_token_expires_at: refreshTokenExpiresAt,
-    oauth_scopes: LINKEDIN_SCOPES,
+    const tokenDataToStore = {
+      connection_id: connection.id,
+      user_id: userId,
+      brand_id: brandId,
+      access_token_encrypted: encryptToken(tokenData.access_token),
+      refresh_token_encrypted: tokenData.refresh_token
+        ? encryptToken(tokenData.refresh_token)
+        : null,
+      token_expires_at: tokenExpiresAt,
+      refresh_token_expires_at: refreshTokenExpiresAt,
+      oauth_scopes: LINKEDIN_SCOPES,
       linkedin_user_id: profile.id !== 'unknown' ? profile.id : `user_${userId.substring(0, 8)}`,
       linkedin_profile_url: profile.id !== 'unknown' ? `https://www.linkedin.com/in/${profile.id}` : null,
       profile_name: profileName,
-    profile_picture_url: profile.profilePicture?.displayImage || null,
-  };
+      profile_picture_url: profile.profilePicture?.displayImage || null,
+    };
 
-  let token: LinkedInOAuthToken;
+    let token: LinkedInOAuthToken;
 
     try {
-  if (existingToken) {
-    // Update existing token
-    token = await updateLinkedInOAuthToken(existingToken.id, tokenDataToStore);
-  } else {
-    // Create new token
-    token = await createLinkedInOAuthToken(tokenDataToStore);
+      if (existingToken) {
+        // Update existing token
+        token = await updateLinkedInOAuthToken(existingToken.id, tokenDataToStore);
+      } else {
+        // Create new token
+        token = await createLinkedInOAuthToken(tokenDataToStore);
       }
     } catch (error: any) {
       throw new Error(`Failed to save LinkedIn token: ${error?.message || error}`);
-  }
+    }
 
-  // Debug logging: OAuth completion
-  console.log('[LinkedIn Debug]', {
-    event: 'oauth_complete',
-    status: 'success',
-    timestamp: new Date().toISOString(),
-    user_id: maskId(userId),
-    brand_id: maskId(brandId),
-    connection_id: maskId(connection.id),
-    token_expires_at: tokenExpiresAt,
-    refresh_token_expires_at: refreshTokenExpiresAt,
-    has_refresh_token: !!tokenData.refresh_token,
-    linkedin_user_id: profile.id !== 'unknown' ? profile.id : `user_${maskId(userId)}`,
-    profile_name: profileName,
-    profile_picture_url: profile.profilePicture?.displayImage ? 'present' : 'not_available',
-    linkedin_profile_url: profile.id !== 'unknown' ? `https://www.linkedin.com/in/${profile.id}` : null,
-    oauth_scopes: LINKEDIN_SCOPES,
-    token_storage: existingToken ? 'updated' : 'created',
-    access_token_preview: maskToken(tokenData.access_token),
-  });
+    // Debug logging: OAuth completion
+    console.log('[LinkedIn Debug]', {
+      event: 'oauth_complete',
+      status: 'success',
+      timestamp: new Date().toISOString(),
+      user_id: maskId(userId),
+      brand_id: maskId(brandId),
+      connection_id: maskId(connection.id),
+      token_expires_at: tokenExpiresAt,
+      refresh_token_expires_at: refreshTokenExpiresAt,
+      has_refresh_token: !!tokenData.refresh_token,
+      linkedin_user_id: profile.id !== 'unknown' ? profile.id : `user_${maskId(userId)}`,
+      profile_name: profileName,
+      profile_picture_url: profile.profilePicture?.displayImage ? 'present' : 'not_available',
+      linkedin_profile_url: profile.id !== 'unknown' ? `https://www.linkedin.com/in/${profile.id}` : null,
+      oauth_scopes: LINKEDIN_SCOPES,
+      token_storage: existingToken ? 'updated' : 'created',
+      access_token_preview: maskToken(tokenData.access_token),
+    });
 
-  return { connection, token };
+    return { connection, token };
   } catch (error: any) {
     // Re-throw with more context
     if (error.message) {
@@ -582,7 +591,7 @@ export async function getValidAccessToken(brandId: string): Promise<{ accessToke
   let accessToken: string;
   let tokenRefreshed = false;
   let tokenValidity: 'valid' | 'expired' | 'expiring_soon';
-  
+
   if (expiresAt > fiveMinutesFromNow) {
     // Token is still valid
     accessToken = decryptToken(token.access_token_encrypted);
@@ -590,7 +599,7 @@ export async function getValidAccessToken(brandId: string): Promise<{ accessToke
   } else {
     // Token is expired or expiring soon, try to refresh
     tokenValidity = expiresAt > now ? 'expiring_soon' : 'expired';
-    
+
     if (!token.refresh_token_encrypted) {
       console.error('No refresh token available');
       console.log('[LinkedIn Debug]', {
@@ -637,46 +646,46 @@ export async function getValidAccessToken(brandId: string): Promise<{ accessToke
   // Convert to the format required by LinkedIn UGC Posts API: urn:li:member:{numeric_id}
   let personUrn = token.linkedin_user_id;
   const originalUrn = personUrn;
-  
+
   // Helper function to convert to member URN format
   function convertToMemberUrn(urn: string): string {
     // If already in correct format (urn:li:member:{numeric}), return as is
     if (urn.match(/^urn:li:member:\d+$/)) {
       return urn;
     }
-    
+
     // If it's urn:li:person:{numeric}, convert to urn:li:member:{numeric}
     const personNumericMatch = urn.match(/^urn:li:person:(\d+)$/);
     if (personNumericMatch) {
       return `urn:li:member:${personNumericMatch[1]}`;
     }
-    
+
     // If it's just a numeric ID, convert to member URN
     if (/^\d+$/.test(urn)) {
       return `urn:li:member:${urn}`;
     }
-    
+
     // If it contains "user_" prefix (urn:li:person:user_xxxxx), we can't extract numeric ID
     // This will need to be fetched from API
     if (urn.includes('user_')) {
       console.warn('Stored URN contains user_ prefix, cannot convert to member format:', urn);
       return urn; // Will be handled by Edge Function
     }
-    
+
     // If it's urn:li:person:xxx (non-numeric), try to extract numeric part
     const numericMatch = urn.match(/(\d+)$/);
     if (numericMatch) {
       return `urn:li:member:${numericMatch[1]}`;
     }
-    
+
     // Default: try to add member prefix if it doesn't have one
     if (!urn.startsWith('urn:li:')) {
       return `urn:li:member:${urn}`;
     }
-    
+
     return urn;
   }
-  
+
   if (personUrn) {
     personUrn = convertToMemberUrn(personUrn);
   }
@@ -706,10 +715,10 @@ async function getLinkedInPersonUrn(accessToken: string): Promise<string> {
   let response: Response;
   try {
     response = await fetch('https://api.linkedin.com/v2/me', {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
   } catch (networkError: any) {
     console.error('Network error fetching LinkedIn profile:', networkError);
     throw new Error(
@@ -733,7 +742,7 @@ async function getLinkedInPersonUrn(accessToken: string): Promise<string> {
         errorMessage = `HTTP ${response.status}: ${response.statusText}`;
       }
     }
-    
+
     if (response.status === 401) {
       throw new Error('LinkedIn authentication failed. Your access token may have expired. Please reconnect your LinkedIn account.');
     } else if (response.status === 403) {
@@ -766,13 +775,13 @@ export async function postToLinkedIn(
   // Try using Supabase Edge Function first (avoids CORS issues)
   try {
     console.log('[LinkedIn Post] Attempting to use Edge Function for LinkedIn post...');
-    console.log('[LinkedIn Post] Options:', { 
-      hasPersonUrn: !!options.personUrn, 
+    console.log('[LinkedIn Post] Options:', {
+      hasPersonUrn: !!options.personUrn,
       personUrn: options.personUrn,
       lifecycleState: options.lifecycleState,
-      visibility: options.visibility 
+      visibility: options.visibility
     });
-    
+
     // Check if user is authenticated
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -780,7 +789,7 @@ export async function postToLinkedIn(
     } else {
       console.log('[LinkedIn Post] User authenticated:', user.id);
     }
-    
+
     // Validate person URN format if provided
     let personUrn = options.personUrn;
     if (personUrn) {
@@ -793,7 +802,7 @@ export async function postToLinkedIn(
     } else {
       console.log('[LinkedIn Post] No person URN provided, Edge Function will fetch it');
     }
-    
+
     // Check Supabase configuration
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     if (!supabaseUrl) {
@@ -801,7 +810,7 @@ export async function postToLinkedIn(
       throw new Error('Supabase URL is not configured. Please check your environment variables.');
     }
     console.log('[LinkedIn Post] Supabase URL configured:', supabaseUrl ? 'Yes' : 'No');
-    
+
     let invokeResult;
     try {
       // Get the current session to ensure we're authenticated
@@ -809,7 +818,7 @@ export async function postToLinkedIn(
       if (!session) {
         console.warn('[LinkedIn Post] No active session, Edge Function may require authentication');
       }
-      
+
       console.log('[LinkedIn Post] Invoking Edge Function with:', {
         functionName: 'linkedin-post',
         hasAccessToken: !!accessToken,
@@ -818,7 +827,7 @@ export async function postToLinkedIn(
         hasPersonUrn: !!personUrn,
         hasSession: !!session
       });
-      
+
       invokeResult = await supabase.functions.invoke('linkedin-post', {
         body: {
           access_token: accessToken,
@@ -829,7 +838,7 @@ export async function postToLinkedIn(
           },
         },
       });
-      
+
       console.log('[LinkedIn Post] Edge Function invoke completed');
     } catch (invokeError: any) {
       // Catch network errors from the invoke call itself
@@ -841,20 +850,20 @@ export async function postToLinkedIn(
         cause: invokeError?.cause,
         toString: invokeError?.toString?.()
       });
-      
+
       // Check if it's a network/CORS error
       const errorMsg = invokeError?.message || String(invokeError);
-      const isNetworkError = errorMsg.includes('Failed to fetch') || 
-                            invokeError?.name === 'TypeError' || 
-                            errorMsg.includes('NetworkError') ||
-                            errorMsg.includes('fetch') ||
-                            errorMsg.includes('Network request failed') ||
-                            (invokeError?.name === 'TypeError' && errorMsg.includes('fetch'));
-      
+      const isNetworkError = errorMsg.includes('Failed to fetch') ||
+        invokeError?.name === 'TypeError' ||
+        errorMsg.includes('NetworkError') ||
+        errorMsg.includes('fetch') ||
+        errorMsg.includes('Network request failed') ||
+        (invokeError?.name === 'TypeError' && errorMsg.includes('fetch'));
+
       if (isNetworkError) {
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
         const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-        
+
         throw new Error(
           `EDGE_FUNCTION_INVOKE_FAILED: Unable to invoke Supabase Edge Function.\n\n` +
           `Error: ${errorMsg}\n\n` +
@@ -883,11 +892,11 @@ export async function postToLinkedIn(
       }
       throw invokeError;
     }
-    
+
     const { data, error } = invokeResult;
 
-    console.log('[LinkedIn Post] Edge Function response:', { 
-      hasData: !!data, 
+    console.log('[LinkedIn Post] Edge Function response:', {
+      hasData: !!data,
       hasError: !!error,
       dataId: data?.id,
       dataError: data?.error,
@@ -900,20 +909,20 @@ export async function postToLinkedIn(
     if (error) {
       console.error('[LinkedIn Post] Edge Function returned error:', error);
       console.error('[LinkedIn Post] Error details:', JSON.stringify(error, null, 2));
-      
+
       // Check for specific error types
       const errorMessage = error?.message || String(error);
       const errorStr = errorMessage.toLowerCase();
       const errorName = error?.name || '';
-      
+
       // Check if it's a network/invoke error (function not reachable)
-      if (errorStr.includes('failed to fetch') || 
-          errorStr.includes('networkerror') || 
-          errorStr.includes('network') ||
-          errorStr.includes('fetch') ||
-          errorName === 'TypeError' ||
-          error?.status === 0 ||
-          (error?.message && error.message.includes('Failed to fetch'))) {
+      if (errorStr.includes('failed to fetch') ||
+        errorStr.includes('networkerror') ||
+        errorStr.includes('network') ||
+        errorStr.includes('fetch') ||
+        errorName === 'TypeError' ||
+        error?.status === 0 ||
+        (error?.message && error.message.includes('Failed to fetch'))) {
         throw new Error(
           `EDGE_FUNCTION_INVOKE_FAILED: Unable to invoke Supabase Edge Function.\n\n` +
           `Error: ${errorMessage}\n\n` +
@@ -933,7 +942,7 @@ export async function postToLinkedIn(
           `See DEPLOY_LINKEDIN_OAUTH_STEP_BY_STEP.md for detailed instructions.`
         );
       }
-      
+
       if (errorStr.includes('not found') || errorStr.includes('404') || errorStr.includes('function not found')) {
         throw new Error(
           'EDGE_FUNCTION_NOT_DEPLOYED: The "linkedin-post" Edge Function is not deployed. ' +
@@ -941,7 +950,7 @@ export async function postToLinkedIn(
           'See DEPLOY_LINKEDIN_OAUTH_STEP_BY_STEP.md for instructions.'
         );
       }
-      
+
       // Authentication errors
       if (errorStr.includes('unauthorized') || errorStr.includes('401') || errorStr.includes('auth')) {
         throw new Error(
@@ -949,14 +958,14 @@ export async function postToLinkedIn(
           `Please ensure you are logged in and try again. Error: ${errorMessage}`
         );
       }
-      
+
       throw new Error(`Edge Function error: ${errorMessage}`);
     }
 
     if (data?.error) {
       console.error('[LinkedIn Post] Edge Function returned error:', data.error);
       console.error('[LinkedIn Post] Full error response:', JSON.stringify(data, null, 2));
-      
+
       // Provide helpful error messages for common issues
       const errorStr = String(data.error).toLowerCase();
       if (errorStr.includes('revoked') || errorStr.includes('token used in the request has been revoked')) {
@@ -983,10 +992,10 @@ export async function postToLinkedIn(
   } catch (edgeFunctionError: any) {
     console.error('[LinkedIn Post] Edge Function error details:', edgeFunctionError);
     console.error('[LinkedIn Post] Full error object:', JSON.stringify(edgeFunctionError, null, 2));
-    
+
     const errorMessage = edgeFunctionError?.message || String(edgeFunctionError);
     const errorStr = errorMessage.toLowerCase();
-    
+
     // Check if Edge Function is not deployed
     if (errorMessage.includes('EDGE_FUNCTION_NOT_DEPLOYED') || errorStr.includes('not found') || errorStr.includes('404')) {
       throw new Error(
@@ -998,14 +1007,14 @@ export async function postToLinkedIn(
         'See DEPLOY_LINKEDIN_OAUTH_STEP_BY_STEP.md for deployment instructions.'
       );
     }
-    
+
     // Check if it's an invoke failure (network/CORS) - DO NOT FALLBACK, throw error immediately
-    if (errorMessage.includes('EDGE_FUNCTION_INVOKE_FAILED') || 
-        errorMessage.includes('EDGE_FUNCTION_NETWORK_ERROR') ||
-        errorStr.includes('failed to fetch') || 
-        errorStr.includes('networkerror') || 
-        errorStr.includes('network') ||
-        edgeFunctionError?.name === 'TypeError') {
+    if (errorMessage.includes('EDGE_FUNCTION_INVOKE_FAILED') ||
+      errorMessage.includes('EDGE_FUNCTION_NETWORK_ERROR') ||
+      errorStr.includes('failed to fetch') ||
+      errorStr.includes('networkerror') ||
+      errorStr.includes('network') ||
+      edgeFunctionError?.name === 'TypeError') {
       // This is a network error calling the Edge Function - don't fallback to client-side (will also fail)
       throw new Error(
         `Unable to connect to Supabase Edge Function.\n\n` +
@@ -1029,7 +1038,7 @@ export async function postToLinkedIn(
         `See DEPLOY_LINKEDIN_OAUTH_STEP_BY_STEP.md for detailed deployment instructions.`
       );
     }
-    
+
     // Check if it's an authentication error
     if (errorMessage.includes('EDGE_FUNCTION_AUTH_ERROR') || errorStr.includes('unauthorized') || errorStr.includes('401')) {
       throw new Error(
@@ -1038,12 +1047,12 @@ export async function postToLinkedIn(
         `If the problem persists, try logging out and logging back in.`
       );
     }
-    
+
     // Only fallback if it's a specific error from the Edge Function (not a network/invoke error)
     // For example, if Edge Function returned an error response (not a network failure)
-    const isEdgeFunctionResponseError = errorMessage.includes('Edge Function error:') || 
-                                        errorMessage.includes('Edge Function returned error:');
-    
+    const isEdgeFunctionResponseError = errorMessage.includes('Edge Function error:') ||
+      errorMessage.includes('Edge Function returned error:');
+
     if (!isEdgeFunctionResponseError) {
       // If it's not a response error, it's likely a network/invoke error - don't fallback
       throw new Error(
@@ -1055,37 +1064,37 @@ export async function postToLinkedIn(
         `4. Check browser console and Supabase logs for details`
       );
     }
-    
+
     // Only attempt fallback if Edge Function returned an error response (not a network failure)
     console.warn('[LinkedIn Post] Edge Function returned error response, attempting client-side fallback:', edgeFunctionError);
-    
-    try {
-  // Get person URN
-  const personUrn = await getLinkedInPersonUrn(accessToken);
 
-  const body: any = {
-    author: personUrn,
+    try {
+      // Get person URN
+      const personUrn = await getLinkedInPersonUrn(accessToken);
+
+      const body: any = {
+        author: personUrn,
         lifecycleState: options.lifecycleState || 'PUBLISHED',
-    specificContent: {
-      'com.linkedin.ugc.ShareContent': {
-        shareCommentary: {
-          text: content,
+        specificContent: {
+          'com.linkedin.ugc.ShareContent': {
+            shareCommentary: {
+              text: content,
+            },
+            shareMediaCategory: options.mediaUrns && options.mediaUrns.length > 0 ? 'IMAGE' : 'NONE',
+            media: options.mediaUrns && options.mediaUrns.length > 0
+              ? options.mediaUrns.map(urn => ({ status: 'READY', media: urn }))
+              : undefined,
+          },
         },
-        shareMediaCategory: options.mediaUrns && options.mediaUrns.length > 0 ? 'IMAGE' : 'NONE',
-        media: options.mediaUrns && options.mediaUrns.length > 0
-          ? options.mediaUrns.map(urn => ({ status: 'READY', media: urn }))
-          : undefined,
-      },
-    },
-    visibility: {
-      'com.linkedin.ugc.MemberNetworkVisibility': options.visibility || 'PUBLIC',
-    },
-  };
+        visibility: {
+          'com.linkedin.ugc.MemberNetworkVisibility': options.visibility || 'PUBLIC',
+        },
+      };
 
       let response: Response;
       try {
         response = await fetch('https://api.linkedin.com/v2/ugcPosts', {
-    method: 'POST',
+          method: 'POST',
           headers: {
             Authorization: `Bearer ${accessToken}`,
             'Content-Type': 'application/json',
@@ -1118,7 +1127,7 @@ export async function postToLinkedIn(
             errorMessage = `HTTP ${response.status}: ${response.statusText}`;
           }
         }
-        
+
         // Provide helpful error messages for common issues
         if (response.status === 401) {
           throw new Error('LinkedIn authentication failed. Your access token may have expired. Please reconnect your LinkedIn account.');
@@ -1214,7 +1223,7 @@ export async function publishLinkedInDraft(
 export async function hasLinkedInConnection(brandId: string): Promise<boolean> {
   const token = await getValidLinkedInToken(brandId);
   const isConnected = token !== null;
-  
+
   // Debug logging: Connection check
   if (token) {
     const expiresAt = new Date(token.token_expires_at);
@@ -1222,7 +1231,7 @@ export async function hasLinkedInConnection(brandId: string): Promise<boolean> {
     const expiresInMs = expiresAt.getTime() - now.getTime();
     const expiresInDays = Math.floor(expiresInMs / (1000 * 60 * 60 * 24));
     const expiresInHours = Math.floor((expiresInMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    
+
     console.log('[LinkedIn Debug]', {
       event: 'connection_check',
       status: 'success',
@@ -1250,7 +1259,7 @@ export async function hasLinkedInConnection(brandId: string): Promise<boolean> {
       message: 'No valid LinkedIn token found for this brand',
     });
   }
-  
+
   return isConnected;
 }
 
@@ -1264,7 +1273,7 @@ export async function getLinkedInProfileInfo(brandId: string): Promise<{
 } | null> {
   try {
     const token = await getValidLinkedInToken(brandId);
-    
+
     if (!token) {
       return null;
     }
