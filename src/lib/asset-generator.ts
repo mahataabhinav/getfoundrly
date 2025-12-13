@@ -590,32 +590,16 @@ export function generateAssetCacheKey(
 /**
  * Session-based asset caching
  */
-function getCachedAssets(cacheKey: string): GeneratedImage[] | VideoScript | null {
-  try {
-    const cached = sessionStorage.getItem(`${ASSET_CACHE_PREFIX}${cacheKey}`);
-    if (cached) {
-      const parsed = JSON.parse(cached);
-      // Check if cache is still valid (24 hours)
-      if (parsed.timestamp && Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000) {
-        return parsed.data;
-      }
-    }
-  } catch (error) {
-    console.error('Error reading cache:', error);
-  }
+// Disable caching to avoid stale blob URLs
+function getCachedAssets(_cacheKey: string): GeneratedImage[] | VideoScript | null {
   return null;
 }
 
-function setCachedAssets(cacheKey: string, data: GeneratedImage[] | VideoScript): void {
-  try {
-    sessionStorage.setItem(`${ASSET_CACHE_PREFIX}${cacheKey}`, JSON.stringify({
-      data,
-      timestamp: Date.now(),
-    }));
-  } catch (error) {
-    console.error('Error writing cache:', error);
-  }
+function setCachedAssets(_cacheKey: string, _data: GeneratedImage[] | VideoScript): void {
+  // Disabled
+  return;
 }
+
 
 /**
  * Save generated images to storage and create media assets
@@ -627,7 +611,7 @@ export async function saveGeneratedImages(
   contentId?: string
 ): Promise<any[]> {
   const { uploadFile } = await import('./storage');
-  const { createMediaAsset, updateMediaAsset, attachMediaToContent } = await import('./database');
+  const { createMediaAsset, attachMediaToContent } = await import('./database');
   const savedAssets = [];
 
   for (let i = 0; i < images.length; i++) {
@@ -635,8 +619,16 @@ export async function saveGeneratedImages(
 
     try {
       // Fetch image from URL and convert to File
-      const response = await fetch(image.url);
-      const blob = await response.blob();
+      let blob;
+      try {
+        const response = await fetch(image.url);
+        if (!response.ok) throw new Error(`Failed to fetch image: ${response.statusText}`);
+        blob = await response.blob();
+      } catch (fetchError) {
+        console.error('Fetch error details:', fetchError);
+        throw new Error(`Could not download generated image. It may have expired. Please regenerate.`);
+      }
+
       const file = new File([blob], `generated-image-${image.variation}.png`, { type: 'image/png' });
 
       // Upload to storage (preserve path structure)
