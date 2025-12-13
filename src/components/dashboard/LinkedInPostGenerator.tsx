@@ -1,18 +1,19 @@
 import { useState, useEffect } from 'react';
-import { X, ArrowRight, RefreshCw, Edit, Sparkles, TrendingUp, BookOpen, Lightbulb, FileText, Rocket, Calendar, Zap, Image, Video, LayoutGrid, Send, Loader2 } from 'lucide-react';
-import RobotChatbot from '../RobotChatbot';
+import { X, ArrowRight, RefreshCw, Edit, Sparkles, TrendingUp, BookOpen, Lightbulb, FileText, Rocket, Calendar, Zap, Image, LayoutGrid, Send, Loader2 } from 'lucide-react';
+
 import VoiceInput from '../VoiceInput';
 import PostEditor from './PostEditor';
 import PublishModal from './PublishModal';
 import { supabase } from '../../lib/supabase';
-import { findOrCreateBrand, createContentItem, updateContentItem, getBrand, updateBrand, getContentItem } from '../../lib/database';
+import { findOrCreateBrand, createContentItem, updateContentItem, getBrand, getContentItem } from '../../lib/database';
 import { generateLinkedInPost } from '../../lib/openai';
 import { extractBrandProfile, getCachedBrandProfile, saveBrandProfile, type BrandProfile } from '../../lib/brand-extractor';
 import { createBrandDNAFromExtraction, getBrandDNA } from '../../lib/brand-dna';
 import BrandDNAPreview from './BrandDNAPreview';
 import type { BrandDNA } from '../../types/database';
 import { generateLinkedInPostEnhanced, regenerateLinkedInPost, type LinkedInPostContent } from '../../lib/openai-enhanced';
-import { generateImages, generateVideoScript, getRecommendedAssetType, saveGeneratedImages, saveVideoScript, type GeneratedImage, type VideoScript } from '../../lib/asset-generator';
+import { generateImages, saveGeneratedImages, type GeneratedImage } from '../../lib/asset-generator';
+import { getPublicUrl } from '../../lib/storage';
 import ImagePicker from '../ImagePicker';
 import { sendWebsiteDataToN8n, sendPostTypeSelectionToN8n } from '../../lib/n8n-webhook';
 import type { Brand, ContentItem } from '../../types/database';
@@ -49,19 +50,17 @@ export default function LinkedInPostGenerator({ isOpen, onClose }: LinkedInPostG
   const [extractionStatus, setExtractionStatus] = useState<string>('');
   const [extractionError, setExtractionError] = useState<string | null>(null);
   const [selectedVariation, setSelectedVariation] = useState<'main' | 'versionA' | 'versionB'>('main');
-  const [activeAssetTab, setActiveAssetTab] = useState<'images' | 'videos'>('images');
+  const [activeAssetTab, setActiveAssetTab] = useState<'images'>('images');
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
-  const [generatedVideo, setGeneratedVideo] = useState<VideoScript | null>(null);
-  const [isGeneratingAssets, setIsGeneratingAssets] = useState(false);
+
   const [selectedImage, setSelectedImage] = useState<GeneratedImage | null>(null);
-  const [selectedVideo, setSelectedVideo] = useState<VideoScript | null>(null);
   const [showImagePreview, setShowImagePreview] = useState(false);
-  const [showVideoPreview, setShowVideoPreview] = useState(false);
-  const [imageProvider, setImageProvider] = useState<'dalle' | 'gemini' | 'seedream'>('dalle');
+
+  // imageProvider state is technically no longer "selected" for generation since we do all, 
+  // but we can keep it if we want to filter or for manual regeneration selector later.
+
   const [imageGenerationError, setImageGenerationError] = useState<string | null>(null);
   const [isGeneratingImages, setIsGeneratingImages] = useState(false);
-  const [isGeneratingVideos, setIsGeneratingVideos] = useState(false);
-  const [videoGenerationError, setVideoGenerationError] = useState<string | null>(null);
   const [showBrandDNAPreview, setShowBrandDNAPreview] = useState(false);
   const [extractedBrandDNA, setExtractedBrandDNA] = useState<BrandDNA | null>(null);
 
@@ -77,16 +76,7 @@ export default function LinkedInPostGenerator({ isOpen, onClose }: LinkedInPostG
     { id: 'carousel', title: 'Carousel Script', description: 'Multi-slide content', icon: FileText, color: 'from-indigo-500 to-indigo-600' },
   ];
 
-  const suggestedImages = [
-    { id: 1, label: 'Brand Aesthetic' },
-    { id: 2, label: 'Data Visualization' },
-    { id: 3, label: 'Team Photo' },
-  ];
 
-  const suggestedVideos = [
-    { id: 1, label: 'Talking Head' },
-    { id: 2, label: 'B-Roll Montage' },
-  ];
 
   // Get current user on mount
   useEffect(() => {
@@ -390,9 +380,9 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
 
       setContentItem(contentRecord);
 
-      // Auto-select recommended asset type
-      const recommendedType = getRecommendedAssetType(selectedType);
-      setActiveAssetTab(recommendedType === 'video' ? 'videos' : 'images');
+      // Auto-select recommended asset type (Forced to images only for now)
+      // const recommendedType = getRecommendedAssetType(selectedType);
+      setActiveAssetTab('images');
 
       // Auto-generate images and videos immediately after post generation
       if (brandProfile) {
@@ -417,13 +407,11 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
 
     // Generate images and videos in parallel
     setIsGeneratingImages(true);
-    setIsGeneratingVideos(true);
     setImageGenerationError(null);
-    setVideoGenerationError(null);
 
     try {
-      // Parallel generation
-      const [imagesResult, videoResult] = await Promise.allSettled([
+      // Parallel generation of Images (Gemini + DALL-E) only - Video removed per user request
+      const [geminiImagesResult, dalleImagesResult] = await Promise.allSettled([
         generateImages({
           brandProfile,
           brandName: brandData.name,
@@ -431,105 +419,65 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
           topic: context.topic,
           contextDetails: context.details || undefined,
           imagePrompt: generatedContent?.imagePrompts?.primary,
-          provider: imageProvider,
+          provider: 'gemini',
+          brandDNA: extractedBrandDNA || undefined,
         }),
-        generateVideoScript({
+        generateImages({
           brandProfile,
+          brandName: brandData.name,
           postType: selectedType,
           topic: context.topic,
           contextDetails: context.details || undefined,
-          targetDuration: '30s',
+          imagePrompt: generatedContent?.imagePrompts?.primary,
+          provider: 'dalle',
+          brandDNA: extractedBrandDNA || undefined,
         }),
       ]);
 
-      // Handle images result
-      if (imagesResult.status === 'fulfilled') {
-        setGeneratedImages(imagesResult.value);
-        setImageGenerationError(null);
-        // Auto-select first image
-        if (imagesResult.value.length > 0) {
-          setSelectedImage(imagesResult.value[0]);
-        }
+      // Collect all generated images
+      let allImages: GeneratedImage[] = [];
+      let errors: string[] = [];
+
+      // Handle Gemini results
+      if (geminiImagesResult.status === 'fulfilled') {
+        const taggedImages = geminiImagesResult.value.map(img => ({
+          ...img,
+          metadata: { ...img.metadata, provider: 'gemini' as const } // Ensure provider is set
+        }));
+        allImages = [...allImages, ...taggedImages];
       } else {
-        console.error('Error generating images:', imagesResult.reason);
-        setImageGenerationError(imagesResult.reason?.message || 'Couldn\'t generate images. Try again.');
+
+        console.error('Gemini generation failed:', geminiImagesResult.reason);
+        errors.push(`Gemini: ${geminiImagesResult.reason?.message || 'Failed'}`);
       }
 
-      // Handle video result
-      if (videoResult.status === 'fulfilled') {
-        setGeneratedVideo(videoResult.value);
-        setVideoGenerationError(null);
-        setSelectedVideo(videoResult.value);
+      // Handle DALL-E results
+      if (dalleImagesResult.status === 'fulfilled') {
+        const taggedImages = dalleImagesResult.value.map(img => ({
+          ...img,
+          metadata: { ...img.metadata, provider: 'dalle' as const } // Ensure provider is set
+        }));
+        allImages = [...allImages, ...taggedImages];
       } else {
-        console.error('Error generating video:', videoResult.reason);
-        setVideoGenerationError(videoResult.reason?.message || 'Couldn\'t generate video script. Try again.');
+        console.error('DALL-E generation failed:', dalleImagesResult.reason);
+        errors.push(`DALL-E: ${dalleImagesResult.reason?.message || 'Failed'}`);
       }
+
+      if (allImages.length > 0) {
+        setGeneratedImages(allImages);
+        setImageGenerationError(null);
+        // Auto-select first image
+        setSelectedImage(allImages[0]);
+      } else {
+        setImageGenerationError(errors.join(' | ') || 'Failed to generate images from any provider.');
+      }
+
+
     } catch (error: any) {
       console.error('Error in auto-generate assets:', error);
       setImageGenerationError(error.message || 'Couldn\'t generate assets. Try again.');
-      setVideoGenerationError(error.message || 'Couldn\'t generate assets. Try again.');
     } finally {
       setIsGeneratingImages(false);
-      setIsGeneratingVideos(false);
-      setIsGeneratingAssets(false);
-    }
-  };
-
-  // Legacy function for manual generation (kept for compatibility, but not used in UI)
-  const handleGenerateImages = async () => {
-    if (!userId || !brand || !brandProfile) return;
-
-    setIsGeneratingAssets(true);
-    setImageGenerationError(null);
-    try {
-      const images = await generateImages({
-        brandProfile,
-        brandName: brandData.name,
-        postType: selectedType,
-        topic: context.topic,
-        contextDetails: context.details || undefined,
-        imagePrompt: generatedContent?.imagePrompts?.primary,
-        provider: imageProvider,
-      });
-
-      setGeneratedImages(images);
-      setImageGenerationError(null);
-
-      // Auto-select first image
-      if (images.length > 0) {
-        setSelectedImage(images[0]);
-      }
-    } catch (error: any) {
-      console.error('Error generating images:', error);
-      setImageGenerationError(error.message || 'Couldn\'t generate images. Try again.');
-    } finally {
-      setIsGeneratingAssets(false);
-    }
-  };
-
-  // Legacy function for manual generation (kept for compatibility, but not used in UI)
-  const handleGenerateVideo = async () => {
-    if (!userId || !brand || !brandProfile) return;
-
-    setIsGeneratingVideos(true);
-    setVideoGenerationError(null);
-    try {
-      const video = await generateVideoScript({
-        brandProfile,
-        postType: selectedType,
-        topic: context.topic,
-        contextDetails: context.details || undefined,
-        targetDuration: '30s',
-      });
-
-      setGeneratedVideo(video);
-      setSelectedVideo(video);
-      setVideoGenerationError(null);
-    } catch (error: any) {
-      console.error('Error generating video script:', error);
-      setVideoGenerationError(error.message || 'Couldn\'t generate video script. Try again.');
-    } finally {
-      setIsGeneratingVideos(false);
     }
   };
 
@@ -538,66 +486,93 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
 
     try {
       setIsSaving(true);
+      const publicUrl = await processImageAttachment(image);
 
-      // Save images to storage
-      const savedAssets = await saveGeneratedImages([image], userId, brand.id, contentItem.id);
-
-      if (savedAssets.length > 0) {
-        // Update content item with attached image
-        await updateContentItem(contentItem.id, {
-          media_url: savedAssets[0].storage_path,
-          media_type: 'image',
-          metadata: {
-            ...contentItem.metadata,
-            attachedImage: {
-              id: savedAssets[0].id,
-              variation: image.variation,
-              prompt: image.prompt,
-            },
-          },
-        });
-
-        alert('Image attached successfully!');
+      if (publicUrl) {
         setShowImagePreview(false);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error attaching image:', error);
-      alert('Failed to attach image. Please try again.');
+      alert(`Failed to attach image: ${error?.message || 'Unknown error'}. Please check your internet connection or try again.`);
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleAttachVideo = async (video: VideoScript) => {
-    if (!userId || !brand || !contentItem) return;
+  const handleOpenPublishModal = async () => {
+    // If we have a selected image that is a blob URL, upload it first
+    if (selectedImage && selectedImage.url.startsWith('blob:')) {
+      try {
+        setIsSaving(true); // Show loading state
+        await processImageAttachment(selectedImage);
+        setShowPublishModal(true);
+      } catch (error) {
+        console.error('Failed to auto-attach image:', error);
+        alert('Failed to prepare image for publishing. Please try attaching it manually first.');
+      } finally {
+        setIsSaving(false);
+      }
+    } else {
+      setShowPublishModal(true);
+    }
+  };
 
-    try {
-      setIsSaving(true);
+  const processImageAttachment = async (image: GeneratedImage): Promise<string | null> => {
+    if (!userId || !brand || !contentItem) return null;
 
-      // Save video script to content metadata
-      await saveVideoScript(video, userId, brand.id, contentItem.id);
+    // Save images to storage
+    const savedAssets = await saveGeneratedImages([image], userId, brand.id, contentItem.id);
 
-      // Update content item
+    if (savedAssets.length > 0) {
+      // Get public URL for the uploaded asset
+      const publicUrl = getPublicUrl(savedAssets[0].storage_path);
+
+      // Update content item with attached image
       await updateContentItem(contentItem.id, {
-        media_type: 'video',
+        media_url: publicUrl, // Save Full Public URL
+        media_type: 'image',
         metadata: {
           ...contentItem.metadata,
-          attachedVideo: {
-            id: video.id,
-            title: video.title,
+          attachedImage: {
+            id: savedAssets[0].id,
+            variation: image.variation,
+            prompt: image.prompt,
           },
         },
       });
 
-      alert('Video script attached successfully!');
-      setShowVideoPreview(false);
-    } catch (error) {
-      console.error('Error attaching video:', error);
-      alert('Failed to attach video script. Please try again.');
-    } finally {
-      setIsSaving(false);
+      // Update local content item state immediately
+      setContentItem(prev => prev ? ({
+        ...prev,
+        media_url: publicUrl, // Save Full Public URL
+        media_type: 'image',
+        metadata: {
+          ...prev.metadata,
+          attachedImage: {
+            id: savedAssets[0].id,
+            variation: image.variation,
+            prompt: image.prompt,
+          },
+        }
+      }) : null);
+
+      // (publicUrl is already defined above)
+
+      // Update selected image with public URL to ensure n8n gets a valid URL
+      const updatedImage = { ...image, url: publicUrl };
+      setSelectedImage(updatedImage);
+
+      // Update the image in generatedImages array as well
+      setGeneratedImages(prev => prev.map(img =>
+        img.id === image.id ? updatedImage : img
+      ));
+
+      return publicUrl;
     }
+    return null;
   };
+
+
 
   const handleRegenerate = async () => {
     if (!contentItem || !brand || !brandProfile) return;
@@ -687,7 +662,7 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
     setShowEditor(false);
   };
 
-  const handlePublish = (scheduled: boolean, date?: string, time?: string) => {
+  const handlePublish = () => {
     setShowPublishModal(false);
     handleClose();
   };
@@ -704,15 +679,10 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
     setExtractionError(null);
     setActiveAssetTab('images');
     setGeneratedImages([]);
-    setGeneratedVideo(null);
     setSelectedImage(null);
-    setSelectedVideo(null);
     setShowImagePreview(false);
-    setShowVideoPreview(false);
     setImageGenerationError(null);
-    setVideoGenerationError(null);
     setIsGeneratingImages(false);
-    setIsGeneratingVideos(false);
     setShowEditor(false);
     setShowPublishModal(false);
     onClose();
@@ -891,7 +861,7 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
 
                 <div className="flex justify-center mt-8">
                   <div className="relative">
-                    <RobotChatbot size={60} animate={true} gesture="wave" />
+
                     <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 whitespace-nowrap">
                       <p className="text-xs text-gray-700">Let me scan your brand in seconds.</p>
                     </div>
@@ -989,7 +959,7 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
 
                 <div className="flex justify-center mt-8">
                   <div className="relative">
-                    <RobotChatbot size={60} animate={true} gesture="thinking" />
+
                     <div className="absolute -top-16 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 max-w-xs">
                       <p className="text-xs text-gray-700">Give me anything — even a rough thought — I'll turn it into gold.</p>
                     </div>
@@ -1096,7 +1066,7 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
                       Edit in Editor
                     </button>
                     <button
-                      onClick={() => setShowPublishModal(true)}
+                      onClick={handleOpenPublishModal}
                       className="flex-1 bg-[#1A1A1A] text-white py-3 px-6 rounded-xl font-medium hover:bg-gray-800 transition-all hover:shadow-lg flex items-center justify-center gap-2"
                     >
                       <Send className="w-5 h-5" />
@@ -1122,16 +1092,7 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
                           <Image className="w-4 h-4 inline mr-1.5" />
                           Images
                         </button>
-                        <button
-                          onClick={() => setActiveAssetTab('videos')}
-                          className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${activeAssetTab === 'videos'
-                            ? 'bg-white text-[#1A1A1A] shadow-sm'
-                            : 'text-gray-600 hover:text-[#1A1A1A]'
-                            }`}
-                        >
-                          <Video className="w-4 h-4 inline mr-1.5" />
-                          Videos
-                        </button>
+
                       </div>
                     </div>
 
@@ -1141,36 +1102,6 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
                         {/* Choose an Image Section Header */}
                         <div className="flex items-center justify-between mb-4">
                           <h5 className="text-sm font-semibold text-[#1A1A1A]">Choose an Image</h5>
-                          {/* Provider Selection */}
-                          <div className="flex gap-2 bg-gray-100 rounded-lg p-1">
-                            <button
-                              onClick={() => setImageProvider('dalle')}
-                              className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${imageProvider === 'dalle'
-                                ? 'bg-white text-[#1A1A1A] shadow-sm'
-                                : 'text-gray-600 hover:text-[#1A1A1A]'
-                                }`}
-                            >
-                              DALL-E
-                            </button>
-                            <button
-                              onClick={() => setImageProvider('gemini')}
-                              className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${imageProvider === 'gemini'
-                                ? 'bg-white text-[#1A1A1A] shadow-sm'
-                                : 'text-gray-600 hover:text-[#1A1A1A]'
-                                }`}
-                            >
-                              Gemini
-                            </button>
-                            <button
-                              onClick={() => setImageProvider('seedream')}
-                              className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${imageProvider === 'seedream'
-                                ? 'bg-white text-[#1A1A1A] shadow-sm'
-                                : 'text-gray-600 hover:text-[#1A1A1A]'
-                                }`}
-                            >
-                              SeedDream
-                            </button>
-                          </div>
                         </div>
 
                         {/* Image Picker Component */}
@@ -1187,78 +1118,6 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
                         />
                       </div>
                     )}
-
-                    {/* Videos Tab */}
-                    {activeAssetTab === 'videos' && (
-                      <div className="space-y-4">
-                        {isGeneratingVideos ? (
-                          <div className="bg-gray-50 rounded-xl p-8 border border-gray-200 text-center">
-                            <Loader2 className="w-12 h-12 text-gray-400 mx-auto mb-3 animate-spin" />
-                            <p className="text-sm text-gray-600 mb-1">Foundi is generating your visuals...</p>
-                            <p className="text-xs text-gray-500">Creating video script and storyboard</p>
-                          </div>
-                        ) : videoGenerationError ? (
-                          <div className="bg-red-50 rounded-xl p-6 border border-red-200 text-center">
-                            <Video className="w-12 h-12 text-red-400 mx-auto mb-3" />
-                            <p className="text-sm text-red-800 mb-2">{videoGenerationError}</p>
-                            <p className="text-xs text-red-600 mb-4">Couldn't generate video script. Try again.</p>
-                            <button
-                              onClick={() => autoGenerateAssets()}
-                              className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 transition-all flex items-center gap-2 mx-auto"
-                            >
-                              <RefreshCw className="w-4 h-4" />
-                              Try Again
-                            </button>
-                          </div>
-                        ) : !generatedVideo ? (
-                          <div className="bg-gray-50 rounded-xl p-6 border border-gray-200 text-center">
-                            <Video className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                            <p className="text-sm text-gray-600">Video script will be generated automatically</p>
-                          </div>
-                        ) : (
-                          <div
-                            onClick={() => {
-                              setSelectedVideo(generatedVideo);
-                              setShowVideoPreview(true);
-                            }}
-                            className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-6 border-2 border-blue-200 cursor-pointer hover:border-blue-300 transition-all"
-                          >
-                            <div className="flex items-start gap-4">
-                              <img
-                                src={generatedVideo.thumbnailPlaceholder}
-                                alt="Video thumbnail"
-                                className="w-32 h-20 object-cover rounded-lg"
-                              />
-                              <div className="flex-1">
-                                <h5 className="font-semibold text-[#1A1A1A] mb-2">{generatedVideo.title}</h5>
-                                <p className="text-sm text-gray-600 mb-3 line-clamp-2">{generatedVideo.script.substring(0, 150)}...</p>
-                                <div className="flex items-center gap-4 text-xs text-gray-500">
-                                  <span>{generatedVideo.scenes.length} scenes</span>
-                                  <span>•</span>
-                                  <span>{generatedVideo.metadata.duration}</span>
-                                  <span>•</span>
-                                  <span className="capitalize">{generatedVideo.metadata.style}</span>
-                                </div>
-                              </div>
-                              <div className="text-blue-600">
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                </svg>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex justify-center">
-                    <div className="relative">
-                      <RobotChatbot size={60} animate={true} gesture="thinking" />
-                      <div className="absolute -top-12 right-0 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 whitespace-nowrap">
-                        <p className="text-xs text-gray-700">Want something different? Try regenerate or edit.</p>
-                      </div>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -1295,15 +1154,19 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
         brandName={brandData.name}
         brandId={brand?.id}
         contentItemId={contentItem?.id}
+        // Prioritize selected assets, fallback to saved content item assets
         mediaType={
-          selectedVideo ? 'video' :
-            selectedImage ? 'image' :
-              'none'
+          (selectedImage && !selectedImage.url.startsWith('blob:')) ? 'image' :
+            (contentItem?.media_type === 'image' ? 'image' : 'none')
         }
         mediaUrls={
-          selectedVideo ? [selectedVideo.thumbnailPlaceholder] : // For video, we might want the script ID or similar, but sending thumbnail for now as placeholder
-            selectedImage ? [selectedImage.url] :
-              []
+          // Ensure we don't send blob URLs to n8n
+          (selectedImage && !selectedImage.url.startsWith('blob:')) ? [selectedImage.url] :
+            contentItem?.media_url && contentItem.media_type === 'image' ? [
+              contentItem.media_url.startsWith('http')
+                ? contentItem.media_url
+                : getPublicUrl(contentItem.media_url)
+            ] : []
         }
       />
 
@@ -1326,10 +1189,7 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
                 alt={selectedImage.variation}
                 className="w-full rounded-lg mb-4"
               />
-              <div className="space-y-2 mb-6">
-                <p className="text-sm font-medium text-gray-700">Variation: <span className="capitalize text-[#1A1A1A]">{selectedImage.variation}</span></p>
-                <p className="text-sm text-gray-600">{selectedImage.prompt}</p>
-              </div>
+              {/* Garbage text removed as per user request */}
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowImagePreview(false)}
@@ -1359,126 +1219,8 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
           </div>
         </div>
       )}
-
-      {/* Video Preview Modal */}
-      {showVideoPreview && selectedVideo && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full my-8">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-[#1A1A1A]">Video Script Preview</h3>
-              <button
-                onClick={() => setShowVideoPreview(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <X className="w-5 h-5 text-gray-600" />
-              </button>
-            </div>
-            <div className="p-6 space-y-6 max-h-[calc(90vh-120px)] overflow-y-auto">
-              <div>
-                <img
-                  src={selectedVideo.thumbnailPlaceholder}
-                  alt="Video thumbnail"
-                  className="w-full h-48 object-cover rounded-lg mb-4"
-                />
-                <h4 className="text-xl font-semibold text-[#1A1A1A] mb-2">{selectedVideo.title}</h4>
-                <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
-                  <span>{selectedVideo.scenes.length} scenes</span>
-                  <span>•</span>
-                  <span>{selectedVideo.metadata.duration}</span>
-                  <span>•</span>
-                  <span className="capitalize">{selectedVideo.metadata.style}</span>
-                </div>
-              </div>
-
-              <div>
-                <h5 className="font-semibold text-[#1A1A1A] mb-3">Script</h5>
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <p className="text-sm text-gray-800 whitespace-pre-wrap">{selectedVideo.script}</p>
-                </div>
-              </div>
-
-              <div>
-                <h5 className="font-semibold text-[#1A1A1A] mb-3">Scenes</h5>
-                <div className="space-y-3">
-                  {selectedVideo.scenes.map((scene) => (
-                    <div key={scene.sceneNumber} className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-blue-900">Scene {scene.sceneNumber}</span>
-                        <span className="text-xs text-blue-700">{scene.duration}</span>
-                      </div>
-                      <p className="text-sm text-gray-800 mb-2">{scene.description}</p>
-                      {scene.dialogue && (
-                        <p className="text-sm text-gray-700 italic mb-2">"{scene.dialogue}"</p>
-                      )}
-                      {scene.visualCues.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {scene.visualCues.map((cue, idx) => (
-                            <span key={idx} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                              {cue}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <h5 className="font-semibold text-[#1A1A1A] mb-3">Storyboard</h5>
-                <div className="grid grid-cols-2 gap-3">
-                  {selectedVideo.storyboard.map((frame) => (
-                    <div key={frame.frameNumber} className="bg-purple-50 rounded-lg p-3 border border-purple-200">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-medium text-purple-900">Frame {frame.frameNumber}</span>
-                        {frame.cameraAngle && (
-                          <span className="text-xs text-purple-700">{frame.cameraAngle}</span>
-                        )}
-                      </div>
-                      <p className="text-xs text-gray-800 mb-2">{frame.description}</p>
-                      {frame.visualElements.length > 0 && (
-                        <div className="flex flex-wrap gap-1">
-                          {frame.visualElements.map((element, idx) => (
-                            <span key={idx} className="text-xs bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded">
-                              {element}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex gap-3 pt-4 border-t border-gray-200">
-                <button
-                  onClick={() => setShowVideoPreview(false)}
-                  className="flex-1 bg-gray-100 text-[#1A1A1A] py-2.5 px-4 rounded-lg font-medium hover:bg-gray-200 transition-all"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => handleAttachVideo(selectedVideo)}
-                  disabled={isSaving}
-                  className="flex-1 bg-[#1A1A1A] text-white py-2.5 px-4 rounded-lg font-medium hover:bg-gray-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {isSaving ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Attaching...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Attach to Post</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }
+
+

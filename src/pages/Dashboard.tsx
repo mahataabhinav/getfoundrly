@@ -9,7 +9,7 @@ import GrowSection from '../components/dashboard/GrowSection';
 import BrandDNASection from '../components/dashboard/BrandDNASection';
 import RobotChatbot from '../components/RobotChatbot';
 import { supabase } from '../lib/supabase';
-import WebhookTester from '../components/dashboard/WebhookTester';
+
 
 interface DashboardProps {
   onLogout: () => void;
@@ -111,7 +111,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           </div>
         </div>
       </div>
-      <WebhookTester />
     </div>
   );
 }

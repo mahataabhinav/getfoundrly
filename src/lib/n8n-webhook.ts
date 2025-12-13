@@ -117,6 +117,7 @@ export interface PublishToN8nPayload {
   images?: string[];
   mediaType?: 'image' | 'video' | 'none';
   mediaUrls?: string[];
+  imageUrl?: string; // Simple string URL for single image
   scheduledAt?: string;
   platform: 'linkedin';
   metadata?: any;
@@ -139,6 +140,8 @@ export async function sendPostToN8n(data: PublishToN8nPayload): Promise<void> {
       ...data,
       mediaType: data.mediaType || 'none',
       mediaUrls: data.mediaUrls || data.images || [],
+      // Ensure we send a simple imageUrl if available, or extract from array
+      imageUrl: data.imageUrl || (data.mediaUrls && data.mediaUrls.length > 0 ? data.mediaUrls[0] : null),
       timestamp: new Date().toISOString(),
       source: 'foundrly-app',
     };

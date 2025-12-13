@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import RobotChatbot from '../RobotChatbot';
 
 interface HeroEnhancedProps {
   onSignupClick: () => void;
@@ -39,7 +38,7 @@ export default function HeroEnhanced({ onSignupClick, onSeeHowItWorks }: HeroEnh
       </div>
 
       <div className="relative max-w-7xl mx-auto px-6 py-32">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
+        <div className="flex flex-col items-center text-center max-w-4xl mx-auto">
           <div className={`transition-all duration-1000 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6 leading-[1.1]">
               <span className="block mb-3 bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent">
@@ -51,11 +50,11 @@ export default function HeroEnhanced({ onSignupClick, onSeeHowItWorks }: HeroEnh
               </span>
             </h1>
 
-            <p className="text-xl md:text-2xl text-gray-600 mb-10 leading-relaxed">
+            <p className="text-xl md:text-2xl text-gray-600 mb-10 leading-relaxed max-w-2xl mx-auto">
               Foundrly is your AI co-founder that creates, schedules, and analyzes content across LinkedIn, Instagram, email, and your blog.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-start gap-4">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <button
                 onClick={onSignupClick}
                 className="group relative bg-gray-900 text-white px-8 py-4 rounded-full text-lg font-medium transition-all hover:shadow-2xl hover:scale-105 flex items-center gap-2 overflow-hidden"
@@ -71,22 +70,6 @@ export default function HeroEnhanced({ onSignupClick, onSeeHowItWorks }: HeroEnh
                 <span className="absolute inset-0 bg-gradient-to-r from-blue-50 to-slate-50 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 <span className="relative z-10">See How It Works</span>
               </button>
-            </div>
-          </div>
-
-          <div className={`relative flex justify-center lg:justify-end transition-all duration-1000 delay-200 ${isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}`}>
-            <div className="relative">
-              <div className="absolute -inset-12 bg-gradient-to-br from-cyan-400/10 to-blue-400/10 rounded-full blur-2xl" />
-              <div className="relative">
-                <RobotChatbot size={220} animate={true} gesture="idle" />
-                <div className="absolute -top-2 right-0 transform translate-x-4">
-                  <div className="bg-white/95 backdrop-blur-sm px-5 py-3 rounded-2xl shadow-lg border border-gray-200/50">
-                    <p className="text-sm font-medium text-gray-900 whitespace-nowrap">
-                      Let's build your visibility.
-                    </p>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
