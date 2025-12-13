@@ -859,14 +859,7 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
                   )}
                 </div>
 
-                <div className="flex justify-center mt-8">
-                  <div className="relative">
 
-                    <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 whitespace-nowrap">
-                      <p className="text-xs text-gray-700">Let me scan your brand in seconds.</p>
-                    </div>
-                  </div>
-                </div>
               </div>
             )}
 
