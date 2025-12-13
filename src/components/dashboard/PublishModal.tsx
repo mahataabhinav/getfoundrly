@@ -242,7 +242,7 @@ export default function PublishModal({ isOpen, onClose, onPublish, post, brandNa
             <Check className="w-10 h-10 text-white" />
           </div>
           <h2 className="text-2xl font-semibold text-[#1A1A1A] mb-2">
-            {step === 'schedule' ? 'Your post is scheduled!' : 'Your post is on its way!'}
+            {step === 'schedule' ? 'Your post is scheduled!' : 'Your LinkedIn post was successfully posted!'}
           </h2>
           <p className="text-gray-600 mb-2">
             {step === 'schedule'
@@ -254,7 +254,7 @@ export default function PublishModal({ isOpen, onClose, onPublish, post, brandNa
           </p>
 
         </div>
-      </div>
+      </div >
     );
   }
 

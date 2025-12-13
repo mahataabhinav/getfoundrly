@@ -18,21 +18,21 @@ const openai = apiKey ? new OpenAI({
 export interface LinkedInPostContent {
   // Main post content
   postText: string;
-  
+
   // Hook, body, CTA breakdown
   structure: {
     hook: string;
     body: string;
     cta: string;
   };
-  
+
   // Image prompts
   imagePrompts: {
     primary: string;
     alternate1: string;
     alternate2: string;
   };
-  
+
   // Video prompt (optional)
   videoPrompt?: {
     description: string;
@@ -41,10 +41,10 @@ export interface LinkedInPostContent {
     environment: string;
     duration?: string;
   };
-  
+
   // Hashtags
   hashtags: string[];
-  
+
   // A/B variations
   variations: {
     versionA: string;
@@ -131,6 +131,11 @@ Return your response as valid JSON matching this structure:
   }
 }`;
 
+  let announcementInstruction = '';
+  if (postType.toLowerCase() === 'announcement') {
+    announcementInstruction = `\n8. IMPORTANT: Since this is an Announcement, seamlessly integrate a compelling Call to Action (CTA) that encourages the reader to check it out, sign up, or learn more. Make it feel natural and woven into the narrative, not just appended at the end.`;
+  }
+
   const userPrompt = `Create a ${postType} LinkedIn post for ${brandName}${brandUrl ? ` (${brandUrl})` : ''}.
 
 Topic: ${topic}
@@ -146,7 +151,7 @@ Generate a compelling LinkedIn post that:
 4. Uses appropriate hashtags
 5. Includes image prompts that match brand colors and visual style
 6. Includes a UGC-style video prompt if relevant
-7. Provides two A/B variations for testing
+7. Provides two A/B variations for testing${announcementInstruction}
 
 Return the complete response as JSON.`;
 
