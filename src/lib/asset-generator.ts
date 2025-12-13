@@ -136,10 +136,15 @@ export async function generateImages(
           n: 1,
           size: '1024x1024', // LinkedIn optimal size
           quality: 'standard',
-          response_format: 'url',
+          response_format: 'b64_json',
         });
 
-        const imageUrl = response.data?.[0]?.url;
+        const imageBase64 = response.data?.[0]?.b64_json;
+        if (!imageBase64) {
+          throw new Error(`Failed to generate image variation ${i + 1} (no data)`);
+        }
+
+        const imageUrl = `data:image/png;base64,${imageBase64}`;
         if (!imageUrl) {
           throw new Error(`Failed to generate image variation ${i + 1}`);
         }
