@@ -1,14 +1,14 @@
 /**
  * Google Gemini Image Generation Module
+ * (Powered by Nano Banana API)
  * 
  * Generates images using Google Gemini API (gemini-2.5-flash-image model)
- * Integrates with brand profile for personalized image generation
- * 
- * Note: Uses Gemini 2.5 Flash Image model for image generation
+ * Integrates with BrandDNA for hyper-realistic, brand-consistent visual generation.
  */
 
 import type { BrandProfile } from './brand-extractor';
 import type { GeneratedImage } from './asset-generator';
+import type { BrandDNA } from '../types/database';
 
 // Get API key from environment
 const apiKey = import.meta.env.VITE_BANANA_API_KEY;
@@ -17,46 +17,58 @@ const apiKey = import.meta.env.VITE_BANANA_API_KEY;
  * Generate brand images using Google Gemini API
  */
 export async function generateBrandImages(
-  prompt: string,
-  brandProfile: BrandProfile
+  basePrompt: string,
+  brandProfile: BrandProfile,
+  brandName: string,
+  brandDNA?: BrandDNA
 ): Promise<GeneratedImage[]> {
   if (!apiKey) {
     throw new Error('Gemini API key is not configured. Please add VITE_BANANA_API_KEY to your .env file.');
   }
 
-  // Build enhanced prompt from brand profile
-  const enhancedPrompt = buildBrandImagePrompt(prompt, brandProfile);
+  // Extract post type from prompt context or default to 'linkedin'
+  const postType = determinePostType(basePrompt);
+
+  // Build enhanced prompt strategies
+  const strategies = [
+    { name: 'clean-minimal', prompt: buildPrompt(basePrompt, brandProfile, brandDNA, postType, 'clean-minimal', brandName) },
+    { name: 'bold-brand', prompt: buildPrompt(basePrompt, brandProfile, brandDNA, postType, 'bold-brand', brandName) },
+    { name: 'lifestyle-context', prompt: buildPrompt(basePrompt, brandProfile, brandDNA, postType, 'lifestyle-context', brandName) }
+  ];
 
   try {
     const variations: GeneratedImage[] = [];
-    const variationTypes: Array<'primary' | 'alternate1' | 'alternate2'> = ['primary', 'alternate1', 'alternate2'];
-    
-    // Generate 3 variations with different style modifiers
-    for (let i = 0; i < 3; i++) {
-      const variationType = variationTypes[i];
-      
-      // Add variation-specific instructions
-      let variationPrompt = enhancedPrompt;
-      if (i === 1) {
-        variationPrompt = `${enhancedPrompt} - Alternative style: more minimalist and clean`;
-      } else if (i === 2) {
-        variationPrompt = `${enhancedPrompt} - Alternative style: more dynamic and energetic`;
-      }
 
-      const imageData = await generateSingleImage(variationPrompt, apiKey);
-      
-      variations.push({
-        id: `gemini_img_${Date.now()}_${i}`,
+    // Generate 3 variations in parallel
+    const promises = strategies.map(async (strategy, index) => {
+      const imageData = await generateSingleImage(strategy.prompt, apiKey);
+      return {
+        id: `gemini_img_${Date.now()}_${index}`,
         url: imageData.url,
-        prompt: variationPrompt,
-        variation: variationType,
+        prompt: strategy.prompt,
+        variation: index === 0 ? 'primary' : index === 1 ? 'alternate1' : 'alternate2',
         metadata: {
-          brandColors: extractBrandColors(brandProfile),
-          style: brandProfile.visualStyle || 'professional',
+          brandColors: extractBrandColors(brandProfile, brandDNA),
+          style: strategy.name,
           dimensions: { width: 1024, height: 1024 },
           provider: 'gemini',
+          postType: postType
         },
-      });
+      } as GeneratedImage;
+    });
+
+    const results = await Promise.allSettled(promises);
+
+    results.forEach((result) => {
+      if (result.status === 'fulfilled') {
+        variations.push(result.value);
+      } else {
+        console.error('Failed verification:', result.reason);
+      }
+    });
+
+    if (variations.length === 0) {
+      throw new Error('Failed to generate any images.');
     }
 
     return variations;
@@ -77,9 +89,8 @@ export async function generateBrandImages(
 async function generateSingleImage(prompt: string, apiKey: string): Promise<{ url: string }> {
   try {
     // Use Google Generative AI REST API with gemini-2.5-flash-image model
-    // API endpoint for image generation
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${apiKey}`;
-    
+
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
@@ -106,7 +117,7 @@ async function generateSingleImage(prompt: string, apiKey: string): Promise<{ ur
     }
 
     const data = await response.json();
-    
+
     // Extract image data from response
     const candidates = data.candidates || [];
     if (candidates.length === 0) {
@@ -114,7 +125,7 @@ async function generateSingleImage(prompt: string, apiKey: string): Promise<{ ur
     }
 
     const parts = candidates[0].content?.parts || [];
-    
+
     // Look for inline image data (base64)
     for (const part of parts) {
       if (part.inlineData) {
@@ -127,21 +138,128 @@ async function generateSingleImage(prompt: string, apiKey: string): Promise<{ ur
       }
     }
 
-    // If no inline data found, the model might not support direct image generation
-    // In this case, create a placeholder and log a warning
-    console.warn('Gemini API did not return image data. Model may not support direct image generation.');
-    throw new Error('Image generation not supported by this model. Please use a model that supports image generation like gemini-2.5-flash-image.');
+    // Fallback if no image data
+    console.warn('Gemini API did not return image data.');
+    throw new Error('Image generation not supported by this output.');
   } catch (error: any) {
-    // If the specific model endpoint doesn't work, try alternative approach
+    // If the specific model endpoint doesn't work, try alternative approach or fallback
     if (error?.message?.includes('not found') || error?.message?.includes('404')) {
-      // Fallback: Create a placeholder image based on the prompt
-      // In production, you would integrate with an actual image generation service
       console.warn('Gemini image generation endpoint not available. Using placeholder.');
       const placeholderUrl = createPlaceholderImage(prompt);
       return { url: placeholderUrl };
     }
     throw error;
   }
+}
+
+/**
+ * Determine Post Type from prompt text
+ */
+function determinePostType(prompt: string): string {
+  const p = prompt.toLowerCase();
+  if (p.includes('announcement') || p.includes('launch')) return 'Announcement';
+  if (p.includes('hiring') || p.includes('join us') || p.includes('team')) return 'Hiring';
+  if (p.includes('milestone') || p.includes('celebrat') || p.includes('award')) return 'Milestone';
+  if (p.includes('tips') || p.includes('guide') || p.includes('how to')) return 'Educational';
+  if (p.includes('event') || p.includes('webinar')) return 'Event';
+  if (p.includes('quote') || p.includes('inspiration')) return 'Quote';
+  return 'General';
+}
+
+/**
+ * Build Strict, Brand-Consistent Prompt
+ */
+function buildPrompt(
+  basePrompt: string,
+  brandProfile: BrandProfile,
+  brandDNA: BrandDNA | undefined,
+  postType: string,
+  styleMode: 'clean-minimal' | 'bold-brand' | 'lifestyle-context',
+  brandNameArg: string
+): string {
+  // 1. Brand Identity Extraction
+  const brandName = brandDNA?.dna_data?.identity?.official_name || brandNameArg || 'Brand';
+  const colors = extractBrandColors(brandProfile, brandDNA);
+  const colorString = colors.length > 0 ? colors.join(', ') : 'professional, neutral colors';
+  const fonts = brandDNA?.dna_data?.visual_identity?.typography?.font_families?.join(', ') || 'modern sans-serif';
+  const vibe = brandDNA?.dna_data?.voice?.tone_descriptors?.join(', ') || brandProfile.brandTone || 'Professional, Trustworthy';
+
+  // 2. Post Type Styling Rules
+  let compositionRule = '';
+  switch (postType) {
+    case 'Announcement':
+      compositionRule = 'Subject: Big reveal, dramatic lighting, center focus. Background: Abstract gradient using brand colors. Mood: Exciting, Premium.';
+      break;
+    case 'Hiring':
+      compositionRule = 'Subject: Professional team environment, modern workspace or friendly professional portrait. Lighting: Bright, warm, inviting. Mood: Welcoming, Growth.';
+      break;
+    case 'Milestone':
+      compositionRule = 'Subject: Success metaphor, upward transparency graph or champion element. Background: Clean, success-oriented. Mood: Celebratory, Data-driven.';
+      break;
+    case 'Educational':
+      compositionRule = 'Subject: Clear concept illustration, organized layout, minimal distraction. Background: Solid or very subtle texture. Mood: Clarity, Knowledge.';
+      break;
+    case 'Event':
+      compositionRule = 'Subject: Stage or Digital gathering metaphor, dynamic energy. Mood: Engaging, Urgent.';
+      break;
+    default: // General
+      compositionRule = 'Subject: Professional business context, high-end photography style. Mood: Trustworthy.';
+  }
+
+  // 3. Style Mode Variation
+  if (styleMode === 'clean-minimal') {
+    compositionRule += ' Style: Ultra-minimalist, lots of negative space, matte finish, soft shadows.';
+  } else if (styleMode === 'bold-brand') {
+    compositionRule += ` Style: Heavy usage of brand colors (${colorString}), high contrast, bold geometric shapes.`;
+  } else if (styleMode === 'lifestyle-context') {
+    compositionRule += ' Style: Real-world photography look, shallow depth of field (bokeh), authentic texture.';
+  }
+
+  // 4. Construct the Mega-Prompt
+  return `
+    Create a high-fidelity, photorealistic image for a LinkedIn ${postType} post by ${brandName}.
+    
+    BRAND GUIDELINES:
+    - Colors to feature: ${colorString}
+    - Aesthetic Vibe: ${vibe}
+    - Typography Style (if text appears in abstract forms): ${fonts}
+    
+    VISUAL COMPOSITION:
+    ${compositionRule}
+    
+    CONTEXT:
+    ${basePrompt}
+    
+    STRICT REQUIREMENTS:
+    - NO distorted text or garbled letters.
+    - NO cartoonish 3D characters.
+    - MUST look like professional corporate photography or high-end graphic design.
+    - Aspect Ratio: 1:1 or 4:5 (Standard Social Media).
+    - Lighting: Studio quality.
+    
+    Make it look like a human designer created this.
+    `.trim();
+}
+
+/**
+ * Extract brand colors as array
+ */
+function extractBrandColors(profile: BrandProfile, brandDNA?: BrandDNA): string[] {
+  // Try BrandDNA first
+  if (brandDNA?.dna_data?.visual_identity?.color_palette?.hex_codes) {
+    return Object.values(brandDNA.dna_data.visual_identity.color_palette.hex_codes);
+  }
+  if (brandDNA?.dna_data?.visual_identity?.color_palette?.primary) {
+    return brandDNA.dna_data.visual_identity.color_palette.primary;
+  }
+
+  // Fallback to BrandProfile
+  if (profile.brandColors) {
+    return Object.values(profile.brandColors)
+      .filter((color): color is string => Boolean(color));
+  }
+
+  return [];
 }
 
 /**
@@ -152,25 +270,24 @@ function base64ToBlob(base64: string, mimeType: string): Blob {
   const base64Data = base64.replace(/^data:image\/\w+;base64,/, '');
   const byteCharacters = atob(base64Data);
   const byteNumbers = new Array(byteCharacters.length);
-  
+
   for (let i = 0; i < byteCharacters.length; i++) {
     byteNumbers[i] = byteCharacters.charCodeAt(i);
   }
-  
+
   const byteArray = new Uint8Array(byteNumbers);
   return new Blob([byteArray], { type: mimeType });
 }
 
 /**
  * Create a placeholder SVG image based on prompt
- * Used as fallback when actual image generation is not available
  */
 function createPlaceholderImage(prompt: string): string {
-  // Extract key colors and themes from prompt for placeholder
+  // Extract key colors from prompt for placeholder
   const colors = ['#1A1A1A', '#6B7280', '#3B82F6'];
   const primaryColor = colors[0];
   const secondaryColor = colors[1];
-  
+
   const svg = `
     <svg width="1024" height="1024" xmlns="http://www.w3.org/2000/svg">
       <defs>
@@ -181,70 +298,15 @@ function createPlaceholderImage(prompt: string): string {
       </defs>
       <rect width="1024" height="1024" fill="url(#grad)"/>
       <text x="512" y="480" font-family="Arial, sans-serif" font-size="32" fill="white" text-anchor="middle" font-weight="bold">
-        ${prompt.substring(0, 40)}${prompt.length > 40 ? '...' : ''}
+        ${prompt.substring(0, 30)}
       </text>
       <text x="512" y="540" font-family="Arial, sans-serif" font-size="20" fill="white" text-anchor="middle" opacity="0.9">
-        Generated Image Preview
+        Gemini Image Fallback
       </text>
     </svg>
   `.trim();
-  
+
   // Convert SVG to data URL
   return `data:image/svg+xml;base64,${btoa(svg)}`;
 }
 
-/**
- * Build enhanced image prompt from brand profile
- */
-function buildBrandImagePrompt(basePrompt: string, brandProfile: BrandProfile): string {
-  const parts: string[] = [];
-  
-  // Base prompt
-  parts.push('Create a clean, modern, professional LinkedIn visual');
-  
-  // Brand colors
-  if (brandProfile.brandColors) {
-    const colors = Object.values(brandProfile.brandColors)
-      .filter(Boolean)
-      .join(', ');
-    if (colors) {
-      parts.push(`using these brand colors: ${colors}`);
-    }
-  }
-  
-  // Visual style
-  if (brandProfile.visualStyle) {
-    parts.push(`style: ${brandProfile.visualStyle}`);
-  }
-  
-  // Brand tone
-  if (brandProfile.brandTone) {
-    parts.push(`tone: ${brandProfile.brandTone}`);
-  }
-  
-  // Image themes
-  if (brandProfile.imageThemes && brandProfile.imageThemes.length > 0) {
-    parts.push(`themes: ${brandProfile.imageThemes.join(', ')}`);
-  }
-  
-  // Original prompt context
-  if (basePrompt) {
-    parts.push(`context: ${basePrompt}`);
-  }
-  
-  // Quality and format
-  parts.push('High quality, professional, clean design, suitable for LinkedIn');
-  parts.push('No text overlay, image only');
-  
-  return parts.join('; ');
-}
-
-/**
- * Extract brand colors as array
- */
-function extractBrandColors(profile: BrandProfile): string[] {
-  if (!profile.brandColors) return [];
-  
-  return Object.values(profile.brandColors)
-    .filter((color): color is string => Boolean(color));
-}

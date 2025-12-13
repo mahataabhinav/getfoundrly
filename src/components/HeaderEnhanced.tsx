@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Menu, X, ChevronDown, Sparkles, TrendingUp, Rocket, Linkedin, Instagram, Mail, FileText, BarChart, Target, Users, Award, Globe, Gift, Calendar } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import Logo from './Logo';
 
 interface HeaderEnhancedProps {
@@ -12,8 +12,13 @@ interface HeaderEnhancedProps {
 export default function HeaderEnhanced({ scrollY, onLoginClick, onSignupClick }: HeaderEnhancedProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [hoveredMenu, setHoveredMenu] = useState<string | null>(null);
+  const location = useLocation();
 
   const isScrolled = scrollY > 20;
+  const isHome = location.pathname === '/';
+
+  // Use dark theme (white text) ONLY on Home page when NOT scrolled
+  const useDarkTheme = isHome && !isScrolled;
 
   const productMenuItems = {
     create: [
@@ -43,14 +48,13 @@ export default function HeaderEnhanced({ scrollY, onLoginClick, onSignupClick }:
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        isScrolled ? 'bg-white/80 backdrop-blur-xl shadow-sm' : 'bg-transparent'
-      }`}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled ? 'bg-white/80 backdrop-blur-xl shadow-sm' : 'bg-transparent'
+        }`}
     >
       <nav className="max-w-7xl mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           <Link to="/" className="cursor-pointer">
-            <Logo variant="dark" iconSize={32} showWordmark={true} />
+            <Logo variant={useDarkTheme ? "light" : "dark"} iconSize={32} showWordmark={true} />
           </Link>
 
           <div className="hidden lg:flex items-center gap-8">
@@ -59,14 +63,15 @@ export default function HeaderEnhanced({ scrollY, onLoginClick, onSignupClick }:
               onMouseEnter={() => setHoveredMenu('product')}
               onMouseLeave={() => setHoveredMenu(null)}
             >
-              <div className="flex items-center gap-1 text-gray-700 hover:text-gray-900 transition-colors cursor-pointer">
+              <div className={`flex items-center gap-1 transition-colors cursor-pointer ${useDarkTheme ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'
+                }`}>
                 <span>Product</span>
                 <ChevronDown className="w-4 h-4" />
               </div>
 
               {hoveredMenu === 'product' && (
                 <div className="absolute top-full left-1/2 -translate-x-1/2 pt-4 w-[720px]">
-                  <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 p-6 animate-fade-in">
+                  <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 p-6 animate-fade-in text-left">
                     <div className="grid grid-cols-3 gap-6">
                       <div>
                         <div className="flex items-center gap-2 mb-4">
@@ -169,14 +174,15 @@ export default function HeaderEnhanced({ scrollY, onLoginClick, onSignupClick }:
               onMouseEnter={() => setHoveredMenu('solutions')}
               onMouseLeave={() => setHoveredMenu(null)}
             >
-              <div className="flex items-center gap-1 text-gray-700 hover:text-gray-900 transition-colors cursor-pointer">
+              <div className={`flex items-center gap-1 transition-colors cursor-pointer ${useDarkTheme ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'
+                }`}>
                 <span>Solutions</span>
                 <ChevronDown className="w-4 h-4" />
               </div>
 
               {hoveredMenu === 'solutions' && (
                 <div className="absolute top-full left-1/2 -translate-x-1/2 pt-4 w-[380px]">
-                  <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 p-4 animate-fade-in">
+                  <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 p-4 animate-fade-in text-left">
                     <div className="space-y-2">
                       {solutionsMenuItems.map((item) => {
                         const Icon = item.icon;
@@ -202,22 +208,27 @@ export default function HeaderEnhanced({ scrollY, onLoginClick, onSignupClick }:
               )}
             </div>
 
-            <Link to="/pricing" className="text-gray-700 hover:text-gray-900 transition-colors">
+            <Link to="/pricing" className={`transition-colors ${useDarkTheme ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'
+              }`}>
               Pricing
             </Link>
-            <Link to="/resources" className="text-gray-700 hover:text-gray-900 transition-colors">
+            <Link to="/resources" className={`transition-colors ${useDarkTheme ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'
+              }`}>
               Resources
             </Link>
-            <Link to="/about" className="text-gray-700 hover:text-gray-900 transition-colors">
+            <Link to="/about" className={`transition-colors ${useDarkTheme ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'
+              }`}>
               About
             </Link>
           </div>
 
           <div className="hidden lg:flex items-center gap-4">
-            <button onClick={onLoginClick} className="text-gray-700 hover:text-gray-900 transition-colors px-4 py-2">
+            <button onClick={onLoginClick} className={`transition-colors px-4 py-2 ${useDarkTheme ? 'text-white hover:text-gray-200' : 'text-gray-700 hover:text-gray-900'
+              }`}>
               Login
             </button>
-            <button onClick={onSignupClick} className="bg-gray-900 text-white px-6 py-2.5 rounded-full hover:bg-gray-800 transition-all hover:shadow-lg hover:scale-105 flex items-center gap-2 group">
+            <button onClick={onSignupClick} className={`${useDarkTheme ? 'bg-white text-black hover:bg-gray-200' : 'bg-gray-900 text-white hover:bg-gray-800'
+              } px-6 py-2.5 rounded-full transition-all hover:shadow-lg hover:scale-105 flex items-center gap-2 group`}>
               <span>Try for Free</span>
               <span className="transform transition-transform group-hover:translate-x-1">→</span>
             </button>
@@ -225,14 +236,14 @@ export default function HeaderEnhanced({ scrollY, onLoginClick, onSignupClick }:
 
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-2"
+            className={`lg:hidden p-2 ${useDarkTheme ? 'text-white' : 'text-gray-900'}`}
           >
             {mobileMenuOpen ? <X /> : <Menu />}
           </button>
         </div>
 
         {mobileMenuOpen && (
-          <div className="lg:hidden mt-4 py-4 border-t border-gray-200 animate-fade-in">
+          <div className="lg:hidden mt-4 py-4 border-t border-gray-200 animate-fade-in bg-white rounded-lg p-4 absolute left-4 right-4 top-20 shadow-xl">
             <div className="flex flex-col gap-4">
               <Link to="/product" className="text-gray-700 hover:text-gray-900" onClick={() => setMobileMenuOpen(false)}>Product</Link>
               <Link to="/solutions/smb" className="text-gray-700 hover:text-gray-900" onClick={() => setMobileMenuOpen(false)}>Solutions</Link>

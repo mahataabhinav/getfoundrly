@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { X, Linkedin, Calendar, Clock, Check, Sparkles, ArrowLeft, Globe, MoreHorizontal, ThumbsUp, MessageCircle, Repeat2, Send as SendIcon, TrendingUp, BarChart3, RefreshCw } from 'lucide-react';
-import RobotChatbot from '../RobotChatbot';
+
 import { supabase } from '../../lib/supabase';
-import { createContentSchedule, updateContentSchedule } from '../../lib/database';
+import { createContentSchedule } from '../../lib/database';
 import { updateContentItem } from '../../lib/database';
 import { sendPostToN8n } from '../../lib/n8n-webhook';
 
@@ -106,9 +106,7 @@ export default function PublishModal({ isOpen, onClose, onPublish, post, brandNa
     },
   ];
 
-  const handlePublishNow = () => {
-    setStep('confirmPublish');
-  };
+
 
   const handleConfirmPublish = async () => {
     if (!userId || !brandId || !contentItemId) {
@@ -129,7 +127,8 @@ export default function PublishModal({ isOpen, onClose, onPublish, post, brandNa
           action: 'publish_now'
         },
         mediaType,
-        mediaUrls
+        mediaUrls,
+        imageUrl: mediaUrls.length > 0 ? mediaUrls[0] : undefined
       });
 
       // Update content item status locally
@@ -190,7 +189,8 @@ export default function PublishModal({ isOpen, onClose, onPublish, post, brandNa
           action: 'schedule'
         },
         mediaType,
-        mediaUrls
+        mediaUrls,
+        imageUrl: mediaUrls.length > 0 ? mediaUrls[0] : undefined
       });
 
       // Update content item status
@@ -252,9 +252,7 @@ export default function PublishModal({ isOpen, onClose, onPublish, post, brandNa
           <p className="text-sm text-gray-500 mb-6">
             You can track status in Analytics.
           </p>
-          <div className="flex justify-center">
-            <RobotChatbot size={80} animate={true} gesture="celebrate" />
-          </div>
+
         </div>
       </div>
     );
@@ -281,48 +279,11 @@ export default function PublishModal({ isOpen, onClose, onPublish, post, brandNa
         <div className="p-8 space-y-6 overflow-y-auto max-h-[calc(90vh-88px)]">
           {step === 'preview' && (
             <div className="space-y-6 animate-slide-in">
-              <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
-                <div className="flex items-start gap-4 mb-4">
-                  <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center font-bold text-blue-600">
-                    {brandName ? brandName.substring(0, 2).toUpperCase() : 'B'}
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-[#1A1A1A]">{brandName || 'Your Brand'}</h3>
-                    <p className="text-sm text-gray-500">Posting to LinkedIn</p>
-                  </div>
-                </div>
-                <div className="whitespace-pre-wrap text-gray-700 font-medium leading-relaxed">
-                  {post || 'No content generated yet.'}
-                </div>
-              </div>
-
-              <div className="flex gap-4">
-                <button
-                  onClick={() => setStep('schedule')}
-                  className="flex-1 py-4 border-2 border-gray-200 text-gray-700 rounded-xl font-medium hover:border-gray-900 transition-all flex items-center justify-center gap-2"
-                >
-                  <Calendar className="w-5 h-5" />
-                  Schedule for Later
-                </button>
-                <button
-                  onClick={handlePublishNow}
-                  className="flex-1 py-4 bg-[#1A1A1A] text-white rounded-xl font-medium hover:bg-black transition-all flex items-center justify-center gap-2"
-                >
-                  <SendIcon className="w-5 h-5" />
-                  Publish Now
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Connect step removed as n8n handles it */}
-
-          {step === 'preview' && (
-            <div className="space-y-6 animate-slide-in">
               <div className="text-center">
                 <h3 className="text-xl font-semibold text-[#1A1A1A] mb-2">
-                  Here's how your post will look on LinkedIn
+                  Preview & Publish
                 </h3>
+                <p className="text-gray-600">Review your post and confirm to publish</p>
               </div>
 
               <div className="bg-gradient-to-br from-gray-50 to-slate-50 rounded-2xl p-6 border border-gray-200">
@@ -358,6 +319,33 @@ export default function PublishModal({ isOpen, onClose, onPublish, post, brandNa
                     <div className="mt-3 mb-4">
                       <pre className="whitespace-pre-wrap font-sans text-[#1A1A1A] leading-relaxed text-[14px]">{post}</pre>
                     </div>
+
+                    {/* Media Preview */}
+                    {mediaType === 'image' && mediaUrls.length > 0 && (
+                      <div className="mb-4">
+                        <img
+                          src={mediaUrls[0]}
+                          alt="Post attachment"
+                          className="w-full h-auto max-h-[500px] object-contain bg-gray-50 border border-gray-100 rounded-md"
+                        />
+                      </div>
+                    )}
+
+                    {mediaType === 'video' && mediaUrls.length > 0 && (
+                      <div className="mb-4 relative">
+                        <img
+                          src={mediaUrls[0]}
+                          alt="Video thumbnail"
+                          className="w-full h-auto max-h-[500px] object-contain bg-gray-900 rounded-md opacity-90"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-16 h-16 bg-black/50 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/20">
+                            <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[20px] border-l-white border-b-[10px] border-b-transparent ml-1"></div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                   </div>
 
                   <div className="border-t border-gray-200 px-4 py-2 flex items-center justify-between text-xs text-gray-600">
@@ -389,15 +377,6 @@ export default function PublishModal({ isOpen, onClose, onPublish, post, brandNa
                 </div>
               </div>
 
-              <div className="flex justify-center">
-                <div className="relative">
-                  <RobotChatbot size={60} animate={true} gesture="thinking" />
-                  <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 whitespace-nowrap">
-                    <p className="text-xs text-gray-700">Looks good? Let's publish or schedule it.</p>
-                  </div>
-                </div>
-              </div>
-
               <div className="flex gap-3">
                 <button
                   onClick={onClose}
@@ -410,85 +389,6 @@ export default function PublishModal({ isOpen, onClose, onPublish, post, brandNa
                   className="flex-1 bg-gray-100 text-[#1A1A1A] py-3 px-6 rounded-xl font-medium hover:bg-gray-200 transition-all"
                 >
                   Schedule for Later
-                </button>
-                <button
-                  onClick={handlePublishNow}
-                  className="flex-1 bg-[#1A1A1A] text-white py-3 px-6 rounded-xl font-medium hover:bg-gray-800 transition-all hover:shadow-lg"
-                >
-                  Publish Now
-                </button>
-              </div>
-            </div>
-          )}
-
-          {step === 'confirmPublish' && (
-            <div className="space-y-6 animate-slide-in">
-              <div className="text-center mb-6">
-                <h3 className="text-2xl font-semibold text-[#1A1A1A] mb-2">
-                  Ready to publish?
-                </h3>
-                <p className="text-gray-600">This is how your post will appear on LinkedIn</p>
-              </div>
-
-              <div className="bg-white border border-gray-200 rounded-2xl p-6">
-                <div className="flex items-start gap-3 mb-4">
-                  <div
-                    className={`w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold`}
-                  >
-                    {brandName ? getInitials(brandName) : 'B'}
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-semibold text-[#1A1A1A]">{brandName}</p>
-                    <p className="text-sm text-gray-600">Founder at {brandName} • Just now</p>
-                  </div>
-                  <button className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
-                    <MoreHorizontal className="w-5 h-5 text-gray-600" />
-                  </button>
-                </div>
-
-                <p className="text-[#1A1A1A] whitespace-pre-wrap mb-4 leading-relaxed">{post}</p>
-
-                <div className="flex items-center gap-6 pt-4 border-t border-gray-100 text-gray-600">
-                  <button className="flex items-center gap-2 hover:text-blue-600 transition-colors">
-                    <ThumbsUp className="w-5 h-5" />
-                    <span className="text-sm">Like</span>
-                  </button>
-                  <button className="flex items-center gap-2 hover:text-blue-600 transition-colors">
-                    <MessageCircle className="w-5 h-5" />
-                    <span className="text-sm">Comment</span>
-                  </button>
-                  <button className="flex items-center gap-2 hover:text-blue-600 transition-colors">
-                    <Repeat2 className="w-5 h-5" />
-                    <span className="text-sm">Repost</span>
-                  </button>
-                  <button className="flex items-center gap-2 hover:text-blue-600 transition-colors">
-                    <SendIcon className="w-5 h-5" />
-                    <span className="text-sm">Send</span>
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex justify-center">
-                <div className="relative">
-                  <RobotChatbot size={60} animate={true} gesture="celebrate" />
-                  <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 whitespace-nowrap">
-                    <p className="text-xs text-gray-700">Ready to publish! Let's make it live.</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setStep('preview')}
-                  className="px-6 py-3 text-gray-600 hover:text-[#1A1A1A] transition-colors font-medium"
-                >
-                  Back
-                </button>
-                <button
-                  onClick={onClose}
-                  className="px-6 py-3 text-gray-600 hover:text-[#1A1A1A] transition-colors font-medium"
-                >
-                  Edit in Editor
                 </button>
                 <button
                   onClick={handleConfirmPublish}
@@ -504,16 +404,11 @@ export default function PublishModal({ isOpen, onClose, onPublish, post, brandNa
                     'Confirm Publish'
                   )}
                 </button>
-
-                {(!userId || !brandId || !contentItemId) && (
-                  <div className="text-center text-sm text-red-500 bg-red-50 p-2 rounded-lg mt-4">
-                    <p>Missing required data to publish.</p>
-                    <p className="text-xs">User: {userId ? 'OK' : 'Missing'}, Brand: {brandId ? 'OK' : 'Missing'}, Content: {contentItemId ? 'OK' : 'Missing'}</p>
-                  </div>
-                )}
               </div>
             </div>
           )}
+
+          {/* Connect step removed as n8n handles it */}
 
           {step === 'schedule' && (
             <div className="space-y-6 animate-slide-in">
@@ -612,12 +507,7 @@ export default function PublishModal({ isOpen, onClose, onPublish, post, brandNa
               </div>
 
               <div className="flex justify-center">
-                <div className="relative">
-                  <RobotChatbot size={60} animate={true} gesture="thinking" />
-                  <div className="absolute -top-12 right-0 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 max-w-xs">
-                    <p className="text-xs text-gray-700">I'll publish automatically at the optimal time.</p>
-                  </div>
-                </div>
+
               </div>
 
               <div className="flex gap-3">

@@ -20,12 +20,12 @@ export default function BuiltForFounders() {
   ];
 
   return (
-    <section className="relative py-32 bg-gradient-to-br from-gray-50 via-white to-slate-50">
+    <section className="relative py-32 bg-[#0A0A0A]">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-16">
-          <h2 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
+          <h2 className="text-5xl md:text-6xl font-bold text-white mb-6">
             Built for Founders,
-            <span className="block mt-2">Not Marketers</span>
+            <span className="block mt-2 text-gray-400">Not Marketers</span>
           </h2>
         </div>
 
@@ -35,12 +35,12 @@ export default function BuiltForFounders() {
             return (
               <div
                 key={feature.text}
-                className="bg-white rounded-3xl p-8 shadow-lg border-2 border-gray-100 hover:border-gray-200 transition-all duration-300 hover:shadow-2xl hover:scale-105 text-center"
+                className="bg-white/5 rounded-3xl p-8 backdrop-blur-sm border border-white/10 hover:border-white/20 transition-all duration-300 hover:shadow-2xl hover:scale-105 text-center hover:bg-white/10"
               >
-                <div className={`inline-flex w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.color} items-center justify-center mb-6 transform transition-transform hover:scale-110 hover:rotate-6`}>
+                <div className={`inline-flex w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.color} items-center justify-center mb-6 transform transition-transform hover:scale-110 hover:rotate-6 shadow-lg`}>
                   <Icon className="w-8 h-8 text-white" />
                 </div>
-                <p className="text-lg font-medium text-gray-900 leading-relaxed">
+                <p className="text-lg font-medium text-gray-300 leading-relaxed">
                   {feature.text}
                 </p>
               </div>

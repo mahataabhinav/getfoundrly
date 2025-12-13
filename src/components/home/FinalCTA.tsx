@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import RobotChatbot from '../RobotChatbot';
 
 interface FinalCTAProps {
   onSignupClick: () => void;
@@ -14,7 +13,7 @@ export default function FinalCTA({ onSignupClick, onLoginClick }: FinalCTAProps)
   }, []);
 
   return (
-    <section className="relative py-32 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 overflow-hidden">
+    <section className="relative py-32 bg-[#0A0A0A] overflow-hidden">
       <div className="absolute inset-0">
         <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-gradient-to-br from-blue-600/20 via-purple-600/20 to-transparent rounded-full blur-3xl animate-float" />
         <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-gradient-to-br from-cyan-600/20 via-blue-600/15 to-transparent rounded-full blur-3xl animate-float-delayed" />
@@ -47,21 +46,6 @@ export default function FinalCTA({ onSignupClick, onLoginClick }: FinalCTAProps)
             </button>
           </div>
 
-          <div className={`relative flex justify-center transition-all duration-1000 delay-300 ${isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}`}>
-            <div className="relative group">
-              <div className="absolute -inset-10 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-full blur-2xl" />
-              <div className="relative">
-                <RobotChatbot size={140} animate={true} gesture="wave" />
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 -translate-y-full">
-                  <div className="bg-white/95 backdrop-blur-sm px-6 py-3 rounded-2xl shadow-xl border border-gray-200/50 whitespace-nowrap">
-                    <p className="text-sm font-medium text-gray-900">
-                      Ready when you are.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </section>
