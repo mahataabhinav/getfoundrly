@@ -3,6 +3,7 @@ import { Menu } from 'lucide-react';
 import TopNav from '../components/dashboard/TopNav';
 import Sidebar from '../components/dashboard/Sidebar';
 import HomeSection from '../components/dashboard/HomeSection';
+import CalendarSection from '../components/dashboard/CalendarSection';
 import CreateSection from '../components/dashboard/CreateSection';
 import AnalyzeSection from '../components/dashboard/AnalyzeSection';
 import GrowSection from '../components/dashboard/GrowSection';
@@ -54,6 +55,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     switch (activeTab) {
       case 'Home':
         return <HomeSection />;
+      case 'Calendar':
+        return <CalendarSection />;
       case 'Create':
         return <CreateSection />;
       case 'Analyze':
@@ -77,7 +80,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/20">
+    <div className="min-h-screen bg-[#0F0F11]">
       <TopNav activeTab={activeTab} onTabChange={setActiveTab} />
       <Sidebar
         activeTab={activeTab}

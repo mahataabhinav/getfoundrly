@@ -332,18 +332,34 @@ export default function PublishModal({ isOpen, onClose, onPublish, post, brandNa
                     )}
 
                     {mediaType === 'video' && mediaUrls.length > 0 && (
-                      <div className="mb-4 relative">
-                        <img
-                          src={mediaUrls[0]}
-                          alt="Video thumbnail"
-                          className="w-full h-auto max-h-[500px] object-contain bg-gray-900 rounded-md opacity-90"
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="w-16 h-16 bg-black/50 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/20">
-                            <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[20px] border-l-white border-b-[10px] border-b-transparent ml-1"></div>
-                          </div>
-                        </div>
+                      <div className="mb-4 relative rounded-md overflow-hidden bg-black">
+                        {mediaUrls[0].includes('screenpal.com') ? (
+                          <iframe
+                            src={mediaUrls[0]}
+                            title="Screenpal Video"
+                            className="w-full aspect-video border-0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                          />
+                        ) : (mediaUrls[0].includes('youtube.com') || mediaUrls[0].includes('youtu.be')) ? (
+                          <iframe
+                            src={mediaUrls[0].includes('youtu.be')
+                              ? mediaUrls[0].replace('youtu.be/', 'www.youtube.com/embed/')
+                              : mediaUrls[0].replace('watch?v=', 'embed/')}
+                            title="YouTube Video"
+                            className="w-full aspect-video border-0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                          />
+                        ) : (
+                          <video
+                            src={mediaUrls[0]}
+                            controls
+                            className="w-full h-auto max-h-[500px] object-contain"
+                          />
+                        )}
                       </div>
+
                     )}
 
                   </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bell, User, LogOut } from 'lucide-react';
+import { Bell, LogOut } from 'lucide-react';
 import Logo from '../Logo';
 import { supabase } from '../../lib/supabase';
 
@@ -34,21 +34,20 @@ export default function TopNav({ activeTab, onTabChange }: TopNavProps) {
   const tabs = ['Home', 'Create', 'Analyze', 'Grow', 'BrandDNA'];
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100 h-[73px]">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0F0F11]/80 backdrop-blur-xl border-b border-white/5 h-[73px]">
       <div className="px-6 h-full flex items-center">
         <div className="flex items-center justify-between w-full">
-          <Logo variant="dark" iconSize={28} showWordmark={true} />
+          <Logo variant="light" iconSize={28} showWordmark={true} />
 
           <div className="hidden md:flex items-center gap-1">
             {tabs.map((tab) => (
               <button
                 key={tab}
                 onClick={() => onTabChange(tab)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  activeTab === tab
-                    ? 'bg-gray-100 text-[#1A1A1A]'
-                    : 'text-gray-600 hover:text-[#1A1A1A] hover:bg-gray-50'
-                }`}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab
+                  ? 'bg-[#CCFF00] text-black shadow-[0_0_20px_rgba(204,255,0,0.2)]'
+                  : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                  }`}
               >
                 {tab}
               </button>
@@ -56,9 +55,9 @@ export default function TopNav({ activeTab, onTabChange }: TopNavProps) {
           </div>
 
           <div className="flex items-center gap-4">
-            <button className="relative p-2 hover:bg-gray-100 rounded-lg transition-all">
-              <Bell className="w-5 h-5 text-gray-600" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-blue-500 rounded-full" />
+            <button className="relative p-2 hover:bg-white/5 rounded-lg transition-all">
+              <Bell className="w-5 h-5 text-zinc-400 hover:text-white" />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#CCFF00] rounded-full" />
             </button>
             <div className="relative">
               <button

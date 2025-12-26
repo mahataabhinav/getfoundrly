@@ -118,6 +118,7 @@ export interface PublishToN8nPayload {
   mediaType?: 'image' | 'video' | 'none';
   mediaUrls?: string[];
   imageUrl?: string; // Simple string URL for single image
+  videoUrl?: string; // Simple string URL for single video
   scheduledAt?: string;
   platform: 'linkedin';
   metadata?: any;
@@ -141,7 +142,8 @@ export async function sendPostToN8n(data: PublishToN8nPayload): Promise<void> {
       mediaType: data.mediaType || 'none',
       mediaUrls: data.mediaUrls || data.images || [],
       // Ensure we send a simple imageUrl if available, or extract from array
-      imageUrl: data.imageUrl || (data.mediaUrls && data.mediaUrls.length > 0 ? data.mediaUrls[0] : null),
+      imageUrl: (data.mediaType === 'image' || !data.mediaType) ? (data.imageUrl || (data.mediaUrls && data.mediaUrls.length > 0 ? data.mediaUrls[0] : null)) : null,
+      videoUrl: data.mediaType === 'video' ? (data.mediaUrls && data.mediaUrls.length > 0 ? data.mediaUrls[0] : null) : null,
       timestamp: new Date().toISOString(),
       source: 'foundrly-app',
     };
@@ -168,5 +170,92 @@ export async function sendPostToN8n(data: PublishToN8nPayload): Promise<void> {
   } catch (error) {
     console.error('Failed to send post to n8n:', error);
     throw error; // Rethrow to let the UI handle the error state
+  }
+}
+
+export interface LinkedInAnalyticsInput {
+  userId: string;
+  linkedinAccessToken: string;
+  organizationId?: string;
+  timeRange: 'last_30_days' | 'last_7_days' | 'last_90_days' | 'last_365_days';
+}
+
+export interface LinkedInAnalyticsResponse {
+  success: boolean;
+  data: {
+    summary: {
+      totalImpressions: number;
+      totalEngagements: number;
+      totalFollowers: number;
+      engagementRate: string;
+      followerGrowth: number;
+      totalPosts: number;
+    };
+    charts: {
+      impressionsOverTime: Array<{ date: string; value: number }>;
+      engagementsByType: Array<{ type: string; value: number }>;
+      followerGrowth: Array<{ date: string; value: number }>;
+      engagementTrends: Array<{ date: string; value: number }>;
+    };
+    topPosts: Array<{
+      id: string;
+      content: string;
+      metrics: {
+        likes: number;
+        comments: number;
+        shares: number;
+        impressions: number;
+      };
+      postedAt: string;
+    }>;
+    profile: any;
+    organization: any;
+    aiInsights: {
+      insights: string[];
+      bestPostingTimes: string[];
+      contentTypeRecommendations: Record<string, string>;
+      growthTrend: string;
+    };
+  };
+  timestamp: string;
+}
+
+/**
+ * Fetches LinkedIn analytics via n8n webhook
+ * @param data - Input data containing user ID and access token
+ * @returns Promise that resolves with analytics data
+ */
+export async function fetchLinkedInAnalytics(data: LinkedInAnalyticsInput): Promise<LinkedInAnalyticsResponse> {
+  // Use the specific analytics webhook URL if defined, otherwise fall back to a default pattern or error
+  const analyticsWebhookUrl = "https://amahata96.app.n8n.cloud/webhook/linkedin-analytics";
+
+  try {
+    console.log('Fetching analytics from n8n...');
+
+    // Create a timeout controller to abort if it takes too long (e.g., 30 seconds)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+    const response = await fetch(analyticsWebhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Analytics request failed: ${response.status} ${response.statusText} - ${errorText}`);
+    }
+
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error('Error fetching analytics:', error);
+    throw error;
   }
 }

@@ -9,6 +9,7 @@ import OpenAI from 'openai';
 import type { BrandProfile } from './brand-extractor';
 import { generateBrandImages as generateGeminiImages } from './geminiImage';
 import { generateBrandImages as generateSeedreamImages } from './seedreamImage';
+import { generateVideoWithVeo, type GeneratedVideo } from './veoVideo';
 
 // Session-based asset cache
 const ASSET_CACHE_PREFIX = 'foundrly_asset_cache_';
@@ -224,6 +225,18 @@ export async function generateImagesWithSeedream(
     }
     throw error;
   }
+}
+
+/**
+ * Generate a video using Google Veo
+ */
+export async function generateVideo(
+  options: GenerateImageOptions
+): Promise<GeneratedVideo> {
+  const { brandProfile, brandName, imagePrompt, brandDNA } = options;
+  const prompt = imagePrompt || `Promotional video for ${brandName}`;
+
+  return await generateVideoWithVeo(prompt, brandProfile, brandName, brandDNA);
 }
 
 /**
