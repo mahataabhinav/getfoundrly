@@ -9,9 +9,9 @@ interface BrandDNAProfileListProps {
   onCreateNew: () => void;
 }
 
-export default function BrandDNAProfileList({ 
-  onSelectProfile, 
-  onCreateNew 
+export default function BrandDNAProfileList({
+  onSelectProfile,
+  onCreateNew
 }: BrandDNAProfileListProps) {
   const [profiles, setProfiles] = useState<(BrandDNA & { brands?: { name: string; website_url: string } })[]>([]);
   const [loading, setLoading] = useState(true);
@@ -21,20 +21,20 @@ export default function BrandDNAProfileList({
   const [deleting, setDeleting] = useState(false);
   const menuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-    const loadProfiles = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-        
-        setUserId(user.id);
-        const brandDNAList = await getBrandDNAList(user.id);
-        setProfiles(brandDNAList as any);
-      } catch (error) {
-        console.error('Error loading BrandDNA profiles:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const loadProfiles = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      setUserId(user.id);
+      const brandDNAList = await getBrandDNAList(user.id);
+      setProfiles(brandDNAList as any);
+    } catch (error) {
+      console.error('Error loading BrandDNA profiles:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     loadProfiles();
@@ -109,8 +109,8 @@ export default function BrandDNAProfileList({
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1A1A1A] mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading BrandDNA profiles...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-zinc-500">Loading BrandDNA profiles...</p>
         </div>
       </div>
     );
@@ -120,12 +120,12 @@ export default function BrandDNAProfileList({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold text-[#1A1A1A]">BrandDNA Profiles</h2>
-          <p className="text-gray-600 mt-1">Manage your brand knowledge base</p>
+          <h2 className="text-2xl font-semibold text-white">BrandDNA Profiles</h2>
+          <p className="text-zinc-400 mt-1">Manage your brand knowledge base</p>
         </div>
         <button
           onClick={onCreateNew}
-          className="flex items-center gap-2 px-4 py-2 bg-[#1A1A1A] text-white rounded-xl font-medium hover:bg-gray-800 transition-all"
+          className="flex items-center gap-2 px-4 py-2 bg-white text-black rounded-xl font-medium hover:bg-gray-200 transition-all"
         >
           <Plus className="w-5 h-5" />
           Create New
@@ -133,13 +133,13 @@ export default function BrandDNAProfileList({
       </div>
 
       {profiles.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">
-          <Globe className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-[#1A1A1A] mb-2">No BrandDNA profiles yet</h3>
-          <p className="text-gray-600 mb-6">Create your first BrandDNA profile to get started</p>
+        <div className="bg-[#18181B] rounded-2xl border border-white/5 p-12 text-center">
+          <Globe className="w-12 h-12 text-zinc-600 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-white mb-2">No BrandDNA profiles yet</h3>
+          <p className="text-zinc-400 mb-6">Create your first BrandDNA profile to get started</p>
           <button
             onClick={onCreateNew}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[#1A1A1A] text-white rounded-xl font-medium hover:bg-gray-800 transition-all"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black rounded-xl font-medium hover:bg-gray-200 transition-all"
           >
             <Plus className="w-5 h-5" />
             Create BrandDNA Profile
@@ -150,17 +150,17 @@ export default function BrandDNAProfileList({
           {profiles.map((profile) => {
             // Handle both join formats: brands (array) or brands (object)
             const brandsData = (profile as any).brands;
-            const brandName = Array.isArray(brandsData) 
+            const brandName = Array.isArray(brandsData)
               ? (brandsData[0]?.name || 'Unknown Brand')
               : (brandsData?.name || 'Unknown Brand');
             const websiteUrl = Array.isArray(brandsData)
               ? (brandsData[0]?.website_url || '')
               : (brandsData?.website_url || '');
-            
+
             return (
               <div
                 key={profile.id}
-                className="bg-white rounded-2xl border border-gray-200 p-6 hover:border-gray-300 hover:shadow-lg transition-all group relative"
+                className="bg-[#18181B] rounded-2xl border border-white/5 p-6 hover:border-white/10 hover:shadow-lg transition-all group relative"
               >
                 {/* Three-dot menu */}
                 <div className="absolute top-4 right-4" ref={(el) => { menuRefs.current[profile.id] = el; }}>
@@ -169,21 +169,21 @@ export default function BrandDNAProfileList({
                       e.stopPropagation();
                       setOpenMenuId(openMenuId === profile.id ? null : profile.id);
                     }}
-                    className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+                    className="p-1.5 rounded-lg hover:bg-white/5 transition-colors"
                   >
-                    <MoreVertical className="w-5 h-5 text-gray-600" />
+                    <MoreVertical className="w-5 h-5 text-zinc-500" />
                   </button>
 
                   {/* Dropdown menu */}
                   {openMenuId === profile.id && (
-                    <div className="absolute right-0 top-10 bg-white rounded-xl border border-gray-200 shadow-lg z-50 min-w-[160px]">
+                    <div className="absolute right-0 top-10 bg-[#18181B] rounded-xl border border-white/10 shadow-lg z-50 min-w-[160px]">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           setOpenMenuId(null);
                           onSelectProfile(profile.brand_id);
                         }}
-                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors first:rounded-t-xl"
+                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-zinc-300 hover:bg-white/5 transition-colors first:rounded-t-xl"
                       >
                         <Eye className="w-4 h-4" />
                         View Profile
@@ -194,7 +194,7 @@ export default function BrandDNAProfileList({
                           setOpenMenuId(null);
                           setDeleteConfirmId(profile.brand_id);
                         }}
-                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors last:rounded-b-xl"
+                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 transition-colors last:rounded-b-xl"
                       >
                         <Trash2 className="w-4 h-4" />
                         Delete
@@ -207,35 +207,35 @@ export default function BrandDNAProfileList({
                 <button
                   onClick={() => onSelectProfile(profile.brand_id)}
                   className="w-full text-left"
-              >
+                >
                   <div className="flex items-start justify-between mb-4 pr-8">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-[#1A1A1A] truncate group-hover:text-blue-600 transition-colors">
-                      {brandName}
-                    </h3>
-                    {websiteUrl && (
-                      <div className="flex items-center gap-1 mt-1 text-sm text-gray-500">
-                        <Globe className="w-3 h-3" />
-                        <span className="truncate">{websiteUrl}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  {getStatusBadge(profile.status, profile.completion_score)}
-                  
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <TrendingUp className="w-4 h-4" />
-                      <span>{profile.completion_score}% complete</span>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-white truncate group-hover:text-[#CCFF00] transition-colors">
+                        {brandName}
+                      </h3>
+                      {websiteUrl && (
+                        <div className="flex items-center gap-1 mt-1 text-sm text-zinc-400">
+                          <Globe className="w-3 h-3" />
+                          <span className="truncate">{websiteUrl}</span>
+                        </div>
+                      )}
                     </div>
-                    <span className="text-gray-500 text-xs">
-                      {new Date(profile.updated_at).toLocaleDateString()}
-                    </span>
                   </div>
-                </div>
-              </button>
+
+                  <div className="space-y-3">
+                    {getStatusBadge(profile.status, profile.completion_score)}
+
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2 text-zinc-400">
+                        <TrendingUp className="w-4 h-4" />
+                        <span>{profile.completion_score}% complete</span>
+                      </div>
+                      <span className="text-zinc-500 text-xs">
+                        {new Date(profile.updated_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                </button>
               </div>
             );
           })}
@@ -244,24 +244,24 @@ export default function BrandDNAProfileList({
 
       {/* Delete Confirmation Dialog */}
       {deleteConfirmId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-[#18181B] rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl border border-white/10">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-[#1A1A1A]">Delete Brand Profile</h3>
+              <h3 className="text-lg font-semibold text-white">Delete Brand Profile</h3>
               <button
                 onClick={() => setDeleteConfirmId(null)}
-                className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-1 hover:bg-white/5 rounded-lg transition-colors"
               >
-                <X className="w-5 h-5 text-gray-600" />
+                <X className="w-5 h-5 text-zinc-500" />
               </button>
             </div>
-            <p className="text-gray-600 mb-6">
+            <p className="text-zinc-400 mb-6">
               Are you sure you want to delete this brand profile? This will permanently delete the brand and all associated BrandDNA data. This action cannot be undone.
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setDeleteConfirmId(null)}
-                className="flex-1 px-4 py-2 bg-gray-100 text-[#1A1A1A] rounded-xl font-medium hover:bg-gray-200 transition-all"
+                className="flex-1 px-4 py-2 bg-white/5 text-white rounded-xl font-medium hover:bg-white/10 transition-all border border-white/5"
               >
                 Cancel
               </button>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, ArrowRight, RefreshCw, Edit, Sparkles, TrendingUp, BookOpen, Lightbulb, FileText, Rocket, Calendar, Zap, Image, LayoutGrid, Send, Loader2 } from 'lucide-react';
+import { X, ArrowRight, RefreshCw, Edit, Sparkles, TrendingUp, BookOpen, Lightbulb, FileText, Rocket, Calendar, Zap, Image, LayoutGrid, Send, Loader2, Search, Palette, MessageSquare, CheckCircle2, Smartphone, Video as VideoIcon, Play } from 'lucide-react';
 
 import VoiceInput from '../VoiceInput';
 import PostEditor from './PostEditor';
@@ -12,7 +12,7 @@ import { createBrandDNAFromExtraction, getBrandDNA } from '../../lib/brand-dna';
 import BrandDNAPreview from './BrandDNAPreview';
 import type { BrandDNA } from '../../types/database';
 import { generateLinkedInPostEnhanced, regenerateLinkedInPost, type LinkedInPostContent } from '../../lib/openai-enhanced';
-import { generateImages, saveGeneratedImages, type GeneratedImage } from '../../lib/asset-generator';
+import { generateImages, saveGeneratedImages, generateVideo, type GeneratedImage, type GeneratedVideo } from '../../lib/asset-generator';
 import { getPublicUrl } from '../../lib/storage';
 import ImagePicker from '../ImagePicker';
 import { sendWebsiteDataToN8n, sendPostTypeSelectionToN8n } from '../../lib/n8n-webhook';
@@ -30,6 +30,14 @@ type PostType = {
   icon: any;
   color: string;
 };
+
+const LOADING_STEPS = [
+  { id: 1, label: 'Scanning website content...', icon: Search, duration: 2000 },
+  { id: 2, label: 'Analyzing visual identity & colors...', icon: Palette, duration: 2500 },
+  { id: 3, label: 'Extracting tone of voice...', icon: MessageSquare, duration: 2500 },
+  { id: 4, label: 'Identifying value propositions...', icon: CheckCircle2, duration: 2000 },
+  { id: 5, label: 'Finalizing brand profile...', icon: Smartphone, duration: 1500 },
+];
 
 export default function LinkedInPostGenerator({ isOpen, onClose }: LinkedInPostGeneratorProps) {
   const [step, setStep] = useState(1);
@@ -50,10 +58,14 @@ export default function LinkedInPostGenerator({ isOpen, onClose }: LinkedInPostG
   const [extractionStatus, setExtractionStatus] = useState<string>('');
   const [extractionError, setExtractionError] = useState<string | null>(null);
   const [selectedVariation, setSelectedVariation] = useState<'main' | 'versionA' | 'versionB'>('main');
-  const [activeAssetTab, setActiveAssetTab] = useState<'images'>('images');
+  const [activeAssetTab, setActiveAssetTab] = useState<'images' | 'videos'>('images');
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
+  const [generatedVideos, setGeneratedVideos] = useState<GeneratedVideo[]>([]);
+  const [isGeneratingVideos, setIsGeneratingVideos] = useState(false);
+  const [videoGenerationError, setVideoGenerationError] = useState<string | null>(null);
 
   const [selectedImage, setSelectedImage] = useState<GeneratedImage | null>(null);
+  const [selectedVideo, setSelectedVideo] = useState<GeneratedVideo | null>(null);
   const [showImagePreview, setShowImagePreview] = useState(false);
 
   // imageProvider state is technically no longer "selected" for generation since we do all, 
@@ -63,6 +75,7 @@ export default function LinkedInPostGenerator({ isOpen, onClose }: LinkedInPostG
   const [isGeneratingImages, setIsGeneratingImages] = useState(false);
   const [showBrandDNAPreview, setShowBrandDNAPreview] = useState(false);
   const [extractedBrandDNA, setExtractedBrandDNA] = useState<BrandDNA | null>(null);
+  const [currentLoadingStep, setCurrentLoadingStep] = useState(0);
 
   const postTypes: PostType[] = [
     { id: 'thought-leadership', title: 'Thought Leadership', description: 'Share expert insights', icon: Lightbulb, color: 'from-blue-500 to-blue-600' },
@@ -155,12 +168,29 @@ export default function LinkedInPostGenerator({ isOpen, onClose }: LinkedInPostG
     };
 
     checkOAuthCompletion();
+    checkOAuthCompletion();
   }, [brand]);
+
+  // Gamified loading effect
+  useEffect(() => {
+    let timeout: NodeJS.Timeout;
+
+    if (isExtracting && currentLoadingStep < LOADING_STEPS.length - 1) {
+      // Advance to next step based on duration, but stop at the last step until actual completion
+      const stepDuration = LOADING_STEPS[currentLoadingStep].duration;
+      timeout = setTimeout(() => {
+        setCurrentLoadingStep(prev => Math.min(prev + 1, LOADING_STEPS.length - 1));
+      }, stepDuration);
+    }
+
+    return () => clearTimeout(timeout);
+  }, [isExtracting, currentLoadingStep]);
 
   const handleStep1Continue = async () => {
     if (brandData.name && brandData.url && userId) {
       setIsSaving(true);
       setIsExtracting(true);
+      setCurrentLoadingStep(0);
       setExtractionError(null);
 
       try {
@@ -210,7 +240,7 @@ export default function LinkedInPostGenerator({ isOpen, onClose }: LinkedInPostG
           const existingBrandDNA = await getBrandDNA(brandRecord.id);
           if (!existingBrandDNA) {
             // Create BrandDNA from extraction
-            setExtractionStatus('Scraping website with Firecrawl...');
+            setExtractionStatus('Analyzing brand...');
             const newBrandDNA = await createBrandDNAFromExtraction(brandRecord.id, userId, brandData.name, brandData.url);
             console.log('BrandDNA created successfully');
             setExtractedBrandDNA(newBrandDNA);
@@ -405,12 +435,12 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
   const autoGenerateAssets = async () => {
     if (!userId || !brand || !brandProfile) return;
 
-    // Generate images and videos in parallel
+    // Generate images in parallel
     setIsGeneratingImages(true);
     setImageGenerationError(null);
 
     try {
-      // Parallel generation of Images (Gemini + DALL-E) only - Video removed per user request
+      // Parallel generation of Images (Gemini + DALL-E) only
       const [geminiImagesResult, dalleImagesResult] = await Promise.allSettled([
         generateImages({
           brandProfile,
@@ -478,6 +508,88 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
       setImageGenerationError(error.message || 'Couldn\'t generate assets. Try again.');
     } finally {
       setIsGeneratingImages(false);
+    }
+  };
+
+  /**
+   * On-demand video generation
+   */
+  const handleGenerateVideo = async () => {
+    if (!brandProfile || isGeneratingVideos) return;
+
+    setIsGeneratingVideos(true);
+    setVideoGenerationError(null);
+
+    try {
+      const video = await generateVideo({
+        brandProfile,
+        brandName: brandData.name,
+        postType: selectedType,
+        topic: context.topic,
+        contextDetails: context.details || undefined,
+        // Use video prompt if available or image prompt as base
+        imagePrompt: generatedContent?.videoPrompt || generatedContent?.imagePrompts?.primary,
+        brandDNA: extractedBrandDNA || undefined,
+      });
+
+      setGeneratedVideos([video]);
+      // setSelectedVideo(video); // Disabled as per user request (manual attach only)
+
+    } catch (error: any) {
+      console.error('Error generating video:', error);
+      setVideoGenerationError(error.message || 'Failed to generate video');
+    } finally {
+      setIsGeneratingVideos(false);
+    }
+  };
+
+  const handleAttachVideo = async (video: GeneratedVideo) => {
+    if (!userId || !brand || !contentItem) return;
+
+    try {
+      setIsSaving(true);
+
+      // Update local state
+      setSelectedVideo(video);
+      setSelectedImage(null); // Clear image selection as we only support one media type
+
+      // Update content item in database
+      const updates = {
+        media_url: video.url,
+        media_type: 'video',
+        metadata: {
+          ...contentItem.metadata,
+          attachedVideo: {
+            id: video.id,
+            duration: video.metadata.duration,
+            provider: video.metadata.provider,
+            thumbnailUrl: video.thumbnailUrl
+          }
+        }
+      };
+
+      await updateContentItem(contentItem.id, updates);
+
+      // In a real app we might upload the video or save this reference.
+      // Since our video.url is already a public URL (mock or Screenpal), we can use it directly.
+
+    } catch (error: any) {
+      console.error('Error attaching video:', error);
+      alert(`Failed to attach video: ${error?.message || 'Unknown error'}.`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleAssetTabChange = (tab: 'images' | 'videos') => {
+    setActiveAssetTab(tab);
+
+    // Auto-generate videos if switching to video tab and none exist (OPTIONAL: per user request "only generated when user clicks the tab", 
+    // interpreting "clicks the tab" as the trigger, OR require an explicit "Generate" button inside the tab. 
+    // The request said: "make sure the video is only generated when user clicks the tab of video". 
+    // So hitting the tab implies generation start.)
+    if (tab === 'videos' && generatedVideos.length === 0 && !isGeneratingVideos) {
+      handleGenerateVideo();
     }
   };
 
@@ -802,62 +914,117 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
                   </p>
                 </div>
 
-                <div className="max-w-lg mx-auto space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Website Name
-                    </label>
-                    <VoiceInput
-                      value={brandData.name}
-                      onChange={(value) => setBrandData({ ...brandData, name: value })}
-                      placeholder="e.g., Acme Inc."
-                    />
-                  </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Website URL
-                    </label>
-                    <VoiceInput
-                      value={brandData.url}
-                      onChange={(value) => setBrandData({ ...brandData, url: value })}
-                      placeholder="https://example.com"
-                    />
-                  </div>
 
-                  <button
-                    onClick={handleStep1Continue}
-                    disabled={!brandData.name || !brandData.url || isSaving}
-                    className="w-full bg-[#1A1A1A] text-white py-3 px-6 rounded-xl font-medium hover:bg-gray-800 transition-all hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 group"
-                  >
-                    {isSaving ? (
-                      <>
-                        {isExtracting ? (
-                          <>
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                            <span>{extractionStatus || 'Analyzing your brand with Firecrawl...'}</span>
-                          </>
-                        ) : (
-                          <>
-                            <RefreshCw className="w-5 h-5 animate-spin" />
-                            <span>Saving...</span>
-                          </>
-                        )}
-                      </>
-                    ) : (
-                      <>
-                        <span>Continue</span>
-                        <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                      </>
-                    )}
-                  </button>
-
-                  {extractionError && (
-                    <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                      <p className="text-sm text-yellow-800">{extractionError}</p>
+                {isExtracting ? (
+                  <div className="py-8 animate-fade-in">
+                    <div className="mb-8 text-center">
+                      <div className="relative w-20 h-20 mx-auto mb-6">
+                        <div className="absolute inset-0 border-4 border-gray-100 rounded-full"></div>
+                        <div className="absolute inset-0 border-4 border-[#1A1A1A] rounded-full border-t-transparent animate-spin"></div>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          {(() => {
+                            const CurrentIcon = LOADING_STEPS[currentLoadingStep].icon;
+                            return <CurrentIcon className="w-8 h-8 text-[#1A1A1A]" />;
+                          })()}
+                        </div>
+                      </div>
+                      <h3 className="text-xl font-semibold text-[#1A1A1A] mb-2">
+                        {LOADING_STEPS[currentLoadingStep].label}
+                      </h3>
+                      <p className="text-gray-500 text-sm">
+                        This process typically takes 30-60 seconds. Please do not close this window.
+                      </p>
                     </div>
-                  )}
-                </div>
+
+                    <div className="max-w-md mx-auto space-y-4">
+                      {LOADING_STEPS.map((step, index) => {
+                        const isActive = index === currentLoadingStep;
+                        const isCompleted = index < currentLoadingStep;
+                        const Icon = step.icon;
+
+                        return (
+                          <div
+                            key={step.id}
+                            className={`flex items-center gap-4 p-3 rounded-xl border transition-all duration-300 ${isActive
+                              ? 'bg-gray-50 border-gray-200 shadow-sm'
+                              : isCompleted
+                                ? 'bg-white border-gray-100 opacity-50'
+                                : 'border-transparent opacity-30'
+                              }`}
+                          >
+                            <div className={`
+                              w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-300
+                              ${isActive ? 'bg-[#1A1A1A]/10 text-[#1A1A1A]' : isCompleted ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'}
+                            `}>
+                              {isCompleted ? (
+                                <CheckCircle2 className="w-5 h-5" />
+                              ) : (
+                                <Icon className="w-4 h-4" />
+                              )}
+                            </div>
+                            <span className={`font-medium ${isActive ? 'text-[#1A1A1A]' : 'text-gray-400'}`}>
+                              {step.label}
+                            </span>
+                            {isActive && (
+                              <div className="ml-auto">
+                                <Loader2 className="w-4 h-4 text-[#1A1A1A] animate-spin" />
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="max-w-lg mx-auto space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Website Name
+                      </label>
+                      <VoiceInput
+                        value={brandData.name}
+                        onChange={(value) => setBrandData({ ...brandData, name: value })}
+                        placeholder="e.g., Acme Inc."
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Website URL
+                      </label>
+                      <VoiceInput
+                        value={brandData.url}
+                        onChange={(value) => setBrandData({ ...brandData, url: value })}
+                        placeholder="https://example.com"
+                      />
+                    </div>
+
+                    <button
+                      onClick={handleStep1Continue}
+                      disabled={!brandData.name || !brandData.url || isSaving}
+                      className="w-full bg-[#1A1A1A] text-white py-3 px-6 rounded-xl font-medium hover:bg-gray-800 transition-all hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 group"
+                    >
+                      {isSaving ? (
+                        <>
+                          <RefreshCw className="w-5 h-5 animate-spin" />
+                          <span>Saving...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Continue</span>
+                          <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                        </>
+                      )}
+                    </button>
+
+                    {extractionError && (
+                      <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <p className="text-sm text-yellow-800">{extractionError}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
 
 
               </div>
@@ -1003,14 +1170,56 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
                         </div>
                       </div>
 
-                      {/* Selected Image Preview */}
-                      {selectedImage && (
-                        <div className="mb-4 rounded-lg overflow-hidden">
-                          <img
-                            src={selectedImage.url}
-                            alt="Post image"
-                            className="w-full object-cover max-h-96"
-                          />
+                      {/* Visual Preview (Image or Video) */}
+                      {(selectedImage || selectedVideo) && (
+                        <div className="mb-4 rounded-xl overflow-hidden border border-gray-100">
+                          {selectedVideo ? (
+                            selectedVideo.url.includes('screenpal.com') ? (
+                              <iframe
+                                src={selectedVideo.url}
+                                title="Attached Video"
+                                className="w-full aspect-video border-0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                              />
+                            ) : (selectedVideo.url.includes('youtube.com') || selectedVideo.url.includes('youtu.be')) ? (
+                              <iframe
+                                src={selectedVideo.url.includes('youtu.be')
+                                  ? selectedVideo.url.replace('youtu.be/', 'www.youtube.com/embed/')
+                                  : selectedVideo.url.replace('watch?v=', 'embed/')}
+                                title="Attached Video"
+                                className="w-full aspect-video border-0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                              />
+                            ) : (
+                              <video
+                                src={selectedVideo.url}
+                                controls
+                                className="w-full max-h-96 object-contain bg-black"
+                                poster={selectedVideo.thumbnailUrl}
+                              />
+                            )
+                          ) : selectedImage ? (
+                            <img
+                              src={selectedImage.url}
+                              alt="Post image"
+                              className="w-full object-cover max-h-96"
+                            />
+                          ) : null}
+
+                          {/* Remove button */}
+                          <button
+                            onClick={() => {
+                              if (selectedVideo) setSelectedVideo(null);
+                              if (selectedImage) setSelectedImage(null);
+                              // Trigger database update to remove media would go here in handleSaveFromEditor usually, 
+                              // or we create a specific handleRemoveMedia
+                            }}
+                            className="w-full py-2 bg-gray-50 text-red-500 text-xs font-medium hover:bg-red-50 transition-colors border-t border-gray-100"
+                          >
+                            Remove Attachment
+                          </button>
                         </div>
                       )}
 
@@ -1069,7 +1278,8 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
                       </h4>
                       <div className="flex gap-2 bg-gray-100 rounded-lg p-1">
                         <button
-                          onClick={() => setActiveAssetTab('images')}
+
+                          onClick={() => handleAssetTabChange('images')}
                           className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${activeAssetTab === 'images'
                             ? 'bg-white text-[#1A1A1A] shadow-sm'
                             : 'text-gray-600 hover:text-[#1A1A1A]'
@@ -1078,7 +1288,16 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
                           <Image className="w-4 h-4 inline mr-1.5" />
                           Images
                         </button>
-
+                        <button
+                          onClick={() => handleAssetTabChange('videos')}
+                          className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${activeAssetTab === 'videos'
+                            ? 'bg-white text-[#1A1A1A] shadow-sm'
+                            : 'text-gray-600 hover:text-[#1A1A1A]'
+                            }`}
+                        >
+                          <VideoIcon className="w-4 h-4 inline mr-1.5" />
+                          Videos
+                        </button>
                       </div>
                     </div>
 
@@ -1102,6 +1321,94 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
                           error={imageGenerationError}
                           onRetry={() => autoGenerateAssets()}
                         />
+                      </div>
+                    )}
+
+                    {/* Videos Tab */}
+                    {activeAssetTab === 'videos' && (
+                      <div className="space-y-4 animate-fade-in">
+                        <div className="flex items-center justify-between mb-4">
+                          <h5 className="text-sm font-semibold text-[#1A1A1A]">AI Generated Video (Gemini Veo)</h5>
+                        </div>
+
+                        {isGeneratingVideos ? (
+                          <div className="flex flex-col items-center justify-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                            <Loader2 className="w-8 h-8 text-[#1A1A1A] animate-spin mb-3" />
+                            <p className="text-sm text-gray-600 font-medium">Creating video with Veo...</p>
+                            <p className="text-xs text-gray-400 mt-1">This might take a few moments</p>
+                          </div>
+                        ) : videoGenerationError ? (
+                          <div className="p-4 bg-red-50 text-red-600 rounded-xl border border-red-100 text-sm flex flex-col items-center gap-2">
+                            <p>{videoGenerationError}</p>
+                            <button
+                              onClick={handleGenerateVideo}
+                              className="px-4 py-1.5 bg-white border border-red-200 rounded-lg text-xs font-medium hover:bg-red-50"
+                            >
+                              Try Again
+                            </button>
+                          </div>
+                        ) : generatedVideos.length > 0 ? (
+                          <div className="grid grid-cols-1 gap-4">
+                            {generatedVideos.map(video => (
+                              <div key={video.id} className="relative group rounded-xl overflow-hidden bg-black border border-gray-200">
+                                {video.url.includes('screenpal.com') ? (
+                                  <iframe
+                                    src={video.url}
+                                    title="Screenpal Video"
+                                    className="w-full aspect-video border-0"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    allowFullScreen
+                                  />
+                                ) : (video.url.includes('youtube.com') || video.url.includes('youtu.be')) ? (
+                                  <iframe
+                                    src={video.url.includes('youtu.be')
+                                      ? video.url.replace('youtu.be/', 'www.youtube.com/embed/')
+                                      : video.url.replace('watch?v=', 'embed/')}
+                                    title="YouTube Video"
+                                    className="w-full aspect-video border-0"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    allowFullScreen
+                                  />
+                                ) : (
+                                  <video
+                                    src={video.url}
+                                    controls
+                                    className="w-full aspect-video object-cover"
+                                    poster={video.thumbnailUrl}
+                                  />
+                                )}
+                                <div className="absolute top-2 left-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded-full backdrop-blur-sm flex items-center gap-1">
+                                  <Sparkles className="w-3 h-3 text-[#CCFF00]" />
+                                  Veo
+                                </div>
+
+                                {/* Add to Post Button Overlay */}
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                                  <div className="pointer-events-auto">
+                                    <button
+                                      onClick={() => handleAttachVideo(video)}
+                                      className="bg-white text-[#1A1A1A] px-4 py-2 rounded-lg font-medium text-sm shadow-lg hover:bg-gray-100 transition-transform hover:scale-105 flex items-center gap-2"
+                                    >
+                                      <CheckCircle2 className="w-4 h-4 text-green-600" />
+                                      {selectedVideo?.id === video.id ? 'Attached' : 'Add to Post'}
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center justify-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-200 text-center px-4">
+                            <VideoIcon className="w-8 h-8 text-gray-400 mb-3" />
+                            <p className="text-sm text-gray-600 font-medium mb-2">No video generated yet</p>
+                            <button
+                              onClick={handleGenerateVideo}
+                              className="px-4 py-2 bg-[#1A1A1A] text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors"
+                            >
+                              Generate Video
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -1130,7 +1437,7 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
             )}
           </div>
         </div>
-      </div>
+      </div >
 
       <PublishModal
         isOpen={showPublishModal}
@@ -1140,71 +1447,61 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
         brandName={brandData.name}
         brandId={brand?.id}
         contentItemId={contentItem?.id}
-        // Prioritize selected assets, fallback to saved content item assets
-        mediaType={
-          (selectedImage && !selectedImage.url.startsWith('blob:')) ? 'image' :
-            (contentItem?.media_type === 'image' ? 'image' : 'none')
-        }
-        mediaUrls={
-          // Ensure we don't send blob URLs to n8n
-          (selectedImage && !selectedImage.url.startsWith('blob:')) ? [selectedImage.url] :
-            contentItem?.media_url && contentItem.media_type === 'image' ? [
-              contentItem.media_url.startsWith('http')
-                ? contentItem.media_url
-                : getPublicUrl(contentItem.media_url)
-            ] : []
-        }
+        mediaType={selectedVideo ? 'video' : selectedImage ? 'image' : 'none'}
+        mediaUrls={selectedVideo ? [selectedVideo.url] : selectedImage ? [selectedImage.url] : []}
       />
 
       {/* Image Preview Modal */}
-      {showImagePreview && selectedImage && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-[#1A1A1A]">Image Preview</h3>
-              <button
-                onClick={() => setShowImagePreview(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <X className="w-5 h-5 text-gray-600" />
-              </button>
-            </div>
-            <div className="p-6">
-              <img
-                src={selectedImage.url}
-                alt={selectedImage.variation}
-                className="w-full rounded-lg mb-4"
-              />
-              {/* Garbage text removed as per user request */}
-              <div className="flex gap-3">
+      {
+        showImagePreview && selectedImage && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+                <h3 className="text-lg font-semibold text-[#1A1A1A]">Image Preview</h3>
                 <button
                   onClick={() => setShowImagePreview(false)}
-                  className="flex-1 bg-gray-100 text-[#1A1A1A] py-2.5 px-4 rounded-lg font-medium hover:bg-gray-200 transition-all"
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                 >
-                  Cancel
+                  <X className="w-5 h-5 text-gray-600" />
                 </button>
-                <button
-                  onClick={() => handleAttachImage(selectedImage)}
-                  disabled={isSaving}
-                  className="flex-1 bg-[#1A1A1A] text-white py-2.5 px-4 rounded-lg font-medium hover:bg-gray-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {isSaving ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Attaching...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Attach to Post</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </>
-                  )}
-                </button>
+              </div>
+              <div className="p-6">
+                <img
+                  src={selectedImage.url}
+                  alt={selectedImage.variation}
+                  className="w-full rounded-lg mb-4"
+                />
+                {/* Garbage text removed as per user request */}
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowImagePreview(false)}
+                    className="flex-1 bg-gray-100 text-[#1A1A1A] py-2.5 px-4 rounded-lg font-medium hover:bg-gray-200 transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => handleAttachImage(selectedImage)}
+                    disabled={isSaving}
+                    className="flex-1 bg-[#1A1A1A] text-white py-2.5 px-4 rounded-lg font-medium hover:bg-gray-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {isSaving ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Attaching...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Attach to Post</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
     </>
   );
 }

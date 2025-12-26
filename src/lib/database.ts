@@ -321,6 +321,16 @@ export async function getConnectionByBrandAndPlatform(
   return data;
 }
 
+export async function getConnectionsByBrand(brandId: string): Promise<Connection[]> {
+  const { data, error } = await supabase
+    .from('connections')
+    .select('*')
+    .eq('brand_id', brandId);
+
+  if (error) throw error;
+  return data || [];
+}
+
 export async function findOrCreateConnection(
   userId: string,
   brandId: string,
@@ -529,7 +539,7 @@ export async function getBrandDNAList(userId: string): Promise<(BrandDNA & { bra
     .order('updated_at', { ascending: false });
 
   if (error) throw error;
-  
+
   // Fetch brand info separately for each BrandDNA
   const result = await Promise.all(
     (data || []).map(async (dna) => {
@@ -544,7 +554,7 @@ export async function getBrandDNAList(userId: string): Promise<(BrandDNA & { bra
       }
     })
   );
-  
+
   return result;
 }
 

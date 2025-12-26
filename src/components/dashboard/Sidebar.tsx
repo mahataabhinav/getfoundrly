@@ -1,4 +1,4 @@
-import { Home, Sparkles, BarChart3, TrendingUp, Database, Settings, X } from 'lucide-react';
+import { Home, Sparkles, BarChart3, TrendingUp, Database, Settings, Calendar } from 'lucide-react';
 
 interface SidebarProps {
   activeTab: string;
@@ -10,6 +10,7 @@ interface SidebarProps {
 export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }: SidebarProps) {
   const menuItems = [
     { id: 'Home', icon: Home, label: 'Home' },
+    { id: 'Calendar', icon: Calendar, label: 'Calendar' },
     { id: 'Create', icon: Sparkles, label: 'Create' },
     { id: 'Analyze', icon: BarChart3, label: 'Analyze' },
     { id: 'Grow', icon: TrendingUp, label: 'Grow' },
@@ -27,9 +28,8 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }: Sid
       )}
 
       <aside
-        className={`fixed left-0 top-[73px] bottom-0 w-64 bg-white border-r border-gray-100 z-40 transition-transform duration-300 overflow-y-auto ${
-          isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-        }`}
+        className={`fixed left-0 top-[73px] bottom-0 w-64 bg-[#0F0F11] border-r border-white/5 z-40 transition-transform duration-300 overflow-y-auto ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+          }`}
       >
         <div className="p-6 space-y-1 pb-8">
           {menuItems.map((item) => {
@@ -41,11 +41,10 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }: Sid
                   onTabChange(item.id);
                   onClose();
                 }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
-                  activeTab === item.id
-                    ? 'bg-gray-100 text-[#1A1A1A]'
-                    : 'text-gray-600 hover:text-[#1A1A1A] hover:bg-gray-50'
-                }`}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${activeTab === item.id
+                  ? 'bg-[#CCFF00] text-black shadow-[0_0_20px_rgba(204,255,0,0.2)]'
+                  : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                  }`}
               >
                 <Icon className="w-5 h-5" />
                 <span>{item.label}</span>

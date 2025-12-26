@@ -33,8 +33,8 @@ export default function CreateSection() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-semibold text-[#1A1A1A] mb-2">Create Content</h1>
-        <p className="text-gray-600">AI-powered branded content from your website URL</p>
+        <h1 className="text-3xl font-semibold text-white mb-2">Create Content</h1>
+        <p className="text-zinc-400">AI-powered branded content from your website URL</p>
       </div>
 
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -45,13 +45,13 @@ export default function CreateSection() {
           return (
             <div
               key={tool.title}
-              className="group bg-white rounded-2xl p-6 border border-gray-100 hover:shadow-xl hover:scale-[1.02] transition-all cursor-pointer"
+              className="group bg-[#18181B] rounded-2xl p-6 border border-white/5 hover:border-white/10 hover:shadow-xl hover:scale-[1.02] transition-all cursor-pointer"
             >
               <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${tool.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
                 <Icon className="w-6 h-6 text-white" />
               </div>
-              <h3 className="font-semibold text-[#1A1A1A] mb-1">{tool.title}</h3>
-              <p className="text-sm text-gray-600 mb-4">{tool.description}</p>
+              <h3 className="font-semibold text-white mb-1">{tool.title}</h3>
+              <p className="text-sm text-zinc-400 mb-4">{tool.description}</p>
               <button
                 onClick={() => {
                   if (isLinkedIn) setIsLinkedInModalOpen(true);
@@ -59,7 +59,7 @@ export default function CreateSection() {
                   if (tool.title === 'Newsletters') setIsNewsletterModalOpen(true);
                   if (tool.title === 'Blog Posts') setIsBlogPostModalOpen(true);
                 }}
-                className="w-full bg-gray-900 text-white py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition-all"
+                className="w-full bg-white/10 text-white py-2 rounded-lg text-sm font-medium hover:bg-white/20 transition-all border border-white/5"
               >
                 Generate
               </button>
@@ -88,24 +88,24 @@ export default function CreateSection() {
         onClose={() => setIsBlogPostModalOpen(false)}
       />
 
-      <div className="bg-gradient-to-br from-slate-50 to-blue-50/30 rounded-2xl p-8 border border-gray-100">
+      <div className="bg-gradient-to-br from-[#18181B] to-[#27272A] rounded-2xl p-8 border border-white/5">
         <div className="max-w-2xl">
-          <h3 className="text-xl font-semibold text-[#1A1A1A] mb-3">How It Works</h3>
-          <div className="space-y-3 text-gray-700">
+          <h3 className="text-xl font-semibold text-white mb-3">How It Works</h3>
+          <div className="space-y-3 text-zinc-300">
             <div className="flex items-start gap-3">
-              <div className="w-6 h-6 rounded-full bg-[#1A1A1A] text-white flex items-center justify-center text-sm font-medium flex-shrink-0">
+              <div className="w-6 h-6 rounded-full bg-[#CCFF00] text-black flex items-center justify-center text-sm font-bold flex-shrink-0">
                 1
               </div>
               <p>Enter your website URL or upload brand guidelines</p>
             </div>
             <div className="flex items-start gap-3">
-              <div className="w-6 h-6 rounded-full bg-[#1A1A1A] text-white flex items-center justify-center text-sm font-medium flex-shrink-0">
+              <div className="w-6 h-6 rounded-full bg-[#CCFF00] text-black flex items-center justify-center text-sm font-bold flex-shrink-0">
                 2
               </div>
               <p>Choose your content format and target platform</p>
             </div>
             <div className="flex items-start gap-3">
-              <div className="w-6 h-6 rounded-full bg-[#1A1A1A] text-white flex items-center justify-center text-sm font-medium flex-shrink-0">
+              <div className="w-6 h-6 rounded-full bg-[#CCFF00] text-black flex items-center justify-center text-sm font-bold flex-shrink-0">
                 3
               </div>
               <p>AI generates on-brand content in seconds</p>

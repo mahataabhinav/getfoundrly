@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { 
-  ArrowLeft, Edit, RefreshCw, CheckCircle2, 
-  User, Building2, MessageSquare, Package, 
-  Users, Award, Palette, FileText, Search, 
+import {
+  ArrowLeft, Edit, RefreshCw, CheckCircle2,
+  User, Building2, MessageSquare, Package,
+  Users, Award, Palette, FileText, Search,
   TrendingUp, Shield, BarChart3
 } from 'lucide-react';
 import { getBrandDNA } from '../../lib/database';
@@ -18,10 +18,10 @@ interface BrandDNAProfileViewProps {
   onEdit: () => void;
 }
 
-export default function BrandDNAProfileView({ 
-  brandId, 
-  onBack, 
-  onEdit 
+export default function BrandDNAProfileView({
+  brandId,
+  onBack,
+  onEdit
 }: BrandDNAProfileViewProps) {
   const [brandDNA, setBrandDNA] = useState<BrandDNA | null>(null);
   const [loading, setLoading] = useState(true);
@@ -78,7 +78,7 @@ export default function BrandDNAProfileView({
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1A1A1A]"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
       </div>
     );
   }
@@ -86,8 +86,8 @@ export default function BrandDNAProfileView({
   if (!brandDNA) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-600">BrandDNA not found</p>
-        <button onClick={onBack} className="mt-4 text-blue-600 hover:text-blue-700">
+        <p className="text-zinc-400">BrandDNA not found</p>
+        <button onClick={onBack} className="mt-4 text-blue-400 hover:text-blue-300">
           Go back
         </button>
       </div>
@@ -96,7 +96,7 @@ export default function BrandDNAProfileView({
 
   const renderTabContent = () => {
     const dnaData = brandDNA.dna_data;
-    
+
     switch (activeTab) {
       case 'identity':
         return (
@@ -473,7 +473,7 @@ export default function BrandDNAProfileView({
       <div className="flex items-center justify-between">
         <button
           onClick={onBack}
-          className="flex items-center gap-2 text-gray-600 hover:text-[#1A1A1A] transition-colors"
+          className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
           Back to Profiles
@@ -482,14 +482,14 @@ export default function BrandDNAProfileView({
           <button
             onClick={handleReCrawl}
             disabled={isReCrawling}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-[#1A1A1A] rounded-xl font-medium hover:bg-gray-200 transition-all disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-white/5 text-white rounded-xl font-medium hover:bg-white/10 transition-all disabled:opacity-50 border border-white/5"
           >
             <RefreshCw className={`w-4 h-4 ${isReCrawling ? 'animate-spin' : ''}`} />
             Re-crawl
           </button>
           <button
             onClick={onEdit}
-            className="flex items-center gap-2 px-4 py-2 bg-[#1A1A1A] text-white rounded-xl font-medium hover:bg-gray-800 transition-all"
+            className="flex items-center gap-2 px-4 py-2 bg-white text-black rounded-xl font-medium hover:bg-gray-200 transition-all"
           >
             <Edit className="w-4 h-4" />
             Edit
@@ -497,10 +497,10 @@ export default function BrandDNAProfileView({
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-200">
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-2xl font-semibold text-[#1A1A1A] mb-2">BrandDNA Profile</h2>
-          <div className="flex items-center gap-4 text-sm text-gray-600">
+      <div className="bg-[#18181B] rounded-2xl border border-white/5">
+        <div className="p-6 border-b border-white/5">
+          <h2 className="text-2xl font-semibold text-white mb-2">BrandDNA Profile</h2>
+          <div className="flex items-center gap-4 text-sm text-zinc-400">
             <span>Status: {brandDNA.status}</span>
             <span>•</span>
             <span>Completion: {brandDNA.completion_score}%</span>
@@ -513,18 +513,17 @@ export default function BrandDNAProfileView({
           </div>
         </div>
 
-        <div className="flex border-b border-gray-200 overflow-x-auto">
+        <div className="flex border-b border-white/5 overflow-x-auto">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-6 py-4 border-b-2 transition-colors ${
-                  activeTab === tab.id
-                    ? 'border-[#1A1A1A] text-[#1A1A1A] font-medium'
-                    : 'border-transparent text-gray-600 hover:text-[#1A1A1A]'
-                }`}
+                className={`flex items-center gap-2 px-6 py-4 border-b-2 transition-colors ${activeTab === tab.id
+                    ? 'border-[#CCFF00] text-white font-medium'
+                    : 'border-transparent text-zinc-400 hover:text-white'
+                  }`}
               >
                 <Icon className="w-4 h-4" />
                 <span>{tab.label}</span>
@@ -536,7 +535,7 @@ export default function BrandDNAProfileView({
         <div className="p-6">
           {activeTab === 'diff' && diff ? (
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-[#1A1A1A] mb-4">Changes from Re-crawl</h3>
+              <h3 className="text-lg font-semibold text-white mb-4">Changes from Re-crawl</h3>
               {Object.entries(diff).map(([field, changes]) => (
                 <BrandDNADiffView
                   key={field}
@@ -568,32 +567,32 @@ export default function BrandDNAProfileView({
 }
 
 // Helper component for rendering section fields
-function SectionField({ 
-  label, 
-  value, 
-  fieldPath, 
-  brandDNA 
-}: { 
-  label: string; 
-  value: any; 
+function SectionField({
+  label,
+  value,
+  fieldPath,
+  brandDNA
+}: {
+  label: string;
+  value: any;
   fieldPath: string;
   brandDNA: BrandDNA;
 }) {
   const provenance = brandDNA.provenance.find(p => p.field === fieldPath);
-  
+
   return (
-    <div className="border border-gray-200 rounded-lg p-4">
+    <div className="border border-white/5 rounded-lg p-4 bg-white/5">
       <div className="flex items-start justify-between mb-2">
-        <label className="text-sm font-medium text-gray-700">{label}</label>
+        <label className="text-sm font-medium text-zinc-400">{label}</label>
         {provenance && (
-          <BrandDNAConfidenceBadge 
-            trustScore={provenance.trust_score} 
+          <BrandDNAConfidenceBadge
+            trustScore={provenance.trust_score}
             extractionMethod={provenance.extraction_method}
           />
         )}
       </div>
-      <div className="text-[#1A1A1A] mb-2">
-        {value || <span className="text-gray-400 italic">Not set</span>}
+      <div className="text-white mb-2">
+        {value || <span className="text-zinc-600 italic">Not set</span>}
       </div>
       {provenance && (
         <BrandDNAProvenance provenance={provenance} compact />
