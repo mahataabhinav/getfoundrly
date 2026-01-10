@@ -51,19 +51,19 @@ export default function HeaderEnhanced({ scrollY, onLoginClick, onSignupClick }:
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled ? 'bg-white/80 backdrop-blur-xl shadow-sm' : 'bg-transparent'
         }`}
     >
-      <nav className="max-w-7xl mx-auto px-6 py-4">
+      <nav className="w-full max-w-[1920px] mx-auto px-4 md:px-12 py-6">
         <div className="flex items-center justify-between">
           <Link to="/" className="cursor-pointer">
-            <Logo variant={useDarkTheme ? "light" : "dark"} iconSize={32} showWordmark={true} />
+            <Logo variant={useDarkTheme ? "light" : "dark"} iconSize={40} showWordmark={true} />
           </Link>
 
-          <div className="hidden lg:flex items-center gap-8">
+          <div className="hidden lg:flex items-center gap-10">
             <div
               className="relative group"
               onMouseEnter={() => setHoveredMenu('product')}
               onMouseLeave={() => setHoveredMenu(null)}
             >
-              <div className={`flex items-center gap-1 transition-colors cursor-pointer ${useDarkTheme ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'
+              <div className={`flex items-center gap-1 transition-colors cursor-pointer text-lg font-medium ${useDarkTheme ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'
                 }`}>
                 <span>Product</span>
                 <ChevronDown className="w-4 h-4" />
@@ -174,7 +174,7 @@ export default function HeaderEnhanced({ scrollY, onLoginClick, onSignupClick }:
               onMouseEnter={() => setHoveredMenu('solutions')}
               onMouseLeave={() => setHoveredMenu(null)}
             >
-              <div className={`flex items-center gap-1 transition-colors cursor-pointer ${useDarkTheme ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'
+              <div className={`flex items-center gap-1 transition-colors cursor-pointer text-lg font-medium ${useDarkTheme ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'
                 }`}>
                 <span>Solutions</span>
                 <ChevronDown className="w-4 h-4" />
@@ -208,27 +208,27 @@ export default function HeaderEnhanced({ scrollY, onLoginClick, onSignupClick }:
               )}
             </div>
 
-            <Link to="/pricing" className={`transition-colors ${useDarkTheme ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'
+            <Link to="/pricing" className={`transition-colors text-lg font-medium ${useDarkTheme ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'
               }`}>
               Pricing
             </Link>
-            <Link to="/resources" className={`transition-colors ${useDarkTheme ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'
+            <Link to="/resources" className={`transition-colors text-lg font-medium ${useDarkTheme ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'
               }`}>
               Resources
             </Link>
-            <Link to="/about" className={`transition-colors ${useDarkTheme ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'
+            <Link to="/about" className={`transition-colors text-lg font-medium ${useDarkTheme ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'
               }`}>
               About
             </Link>
           </div>
 
           <div className="hidden lg:flex items-center gap-4">
-            <button onClick={onLoginClick} className={`transition-colors px-4 py-2 ${useDarkTheme ? 'text-white hover:text-gray-200' : 'text-gray-700 hover:text-gray-900'
+            <button onClick={onLoginClick} className={`transition-colors px-8 py-3 text-lg font-medium ${useDarkTheme ? 'text-white hover:text-gray-200' : 'text-gray-700 hover:text-gray-900'
               }`}>
               Login
             </button>
             <button onClick={onSignupClick} className={`${useDarkTheme ? 'bg-white text-black hover:bg-gray-200' : 'bg-gray-900 text-white hover:bg-gray-800'
-              } px-6 py-2.5 rounded-full transition-all hover:shadow-lg hover:scale-105 flex items-center gap-2 group`}>
+              } px-8 py-4 rounded-full text-lg font-bold transition-all hover:shadow-lg hover:scale-105 flex items-center gap-2 group`}>
               <span>Try for Free</span>
               <span className="transform transition-transform group-hover:translate-x-1">→</span>
             </button>

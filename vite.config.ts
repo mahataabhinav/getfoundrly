@@ -12,5 +12,24 @@ export default defineConfig({
       input: './index.html',
     },
   },
+  server: {
+    proxy: {
+      '/api/n8n-publish': {
+        target: 'https://foundrly.app.n8n.cloud/webhook-test/linkedin-post',
+        changeOrigin: true,
+        rewrite: (path) => '',
+        secure: false,
+      },
+      '/openai-proxy': {
+        target: 'https://api.openai.com/v1',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/openai-proxy/, ''),
+        secure: false, // Handle SSL potentially
+        headers: {
+          'Origin': 'https://api.openai.com' // Spoof origin
+        }
+      }
+    },
+  },
   publicDir: 'public',
 });

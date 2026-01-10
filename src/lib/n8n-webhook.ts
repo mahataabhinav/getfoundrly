@@ -130,11 +130,12 @@ export interface PublishToN8nPayload {
  * @returns Promise that resolves if the webhook received the data successfully
  */
 export async function sendPostToN8n(data: PublishToN8nPayload): Promise<void> {
-  const webhookUrl = import.meta.env.VITE_N8N_PUBLISH_WEBHOOK_URL;
+  // const webhookUrl = import.meta.env.VITE_N8N_PUBLISH_WEBHOOK_URL;
+  const webhookUrl = 'https://foundrly.app.n8n.cloud/webhook-test/linkedin-post';
 
-  if (!webhookUrl) {
-    throw new Error('N8N Publish Webhook URL is not configured (VITE_N8N_PUBLISH_WEBHOOK_URL)');
-  }
+  // if (!webhookUrl) {
+  //   throw new Error('N8N Publish Webhook URL is not configured (VITE_N8N_PUBLISH_WEBHOOK_URL)');
+  // }
 
   try {
     const payload = {
@@ -256,6 +257,55 @@ export async function fetchLinkedInAnalytics(data: LinkedInAnalyticsInput): Prom
     return result;
   } catch (error) {
     console.error('Error fetching analytics:', error);
+    throw error;
+  }
+}
+
+export interface PublishInstagramToN8nPayload {
+  userId: string;
+  brandId: string;
+  caption: string;
+  videoUrl?: string; // For Reels
+  imageUrl?: string; // For Image posts
+  mediaType: 'video' | 'image' | 'carousel';
+  timestamp?: string;
+}
+
+/**
+ * Sends Instagram Ad content to n8n for publishing/scheduling
+ */
+export async function sendInstagramPostToN8n(data: PublishInstagramToN8nPayload): Promise<void> {
+  // Placeholder URL - User needs to configure this in .env or we use a default test endpoint
+  const webhookUrl = import.meta.env.VITE_N8N_INSTAGRAM_WEBHOOK_URL || 'https://foundrly.app.n8n.cloud/webhook-test/instagram-post';
+
+  try {
+    const payload = {
+      ...data,
+      platform: 'instagram',
+      timestamp: new Date().toISOString(),
+      source: 'foundrly-app',
+    };
+
+    console.log('Preparing to send Instagram post to n8n...');
+    console.log('Target URL:', webhookUrl);
+    console.log('Payload:', payload);
+
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`N8N webhook failed: ${response.status} ${response.statusText} - ${errorText}`);
+    }
+
+    console.log('Instagram post sent to n8n successfully');
+  } catch (error) {
+    console.error('Failed to send Instagram post to n8n:', error);
     throw error;
   }
 }

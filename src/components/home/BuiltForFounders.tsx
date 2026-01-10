@@ -21,11 +21,11 @@ export default function BuiltForFounders() {
 
   return (
     <section className="relative py-32 bg-[#0A0A0A]">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="text-center mb-16">
-          <h2 className="text-5xl md:text-6xl font-bold text-white mb-6">
+      <div className="w-full max-w-[1920px] mx-auto px-4 md:px-12">
+        <div className="text-center mb-24">
+          <h2 className="text-6xl md:text-8xl font-bold text-white mb-8">
             Built for Founders,
-            <span className="block mt-2 text-gray-400">Not Marketers</span>
+            <span className="block mt-4 text-gray-400">Not Marketers</span>
           </h2>
         </div>
 

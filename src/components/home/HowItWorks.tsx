@@ -36,12 +36,12 @@ export default function HowItWorks() {
         <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[100px]" />
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 relative z-10">
-        <div className="text-center mb-20">
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+      <div className="w-full max-w-[1920px] mx-auto px-4 md:px-12 relative z-10">
+        <div className="text-center mb-24">
+          <h2 className="text-6xl md:text-8xl font-bold text-white mb-8">
             How Foundrly Works
           </h2>
-          <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+          <p className="text-gray-400 text-3xl max-w-4xl mx-auto leading-relaxed">
             A simple, automated workflow to turn your ideas into authority-building content.
           </p>
         </div>
@@ -50,14 +50,14 @@ export default function HowItWorks() {
           {steps.map((step) => {
             const Icon = step.icon;
             return (
-              <div key={step.title} className="relative group">
-                <div className="bg-white/5 rounded-3xl p-8 backdrop-blur-sm border border-white/10 hover:border-white/20 transition-all duration-300 hover:bg-white/10 h-full">
-                  <div className={`inline-flex w-16 h-16 rounded-2xl bg-gradient-to-br ${step.color} items-center justify-center mb-6 transform transition-transform group-hover:scale-110 group-hover:rotate-6 shadow-lg`}>
-                    <Icon className="w-8 h-8 text-white" />
+              <div key={step.title} className="relative group h-full">
+                <div className="bg-white/5 rounded-[2rem] p-10 backdrop-blur-sm border border-white/10 hover:border-white/20 transition-all duration-300 hover:bg-white/10 h-full flex flex-col">
+                  <div className={`inline-flex w-20 h-20 rounded-3xl bg-gradient-to-br ${step.color} items-center justify-center mb-8 transform transition-transform group-hover:scale-110 group-hover:rotate-6 shadow-xl`}>
+                    <Icon className="w-10 h-10 text-white" />
                   </div>
 
-                  <h3 className="text-2xl font-bold text-white mb-3">{step.title}</h3>
-                  <p className="text-gray-400 leading-relaxed">{step.description}</p>
+                  <h3 className="text-3xl font-bold text-white mb-4">{step.title}</h3>
+                  <p className="text-gray-400 text-xl leading-relaxed">{step.description}</p>
                 </div>
               </div>
             );

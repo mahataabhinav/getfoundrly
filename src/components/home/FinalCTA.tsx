@@ -19,19 +19,19 @@ export default function FinalCTA({ onSignupClick, onLoginClick }: FinalCTAProps)
         <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-gradient-to-br from-cyan-600/20 via-blue-600/15 to-transparent rounded-full blur-3xl animate-float-delayed" />
       </div>
 
-      <div className="relative max-w-6xl mx-auto px-6 text-center">
+      <div className="w-full max-w-[1920px] mx-auto px-4 md:px-12 text-center">
         <div className={`transition-all duration-1000 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          <h2 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight">
+          <h2 className="text-7xl md:text-9xl font-bold text-white mb-12 leading-tight">
             Ready to stop being invisible?
           </h2>
-          <p className="text-xl md:text-2xl text-gray-300 mb-12 max-w-3xl mx-auto">
+          <p className="text-3xl text-gray-300 mb-16 max-w-4xl mx-auto">
             Start your visibility engine in minutes.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-20">
             <button
               onClick={onSignupClick}
-              className="group relative bg-white text-gray-900 px-10 py-5 rounded-full text-lg font-bold transition-all hover:shadow-2xl hover:scale-105 flex items-center gap-2 overflow-hidden"
+              className="group relative bg-white text-gray-900 px-16 py-8 rounded-full text-2xl font-bold transition-all hover:shadow-2xl hover:scale-105 flex items-center gap-4 overflow-hidden"
             >
               <span className="absolute inset-0 bg-gradient-to-r from-blue-50 to-cyan-50 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               <span className="relative z-10">Try Foundrly Free</span>
@@ -39,7 +39,7 @@ export default function FinalCTA({ onSignupClick, onLoginClick }: FinalCTAProps)
             </button>
             <button
               onClick={onLoginClick}
-              className="group relative bg-transparent text-white px-10 py-5 rounded-full text-lg font-bold border-2 border-white/30 hover:border-white/50 transition-all hover:shadow-xl hover:scale-105 overflow-hidden"
+              className="group relative bg-transparent text-white px-16 py-8 rounded-full text-2xl font-bold border-2 border-white/30 hover:border-white/50 transition-all hover:shadow-xl hover:scale-105 overflow-hidden"
             >
               <span className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               <span className="relative z-10">Login</span>

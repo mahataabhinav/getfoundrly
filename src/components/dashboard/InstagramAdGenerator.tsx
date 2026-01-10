@@ -1,9 +1,17 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, ArrowRight, Instagram, Video, Image as ImageIcon, LayoutGrid, Users, Sparkles, RefreshCw, Edit, Save, TrendingUp, Clock, Target, BarChart3, ArrowLeft } from 'lucide-react';
 import RobotChatbot from '../RobotChatbot';
 import VoiceInput from '../VoiceInput';
 import InstagramAdEditor from './InstagramAdEditor';
 import InstagramPreviewModal from './InstagramPreviewModal';
+import { supabase } from '../../lib/supabase';
+import { findOrCreateBrand } from '../../lib/database';
+import { extractBrandProfile, getCachedBrandProfile, saveBrandProfile, type BrandProfile } from '../../lib/brand-extractor';
+import { createBrandDNAFromExtraction, getBrandDNA } from '../../lib/brand-dna';
+import type { BrandDNA, Brand } from '../../types/database';
+import { generateVideo, type GeneratedVideo } from '../../lib/asset-generator';
+import { generateInstagramCaptions } from '../../lib/instagram-generator';
+// import { sendInstagramPostToN8n } from '../../lib/n8n-webhook';
 
 interface InstagramAdGeneratorProps {
   isOpen: boolean;
@@ -12,6 +20,11 @@ interface InstagramAdGeneratorProps {
 
 export default function InstagramAdGenerator({ isOpen, onClose }: InstagramAdGeneratorProps) {
   const [step, setStep] = useState(1);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [brand, setBrand] = useState<Brand | null>(null);
+  const [brandProfile, setBrandProfile] = useState<BrandProfile | null>(null);
+  const [extractedBrandDNA, setExtractedBrandDNA] = useState<BrandDNA | null>(null);
+
   const [brandData, setBrandData] = useState({
     name: '',
     website: '',
@@ -37,6 +50,16 @@ export default function InstagramAdGenerator({ isOpen, onClose }: InstagramAdGen
   const [showEditor, setShowEditor] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generationError, setGenerationError] = useState<string | null>(null);
+
+  // Get current user on mount
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUserId(user?.id || null);
+    };
+    getUser();
+  }, []);
 
   const adTypes = [
     {
@@ -82,12 +105,62 @@ export default function InstagramAdGenerator({ isOpen, onClose }: InstagramAdGen
     'Download'
   ];
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
+    if (!userId || !brandData.name || !brandData.website) return;
+
     setIsGenerating(true);
-    setTimeout(() => {
-      setIsGenerating(false);
+    setGenerationError(null);
+
+    try {
+      // 1. Find or create brand
+      const brandRecord = await findOrCreateBrand(userId, brandData.name, brandData.website);
+      setBrand(brandRecord);
+
+      // 2. Extarct Brand Profile
+      let profile = await getCachedBrandProfile(brandRecord.id);
+      if (!profile) {
+        try {
+          profile = await extractBrandProfile(brandData.name, brandData.website);
+          await saveBrandProfile(brandRecord.id, profile);
+        } catch (e) {
+          console.error("Profile extraction failed", e);
+          profile = {} as BrandProfile; // Fallback
+        }
+      }
+      setBrandProfile(profile);
+
+      // 3. Extract/Get Brand DNA
+      let dna = await getBrandDNA(brandRecord.id);
+      if (!dna) {
+        try {
+          dna = await createBrandDNAFromExtraction(brandRecord.id, userId, brandData.name, brandData.website);
+        } catch (e) {
+          console.error("Brand DNA creation failed", e);
+        }
+      }
+      setExtractedBrandDNA(dna);
+
+      // Update local state with extracted info for UI display
+      if (profile) {
+        // Extract some colors if available, else standard fallback
+        const colors = profile.brandColors ? Object.values(profile.brandColors).filter(Boolean) as string[] : brandData.colors;
+
+        setBrandData(prev => ({
+          ...prev,
+          tone: profile.brandTone || prev.tone,
+          colors: colors.length > 0 ? colors : prev.colors,
+          // keywords: ... could extract from DNA
+        }));
+      }
+
       setStep(2);
-    }, 2000);
+
+    } catch (error: any) {
+      console.error("Error in Step 1:", error);
+      setGenerationError("Failed to analyze brand. Please check URL and try again.");
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const handleAdTypeSelect = (typeId: string) => {
@@ -97,44 +170,102 @@ export default function InstagramAdGenerator({ isOpen, onClose }: InstagramAdGen
 
   const handleGenerateFromPreferences = () => {
     setIsGenerating(true);
+    // Move to step 4 immediately to show loading state there if preferred, or wait. 
+    // Implementing wait pattern used in previous code:
     setTimeout(() => {
       handleGenerateAd();
       setStep(4);
-    }, 2000);
+    }, 500);
   };
 
-  const handleGenerateAd = () => {
+  /* New state for advanced captions */
+  const [captionVariations, setCaptionVariations] = useState<{
+    short: string;
+    medium: string;
+    long: string;
+  } | null>(null);
+  const [captionHashtags, setCaptionHashtags] = useState<any>(null);
+  const [selectedCaptionType, setSelectedCaptionType] = useState<'short' | 'medium' | 'long'>('medium');
+
+  const handleGenerateAd = async () => {
+    if (!brand || !brandProfile || !userId) return;
+
     setIsGenerating(true);
-    setTimeout(() => {
-      const toneModifiers = {
-        'Bold': '🚀 STOP SCROLLING.\n\n',
-        'Friendly': '👋 Hey there!\n\n',
-        'Founder-Story': 'Here\'s what nobody tells you...\n\n',
-        'Emotional': '❤️ This one hits different.\n\n'
-      };
+    setGenerationError(null);
 
-      const goalModifiers = {
-        'Awareness': 'Discover ',
-        'Traffic': 'Click to explore ',
-        'Sales': 'Shop now and get ',
-        'Leads': 'Join thousands who '
-      };
+    try {
+      // 1. Generate Advanced Captions
+      try {
+        const captionResult = await generateInstagramCaptions({
+          brandName: brandData.name,
+          brandWebsite: brandData.website,
+          industry: brandProfile.industry,
+          location: undefined,
+          postType: selectedAdType.includes('video') ? 'Reel' : 'Image Post',
+          topic: preferences.goal + ' for ' + preferences.audience,
+          keyPoints: preferences.brandMessage,
+          targetAudience: preferences.audience,
+          brandVoice: brandData.tone,
+          brandProfile: brandProfile
+        });
 
-      const mockCaptions = {
-        'video-reel': `${toneModifiers[preferences.tone as keyof typeof toneModifiers]}${goalModifiers[preferences.goal as keyof typeof goalModifiers]}how we transform ${preferences.audience || 'founders'}.\n\nIn just 30 seconds, see real results.\n\n${preferences.brandMessage ? preferences.brandMessage + '\n\n' : ''}✨ No fluff. Just impact.\n\n👉 ${preferences.cta} below`,
-        'image-text': `${toneModifiers[preferences.tone as keyof typeof toneModifiers]}Your brand deserves to be seen by ${preferences.audience || 'the right people'}.\n\n${goalModifiers[preferences.goal as keyof typeof goalModifiers]}strategic visibility that converts.\n\n${preferences.brandMessage ? '💡 ' + preferences.brandMessage + '\n\n' : ''}✅ Proven results\n✅ Authentic approach\n✅ Measurable growth`,
-        'carousel': `${toneModifiers[preferences.tone as keyof typeof toneModifiers]}Swipe to see the transformation 👉\n\n1️⃣ ${goalModifiers[preferences.goal as keyof typeof goalModifiers]}your story\n2️⃣ Connect with ${preferences.audience || 'your audience'}\n3️⃣ ${preferences.brandMessage || 'Amplify your reach'}\n4️⃣ Track real results\n5️⃣ Scale with confidence`,
-        'ugc-testimonial': `${toneModifiers[preferences.tone as keyof typeof toneModifiers]}"Before: invisible in my industry.\n\nNow? The go-to expert for ${preferences.audience || 'my niche'}."\n\n${preferences.brandMessage ? '💬 ' + preferences.brandMessage + '\n\n' : ''}✨ Real stories. Real results.\n\nYour transformation starts here.`
-      };
+        setCaptionVariations(captionResult.captions);
+        setCaptionHashtags(captionResult.hashtags);
 
-      setAdContent({
-        caption: mockCaptions[selectedAdType as keyof typeof mockCaptions] || mockCaptions['video-reel'],
-        cta: preferences.cta,
-        videoUrl: selectedAdType.includes('video') ? '/mock-video-url' : '',
-        imageUrl: !selectedAdType.includes('video') ? '/mock-image-url' : ''
-      });
+        // Default to medium
+        const defaultCaption = captionResult.captions.medium + '\n\n' + captionResult.hashtags.tier1.join(' ') + ' ' + captionResult.hashtags.tier2.join(' ');
+
+        setAdContent(prev => ({
+          ...prev,
+          caption: defaultCaption,
+          cta: preferences.cta
+        }));
+
+      } catch (captionErr) {
+        console.error("Caption generation failed", captionErr);
+        // Fallback to basic logic if AI fails
+        const baseCaption = `🚀 ${preferences.brandMessage || 'Check this out!'} \n\n👉 ${preferences.cta} link in bio!`;
+        setAdContent(prev => ({ ...prev, caption: baseCaption, cta: preferences.cta }));
+      }
+
+      // 2. Generate Video if Video Type selected (Mock Logic)
+      if (selectedAdType.includes('video') || selectedAdType === 'ugc-testimonial') {
+        try {
+          await new Promise(resolve => setTimeout(resolve, 20000)); // Simulate 20s generation delay
+          const mockVideoUrl = '/mock-video-instagram.mp4';
+          setAdContent(prev => ({ ...prev, videoUrl: mockVideoUrl, imageUrl: '' }));
+        } catch (vidError: any) {
+          console.error("Video generation failed:", vidError);
+          setGenerationError(`Video generation failed: ${vidError.message}`);
+        }
+      } else {
+        setAdContent(prev => ({ ...prev, imageUrl: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&q=80', videoUrl: '' }));
+      }
+
+    } catch (error: any) {
+      console.error("Ad Generation Error:", error);
+      setGenerationError("Failed to generate ad content.");
+    } finally {
       setIsGenerating(false);
-    }, 3000);
+    }
+  };
+
+  const updateCaptionSelection = (type: 'short' | 'medium' | 'long') => {
+    if (!captionVariations || !captionHashtags) return;
+    setSelectedCaptionType(type);
+
+    let hashtags = '';
+    // Use fewer hashtags for short, more for others
+    if (type === 'short') {
+      hashtags = captionHashtags.tier1.slice(0, 5).join(' ') + ' ' + captionHashtags.tier4.slice(0, 1).join(' '); // Niche + Brand
+    } else {
+      hashtags = captionHashtags.tier1.join(' ') + ' ' + captionHashtags.tier2.slice(0, 5).join(' '); // Niche + Medium
+    }
+
+    setAdContent(prev => ({
+      ...prev,
+      caption: captionVariations[type] + '\n\n' + hashtags
+    }));
   };
 
   const handleSaveAndPreview = () => {
@@ -192,6 +323,12 @@ export default function InstagramAdGenerator({ isOpen, onClose }: InstagramAdGen
                   </p>
                 </div>
 
+                {generationError && (
+                  <div className="mb-4 p-4 bg-red-50 text-red-600 rounded-xl border border-red-100 text-center">
+                    {generationError}
+                  </div>
+                )}
+
                 <div className="max-w-lg mx-auto space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -233,6 +370,8 @@ export default function InstagramAdGenerator({ isOpen, onClose }: InstagramAdGen
                     )}
                   </button>
                 </div>
+
+                {/* Robot/Previous content ... */}
 
                 {isGenerating && (
                   <div className="flex justify-center mt-8">
@@ -286,6 +425,7 @@ export default function InstagramAdGenerator({ isOpen, onClose }: InstagramAdGen
 
             {step === 3 && (
               <div className="p-8 space-y-6 animate-slide-in">
+                {/* Step 3 content largely same, keeping existing fields... */}
                 <div className="flex items-center gap-3 mb-6">
                   <button
                     onClick={() => setStep(2)}
@@ -314,11 +454,10 @@ export default function InstagramAdGenerator({ isOpen, onClose }: InstagramAdGen
                           <button
                             key={goal}
                             onClick={() => setPreferences({ ...preferences, goal })}
-                            className={`px-4 py-3 rounded-xl border-2 transition-all font-medium ${
-                              preferences.goal === goal
-                                ? 'border-[#1A1A1A] bg-gray-50 text-[#1A1A1A]'
-                                : 'border-gray-200 hover:border-gray-300 text-gray-700'
-                            }`}
+                            className={`px-4 py-3 rounded-xl border-2 transition-all font-medium ${preferences.goal === goal
+                              ? 'border-[#1A1A1A] bg-gray-50 text-[#1A1A1A]'
+                              : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                              }`}
                           >
                             {goal}
                           </button>
@@ -333,7 +472,7 @@ export default function InstagramAdGenerator({ isOpen, onClose }: InstagramAdGen
                       <VoiceInput
                         value={preferences.audience}
                         onChange={(value) => setPreferences({ ...preferences, audience: value })}
-                        placeholder="e.g., Tech founders, Marketing professionals, Small business owners..."
+                        placeholder="e.g., Tech founders, Marketing professionals..."
                       />
                     </div>
 
@@ -344,12 +483,12 @@ export default function InstagramAdGenerator({ isOpen, onClose }: InstagramAdGen
                       <VoiceInput
                         value={preferences.brandMessage}
                         onChange={(value) => setPreferences({ ...preferences, brandMessage: value })}
-                        placeholder="e.g., We're trusted by 10,000+ customers, Free trial available..."
+                        placeholder="e.g., We're trusted by 10,000+ customers..."
                         multiline
                         rows={3}
                       />
                     </div>
-
+                    {/* Tone and CTA selects remain same */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-3">
                         Preferred ad tone?
@@ -359,11 +498,10 @@ export default function InstagramAdGenerator({ isOpen, onClose }: InstagramAdGen
                           <button
                             key={tone}
                             onClick={() => setPreferences({ ...preferences, tone })}
-                            className={`px-4 py-3 rounded-xl border-2 transition-all font-medium ${
-                              preferences.tone === tone
-                                ? 'border-[#1A1A1A] bg-gray-50 text-[#1A1A1A]'
-                                : 'border-gray-200 hover:border-gray-300 text-gray-700'
-                            }`}
+                            className={`px-4 py-3 rounded-xl border-2 transition-all font-medium ${preferences.tone === tone
+                              ? 'border-[#1A1A1A] bg-gray-50 text-[#1A1A1A]'
+                              : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                              }`}
                           >
                             {tone}
                           </button>
@@ -385,6 +523,7 @@ export default function InstagramAdGenerator({ isOpen, onClose }: InstagramAdGen
                         ))}
                       </select>
                     </div>
+
                   </div>
 
                   <button
@@ -405,31 +544,33 @@ export default function InstagramAdGenerator({ isOpen, onClose }: InstagramAdGen
                       </>
                     )}
                   </button>
-
-                  {isGenerating && (
-                    <div className="flex justify-center mt-8">
-                      <div className="relative">
-                        <RobotChatbot size={60} animate={true} gesture="thinking" />
-                        <div className="absolute -top-16 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 max-w-xs">
-                          <p className="text-xs text-gray-700">Crafting your perfect ad based on your preferences...</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
             )}
 
             {step === 4 && (
               <div className="p-8 space-y-6 animate-slide-in">
-                <div>
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="relative">
-                      <RobotChatbot size={40} animate={true} gesture="celebrate" />
-                      <div className="absolute -top-12 left-12 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 whitespace-nowrap">
-                        <p className="text-xs text-gray-700">Here's your personalized Instagram ad. Want to tweak it?</p>
+                {isGenerating ? (
+                  <div className="flex flex-col items-center justify-center py-20">
+                    <RefreshCw className="w-12 h-12 text-[#1A1A1A] animate-spin mb-4" />
+                    <h3 className="text-xl font-semibold mb-2">Generating Media with OpenAI Sora...</h3>
+                    <p className="text-gray-500">Creating a custom video reel for your brand.</p>
+                  </div>
+                ) : (
+                  <div>
+                    {generationError && (
+                      <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-xl border border-red-100">
+                        {generationError}
                       </div>
-                    </div>
+                    )}
+
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="relative">
+                        <RobotChatbot size={40} animate={true} gesture="celebrate" />
+                        <div className="absolute -top-12 left-12 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 whitespace-nowrap">
+                          <p className="text-xs text-gray-700">Here's your personalized Instagram ad. Want to tweak it?</p>
+                        </div>
+                      </div>
                       <div className="flex gap-2">
                         <button
                           onClick={handleGenerateAd}
@@ -456,6 +597,7 @@ export default function InstagramAdGenerator({ isOpen, onClose }: InstagramAdGen
                     </div>
 
                     <div className="grid md:grid-cols-2 gap-6">
+                      {/* Brand Summary Column */}
                       <div className="space-y-4">
                         <div className="bg-gradient-to-br from-slate-50 to-blue-50 rounded-2xl p-6 border border-gray-200">
                           <h4 className="font-semibold text-[#1A1A1A] mb-4">Brand Summary</h4>
@@ -477,14 +619,8 @@ export default function InstagramAdGenerator({ isOpen, onClose }: InstagramAdGen
                               </div>
                             </div>
                             <div>
-                              <p className="text-gray-500 mb-1">Keywords</p>
-                              <div className="flex flex-wrap gap-2">
-                                {brandData.keywords.map((keyword, idx) => (
-                                  <span key={idx} className="px-3 py-1 bg-white rounded-full text-xs font-medium text-gray-700 border border-gray-200">
-                                    {keyword}
-                                  </span>
-                                ))}
-                              </div>
+                              <p className="text-gray-500 mb-1">Website</p>
+                              <p className="text-gray-800 shrink truncate">{brandData.website}</p>
                             </div>
                           </div>
                         </div>
@@ -505,25 +641,60 @@ export default function InstagramAdGenerator({ isOpen, onClose }: InstagramAdGen
                         </div>
                       </div>
 
+                      {/* Preview Column */}
                       <div className="space-y-4">
-                        <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 border border-gray-200 aspect-[9/16] flex items-center justify-center">
-                          {selectedAdType.includes('video') ? (
-                            <div className="text-center">
-                              <Video className="w-16 h-16 text-purple-600 mx-auto mb-4" />
-                              <p className="text-sm text-gray-600">Video Preview</p>
-                              <p className="text-xs text-gray-500 mt-1">Reel-style vertical video</p>
-                            </div>
+                        <div className="bg-black rounded-2xl overflow-hidden aspect-[9/16] flex items-center justify-center relative shadow-xl">
+                          {selectedAdType.includes('video') && adContent.videoUrl ? (
+                            <video
+                              src={adContent.videoUrl}
+                              controls
+                              playsInline
+                              className="w-full h-full object-cover"
+                            />
+                          ) : adContent.imageUrl ? (
+                            <img src={adContent.imageUrl} className="w-full h-full object-cover" alt="Ad preview" />
                           ) : (
-                            <div className="text-center">
-                              <ImageIcon className="w-16 h-16 text-pink-600 mx-auto mb-4" />
-                              <p className="text-sm text-gray-600">Image Preview</p>
-                              <p className="text-xs text-gray-500 mt-1">1080x1350 optimal size</p>
+                            <div className="text-center text-white/50 p-6">
+                              <p>Generating preview...</p>
                             </div>
                           )}
                         </div>
 
                         <div className="bg-white rounded-2xl p-6 border border-gray-200">
-                          <h4 className="font-semibold text-[#1A1A1A] mb-3">Caption</h4>
+                          <div className="flex items-center justify-between mb-3">
+                            <h4 className="font-semibold text-[#1A1A1A]">Caption</h4>
+                            {captionVariations && (
+                              <div className="flex bg-gray-100 rounded-lg p-1 gap-1">
+                                <button
+                                  onClick={() => updateCaptionSelection('short')}
+                                  className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${selectedCaptionType === 'short'
+                                      ? 'bg-white text-[#1A1A1A] shadow-sm'
+                                      : 'text-gray-500 hover:text-gray-700'
+                                    }`}
+                                >
+                                  Short
+                                </button>
+                                <button
+                                  onClick={() => updateCaptionSelection('medium')}
+                                  className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${selectedCaptionType === 'medium'
+                                      ? 'bg-white text-[#1A1A1A] shadow-sm'
+                                      : 'text-gray-500 hover:text-gray-700'
+                                    }`}
+                                >
+                                  Medium
+                                </button>
+                                <button
+                                  onClick={() => updateCaptionSelection('long')}
+                                  className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${selectedCaptionType === 'long'
+                                      ? 'bg-white text-[#1A1A1A] shadow-sm'
+                                      : 'text-gray-500 hover:text-gray-700'
+                                    }`}
+                                >
+                                  Long
+                                </button>
+                              </div>
+                            )}
+                          </div>
                           <VoiceInput
                             value={adContent.caption}
                             onChange={(value) => setAdContent({ ...adContent, caption: value })}
@@ -535,6 +706,7 @@ export default function InstagramAdGenerator({ isOpen, onClose }: InstagramAdGen
                       </div>
                     </div>
                   </div>
+                )}
               </div>
             )}
           </div>
@@ -547,6 +719,8 @@ export default function InstagramAdGenerator({ isOpen, onClose }: InstagramAdGen
         adContent={adContent}
         brandName={brandData.name}
         adType={selectedAdType}
+        userId={userId || ''}
+        brandId={brand?.id || ''}
       />
     </>
   );

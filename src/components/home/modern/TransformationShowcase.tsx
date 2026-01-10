@@ -1,7 +1,7 @@
 
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Linkedin, Instagram, Check, X, Heart, MessageCircle, Share2, MoreHorizontal, Bookmark, Send, Music2, Globe } from 'lucide-react';
+import { Linkedin, Instagram, Heart, MessageCircle, Share2, MoreHorizontal, Send, Music2, Globe } from 'lucide-react';
 
 export default function TransformationShowcase() {
     const [sliderValue, setSliderValue] = useState(50);
@@ -25,14 +25,14 @@ export default function TransformationShowcase() {
     };
 
     return (
-        <section className="py-24 bg-[#0A0A0A] text-white overflow-hidden">
-            <div className="container mx-auto px-4">
-                <div className="text-center mb-12">
+        <section className="py-32 bg-[#0A0A0A] text-white overflow-hidden">
+            <div className="w-full max-w-[1920px] mx-auto px-4 md:px-12">
+                <div className="text-center mb-20">
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         whileInView={{ opacity: 1, scale: 1 }}
                         viewport={{ once: true }}
-                        className="inline-block px-4 py-1 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm text-sm font-medium text-indigo-300 mb-6"
+                        className="inline-block px-6 py-2 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm text-base font-medium text-indigo-300 mb-8"
                     >
                         Before & After
                     </motion.div>
@@ -40,38 +40,38 @@ export default function TransformationShowcase() {
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
-                        className="text-4xl md:text-5xl font-bold mb-6"
+                        className="text-6xl md:text-8xl font-bold mb-8"
                     >
                         The <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">Foundrly Effect</span>
                     </motion.h2>
-                    <p className="text-gray-400 text-lg max-w-2xl mx-auto mb-8">
+                    <p className="text-gray-400 text-3xl max-w-4xl mx-auto mb-12 leading-relaxed">
                         Witness the transformation from generic updates to authority-building thought leadership.
                     </p>
 
                     {/* Tab Switcher */}
-                    <div className="flex justify-center gap-4 mb-10">
+                    <div className="flex justify-center gap-6 mb-16">
                         <button
                             onClick={() => setActiveTab('linkedin')}
-                            className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-medium transition-all ${activeTab === 'linkedin'
+                            className={`flex items-center gap-3 px-8 py-4 rounded-full text-lg font-medium transition-all ${activeTab === 'linkedin'
                                 ? 'bg-[#0077B5] text-white shadow-[0_0_20px_rgba(0,119,181,0.3)] scale-105'
                                 : 'bg-white/5 text-gray-400 hover:bg-white/10'
                                 }`}
                         >
-                            <Linkedin className="w-4 h-4" /> LinkedIn
+                            <Linkedin className="w-6 h-6" /> LinkedIn
                         </button>
                         <button
                             onClick={() => setActiveTab('instagram')}
-                            className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-medium transition-all ${activeTab === 'instagram'
+                            className={`flex items-center gap-3 px-8 py-4 rounded-full text-lg font-medium transition-all ${activeTab === 'instagram'
                                 ? 'bg-gradient-to-tr from-[#FD1D1D] to-[#833AB4] text-white shadow-[0_0_20px_rgba(253,29,29,0.3)] scale-105'
                                 : 'bg-white/5 text-gray-400 hover:bg-white/10'
                                 }`}
                         >
-                            <Instagram className="w-4 h-4" /> Instagram
+                            <Instagram className="w-6 h-6" /> Instagram
                         </button>
                     </div>
                 </div>
 
-                <div className="relative max-w-4xl mx-auto aspect-[4/5] md:aspect-[2/1] bg-gray-900 rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
+                <div className="relative max-w-7xl mx-auto aspect-[4/5] md:aspect-[2/1] bg-gray-900 rounded-[3rem] overflow-hidden border border-white/10 shadow-2xl">
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={activeTab}
@@ -84,7 +84,7 @@ export default function TransformationShowcase() {
                             {/* AFTER Image (Background) */}
                             <div className="absolute inset-0 bg-[#0F1115] flex items-center justify-center p-4 md:p-8">
                                 {activeTab === 'linkedin' ? <LinkedInPost variant="after" /> : <InstagramPost variant="after" />}
-                                <div className="absolute top-6 right-6 bg-indigo-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg z-10 hidden md:block">
+                                <div className="absolute top-10 right-10 bg-indigo-500 text-white px-5 py-2 rounded-full text-sm font-bold shadow-lg z-10 hidden md:block">
                                     AFTER: AUTHORITY
                                 </div>
                             </div>
@@ -95,7 +95,7 @@ export default function TransformationShowcase() {
                                 style={{ clipPath: `polygon(0 0, ${sliderValue}% 0, ${sliderValue}% 100%, 0 100%)` }}
                             >
                                 {activeTab === 'linkedin' ? <LinkedInPost variant="before" /> : <InstagramPost variant="before" />}
-                                <div className="absolute top-6 left-6 bg-gray-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg z-10 hidden md:block">
+                                <div className="absolute top-10 left-10 bg-gray-500 text-white px-5 py-2 rounded-full text-sm font-bold shadow-lg z-10 hidden md:block">
                                     BEFORE: NOISE
                                 </div>
                             </div>
@@ -110,11 +110,11 @@ export default function TransformationShowcase() {
                         onTouchMove={handleTouchMove}
                     >
                         <div
-                            className="absolute top-0 bottom-0 w-1 bg-white shadow-[0_0_20px_rgba(255,255,255,0.5)] z-30"
+                            className="absolute top-0 bottom-0 w-1.5 bg-white shadow-[0_0_20px_rgba(255,255,255,0.5)] z-30"
                             style={{ left: `${sliderValue}%` }}
                         >
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 bg-white rounded-full shadow-lg flex items-center justify-center text-indigo-600">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-white rounded-full shadow-lg flex items-center justify-center text-indigo-600 hover:scale-110 transition-transform">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                                     <path d="M18 8L22 12L18 16" />
                                     <path d="M6 8L2 12L6 16" />
                                 </svg>
@@ -124,7 +124,7 @@ export default function TransformationShowcase() {
                 </div>
 
                 {/* Metrics */}
-                <div className="max-w-4xl mx-auto mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="max-w-6xl mx-auto mt-20 grid grid-cols-1 md:grid-cols-3 gap-10">
                     <MetricCard label="Engagement Amplification" value="340%" delay={0.1} />
                     <MetricCard label="Brand Consistency" value="100%" delay={0.2} />
                     <MetricCard label="Time Saved / Wk" value="12h+" delay={0.3} />
@@ -141,7 +141,7 @@ function MetricCard({ label, value, delay }: { label: string; value: string; del
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay }}
-            className="bg-white/5 border border-white/10 rounded-2xl p-6 text-center hover:bg-white/10 transition-colors"
+            className="bg-white/5 border border-white/10 rounded-[2rem] p-10 text-center hover:bg-white/10 transition-colors"
         >
             <div className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-white to-gray-400 mb-2">
                 {value}

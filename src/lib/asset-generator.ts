@@ -10,6 +10,7 @@ import type { BrandProfile } from './brand-extractor';
 import { generateBrandImages as generateGeminiImages } from './geminiImage';
 import { generateBrandImages as generateSeedreamImages } from './seedreamImage';
 import { generateVideoWithVeo, type GeneratedVideo } from './veoVideo';
+export type { GeneratedVideo };
 
 // Session-based asset cache
 const ASSET_CACHE_PREFIX = 'foundrly_asset_cache_';
@@ -74,14 +75,22 @@ export interface GenerateImageOptions {
   imagePrompt?: string; // Optional: use existing prompt from post generation
   provider?: 'dalle' | 'gemini' | 'seedream'; // Image generation provider
   brandDNA?: any; // BrandDNA object for enhanced personalization
+  userId?: string;
+  brandId?: string;
 }
 
 export interface GenerateVideoOptions {
   brandProfile: BrandProfile;
+  brandName: string;
+  imagePrompt?: string;
   postType: string;
   topic: string;
   contextDetails?: string;
   targetDuration?: string; // e.g., "30s", "60s"
+  aspectRatio?: 'landscape' | 'portrait' | 'square';
+  brandDNA?: any;
+  userId?: string;
+  brandId?: string;
 }
 
 /**
@@ -228,15 +237,15 @@ export async function generateImagesWithSeedream(
 }
 
 /**
- * Generate a video using Google Veo
+ * Generate a video using OpenAI Sora
  */
 export async function generateVideo(
-  options: GenerateImageOptions
+  options: GenerateVideoOptions
 ): Promise<GeneratedVideo> {
-  const { brandProfile, brandName, imagePrompt, brandDNA } = options;
+  const { brandProfile, brandName, imagePrompt, brandDNA, userId, brandId, aspectRatio } = options;
   const prompt = imagePrompt || `Promotional video for ${brandName}`;
 
-  return await generateVideoWithVeo(prompt, brandProfile, brandName, brandDNA);
+  return await generateVideoWithVeo(prompt, brandProfile, brandName, brandDNA, userId, brandId, aspectRatio);
 }
 
 /**

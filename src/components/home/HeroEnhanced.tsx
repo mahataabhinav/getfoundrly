@@ -37,20 +37,20 @@ export default function HeroEnhanced({ onSignupClick, onSeeHowItWorks }: HeroEnh
         <div className="absolute top-1/2 left-1/2 w-[600px] h-[600px] bg-gradient-to-r from-blue-100/10 to-slate-100/10 rounded-full blur-3xl animate-pulse" />
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-6 py-32">
-        <div className="flex flex-col items-center text-center max-w-4xl mx-auto">
+      <div className="relative w-full mx-auto px-4 py-8 md:py-12">
+        <div className="flex flex-col items-center text-center w-full mx-auto">
           <div className={`transition-all duration-1000 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6 leading-[1.1]">
-              <span className="block mb-3 bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent">
+            <h1 className="text-[11vw] leading-[0.9] font-bold tracking-tighter mb-6">
+              <span className="block mb-2 bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent">
                 Turn invisible brands
               </span>
               <span className="block text-gray-900 relative">
                 <span className="relative z-10">into undeniable ones.</span>
-                <span className="absolute inset-0 bg-gradient-to-r from-blue-500/20 via-slate-500/20 to-blue-500/20 blur-2xl" />
+                <span className="absolute inset-0 bg-gradient-to-r from-blue-500/20 via-slate-500/20 to-blue-500/20 blur-3xl transform scale-110" />
               </span>
             </h1>
 
-            <p className="text-xl md:text-2xl text-gray-600 mb-10 leading-relaxed max-w-2xl mx-auto">
+            <p className="text-2xl md:text-4xl text-gray-600 mb-10 leading-snug max-w-5xl mx-auto font-medium tracking-tight">
               Foundrly is your AI co-founder that creates, schedules, and analyzes content across LinkedIn, Instagram, email, and your blog.
             </p>
 

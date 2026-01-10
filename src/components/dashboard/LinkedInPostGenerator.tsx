@@ -515,24 +515,30 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
    * On-demand video generation
    */
   const handleGenerateVideo = async () => {
-    if (!brandProfile || isGeneratingVideos) return;
+    if (!brandProfile || !userId || !brand || isGeneratingVideos) return;
 
     setIsGeneratingVideos(true);
     setVideoGenerationError(null);
 
     try {
-      const video = await generateVideo({
-        brandProfile,
-        brandName: brandData.name,
-        postType: selectedType,
-        topic: context.topic,
-        contextDetails: context.details || undefined,
-        // Use video prompt if available or image prompt as base
-        imagePrompt: generatedContent?.videoPrompt || generatedContent?.imagePrompts?.primary,
-        brandDNA: extractedBrandDNA || undefined,
-      });
+      // Mock video generation for demo purposes using user's MP4
+      await new Promise(resolve => setTimeout(resolve, 20000)); // Simulate generation delay
 
-      setGeneratedVideos([video]);
+      const mockVideo: GeneratedVideo = {
+        id: `mock_vid_${Date.now()}`,
+        url: '/mock-video.mp4',
+        prompt: generatedContent?.videoPrompt || generatedContent?.imagePrompts?.primary || "Professional brand video",
+        thumbnailUrl: '', // Browser will generate preview from video file
+        metadata: {
+          duration: "15s",
+          style: "Cinematic Strategy",
+          provider: 'sora',
+          aspectRatio: "16:9",
+          createdAt: new Date().toISOString()
+        }
+      };
+
+      setGeneratedVideos([mockVideo]);
       // setSelectedVideo(video); // Disabled as per user request (manual attach only)
 
     } catch (error: any) {
@@ -1328,13 +1334,13 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
                     {activeAssetTab === 'videos' && (
                       <div className="space-y-4 animate-fade-in">
                         <div className="flex items-center justify-between mb-4">
-                          <h5 className="text-sm font-semibold text-[#1A1A1A]">AI Generated Video (Gemini Veo)</h5>
+                          <h5 className="text-sm font-semibold text-[#1A1A1A]">AI Generated Video (OpenAI Sora)</h5>
                         </div>
 
                         {isGeneratingVideos ? (
                           <div className="flex flex-col items-center justify-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-200">
                             <Loader2 className="w-8 h-8 text-[#1A1A1A] animate-spin mb-3" />
-                            <p className="text-sm text-gray-600 font-medium">Creating video with Veo...</p>
+                            <p className="text-sm text-gray-600 font-medium">Creating video with Sora...</p>
                             <p className="text-xs text-gray-400 mt-1">This might take a few moments</p>
                           </div>
                         ) : videoGenerationError ? (
@@ -1379,7 +1385,7 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
                                 )}
                                 <div className="absolute top-2 left-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded-full backdrop-blur-sm flex items-center gap-1">
                                   <Sparkles className="w-3 h-3 text-[#CCFF00]" />
-                                  Veo
+                                  Sora
                                 </div>
 
                                 {/* Add to Post Button Overlay */}

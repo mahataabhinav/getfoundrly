@@ -13,30 +13,30 @@ export default function LiveProductGlimpses() {
 
   return (
     <section className="relative py-32 bg-[#0A0A0A] overflow-hidden">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="text-center mb-16">
-          <h2 className="text-5xl md:text-6xl font-bold text-white mb-6">
+      <div className="w-full max-w-[1920px] mx-auto px-4 md:px-12">
+        <div className="text-center mb-20">
+          <h2 className="text-6xl md:text-8xl font-bold text-white mb-8">
             See Foundrly in action
           </h2>
-          <p className="text-xl text-gray-400 max-w-3xl mx-auto">
+          <p className="text-3xl text-gray-400 max-w-4xl mx-auto leading-relaxed">
             Watch how each content type flows from idea to published
           </p>
         </div>
 
-        <div className="flex justify-center mb-12">
-          <div className="inline-flex bg-white/5 border border-white/10 rounded-full p-2 gap-2 backdrop-blur-sm">
+        <div className="flex justify-center mb-16">
+          <div className="inline-flex bg-white/5 border border-white/10 rounded-full p-3 gap-3 backdrop-blur-sm">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all ${activeTab === tab.id
+                  className={`flex items-center gap-3 px-8 py-4 rounded-full text-lg font-medium transition-all ${activeTab === tab.id
                     ? 'bg-white text-black shadow-lg'
                     : 'text-gray-400 hover:text-white hover:bg-white/5'
                     }`}
                 >
-                  <Icon className="w-5 h-5" />
+                  <Icon className="w-6 h-6" />
                   {tab.label}
                 </button>
               );
@@ -44,7 +44,7 @@ export default function LiveProductGlimpses() {
           </div>
         </div>
 
-        <div className="bg-white/5 rounded-3xl p-8 md:p-12 border border-white/10 backdrop-blur-sm">
+        <div className="bg-white/5 rounded-[3rem] p-10 md:p-16 border border-white/10 backdrop-blur-sm">
           {activeTab === 'linkedin' && <LinkedInFlow />}
           {activeTab === 'instagram' && <InstagramFlow />}
           {activeTab === 'newsletter' && <NewsletterFlow />}
