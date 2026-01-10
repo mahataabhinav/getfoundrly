@@ -25,105 +25,156 @@ interface CalendarEvent {
 }
 
 export default function ContentCalendar() {
-    // Default to Dec 23, 2025 as per screenshot, or use today
-    // For this specific request, I will anchor it to Dec 23, 2025 to match the mock data relevance, 
-    // but in a real app this would initialize to `new Date()`. 
-    // Given the previous context heavily uses Dec 2025, I will stick to that for the "demo" feel,
-    // or better yet, make it dynamic but populate the mock data relative to the current view.
-    // Let's use specific fixed dates for the mock to match the screenshot exactly.
-    const [startDate, setStartDate] = useState(new Date('2025-12-23T00:00:00'));
+    // Start from Jan 10, 2026 as requested
+    const [startDate, setStartDate] = useState(new Date('2026-01-10T00:00:00'));
 
     const generateMockEvents = (): CalendarEvent[] => {
         return [
-            // Dec 23 (Tue)
+            // Jan 10 (Sat) - Weekend Vibes
             {
                 id: '1',
-                type: 'blog',
-                title: "Elevate Your Startup's Presence with Automated BrandDNA Extraction",
-                body: "Most startups struggle to stand out, losing hours crafting content that barely moves the needle. Foundrly's AI-powered BrandDNA extraction cuts through the noise...",
-                date: new Date('2025-12-23'),
-                time: '9:00am',
-                status: 'scheduled'
+                type: 'instagram',
+                title: "Weekend recharging 🔋",
+                body: "Sometimes the best productivity hack is stepping away. #FounderLife",
+                date: new Date('2026-01-10'),
+                time: '10:00am',
+                status: 'scheduled',
+                thumbnail: 'https://images.unsplash.com/photo-1517865288-978fcb780652?auto=format&fit=crop&q=80&w=400',
+                hasVideo: true
             },
             {
                 id: '2',
-                type: 'linkedin',
-                title: "Let Foundrly handle your brand DNA and content so you can grow effortlessly.",
-                body: "Feeling overwhelmed by content creation? You're not alone.",
-                date: new Date('2025-12-23'),
-                time: '3:00pm',
-                status: 'scheduled',
-                thumbnail: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=400'
+                type: 'blog',
+                title: "2026 Tech Trends Recap",
+                body: "A quick look at what's shaping the industry as we kick off the year.",
+                date: new Date('2026-01-10'),
+                time: '2:00pm',
+                status: 'published'
             },
-            // Dec 24 (Wed)
+
+            // Jan 11 (Sun) - Prep for Week
             {
                 id: '3',
+                type: 'linkedin',
+                title: "Sunday Strategy Session",
+                body: "Planning the roadmap for Q1. What's your top priority this week?",
+                date: new Date('2026-01-11'),
+                time: '4:00pm',
+                status: 'scheduled',
+                thumbnail: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=400'
+            },
+
+            // Jan 12 (Mon) - Motivation & Announcements
+            {
+                id: '4',
+                type: 'linkedin',
+                title: "The Agentic AI Revolution is Here",
+                body: "Why 2026 is the year AI agents officially replace static software.",
+                date: new Date('2026-01-12'),
+                time: '9:00am',
+                status: 'scheduled',
+                thumbnail: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&q=80&w=400',
+                hasVideo: true
+            },
+            {
+                id: '5',
                 type: 'email',
-                title: "The Power of AI in Brand Building",
-                body: "Struggling to grow your brand without adding more team members? Solopreneurs can boost brand visibility and supercharge content creation with AI...",
-                date: new Date('2025-12-24'),
+                title: "Community Update: New Features Live",
+                body: "We just dropped the new dashboard. Check it out!",
+                date: new Date('2026-01-12'),
+                time: '11:00am',
+                status: 'scheduled'
+            },
+            {
+                id: '6',
+                type: 'instagram',
+                title: "Office Tour - New HQ",
+                body: "A sneak peek at where the magic happens.",
+                date: new Date('2026-01-12'),
+                time: '1:00pm',
+                status: 'scheduled',
+                thumbnail: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=400'
+            },
+
+            // Jan 13 (Tue) - Educational Content
+            {
+                id: '7',
+                type: 'blog',
+                title: "How to Build an Audience in 2026",
+                body: "The algorithms have changed. Here is the new playbook.",
+                date: new Date('2026-01-13'),
                 time: '8:00am',
                 status: 'draft'
             },
             {
-                id: '4',
-                type: 'instagram',
-                title: "Cut content time by 70% and triple engagement",
-                body: "How do you make your brand unforgettable without burning hours on content creation...",
-                date: new Date('2025-12-24'),
-                time: '10:00am',
-                status: 'scheduled',
-                thumbnail: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&q=80&w=400'
-            },
-            {
-                id: '5',
-                type: 'blog',
-                title: "Foundrly: Revolutionizing Your Content Workflow",
-                body: "Discover how our new features can streamline your daily tasks...",
-                date: new Date('2025-12-24'),
-                time: '2:00pm',
-                status: 'scheduled'
-            },
-            // Dec 25 (Thu)
-            {
-                id: '6',
-                type: 'blog',
-                title: "Unlocking Brand Growth: The Essential Role of AI Tools",
-                body: "You spend hours crafting content that barely moves the needle. Traditional branding tactics no longer cut it—your startup needs smarter tools...",
-                date: new Date('2025-12-25'),
-                time: '9:00am',
-                status: 'scheduled'
-            },
-            {
-                id: '7',
-                type: 'instagram',
-                title: "Still invisible to your audience? That's costing you serious growth.",
-                body: "",
-                date: new Date('2025-12-25'),
-                time: '10:00am',
-                status: 'scheduled',
-                thumbnail: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=400',
-                hasVideo: true
-            },
-            // Dec 26 (Fri)
-            {
                 id: '8',
-                type: 'blog',
-                title: "Transform Your Brand from Invisible to Unstoppable with Foundrly's AI Magic 🚀",
-                body: "You spend hours crafting content that barely moves the needle. Your brand stays invisible while competitors grab the spotlight...",
-                date: new Date('2025-12-26'),
-                time: '2:00pm',
-                status: 'scheduled'
+                type: 'instagram',
+                title: "3 Tips for Better Design",
+                body: "Swipe through to see how we optimized our UI.",
+                date: new Date('2026-01-13'),
+                time: '10:00am',
+                status: 'scheduled',
+                thumbnail: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&q=80&w=400'
             },
             {
                 id: '9',
                 type: 'linkedin',
-                title: "Stop Guessing and Start Growing with AI",
-                body: "The brands that get noticed? They're not just lucky—they're AI-powered.",
-                date: new Date('2025-12-26'),
+                title: "Customer Success Story: Acme Corp",
+                body: "How Acme Corp scaled 10x using Foundrly.",
+                date: new Date('2026-01-13'),
                 time: '3:00pm',
                 status: 'scheduled',
-                thumbnail: 'https://images.unsplash.com/photo-1488190211105-8b0e65b80b4e?auto=format&fit=crop&q=80&w=400'
+                thumbnail: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&q=80&w=400'
+            },
+
+            // Jan 14 (Wed) - Viral/Fun Content
+            {
+                id: '10',
+                type: 'instagram',
+                title: "When the code works on the first try 🤯",
+                body: "Rare footage of a bug-free deploy.",
+                date: new Date('2026-01-14'),
+                time: '12:00pm',
+                status: 'scheduled',
+                thumbnail: 'https://images.unsplash.com/photo-1531297461136-82lw8e2c0e8f?auto=format&fit=crop&q=80&w=400',
+                hasVideo: true
+            },
+            {
+                id: '11',
+                type: 'linkedin',
+                title: "Poll: Remote or Office?",
+                body: "What is your team's policy in 2026?",
+                date: new Date('2026-01-14'),
+                time: '2:00pm',
+                status: 'scheduled'
+            },
+            {
+                id: '12',
+                type: 'email',
+                title: "Webinar Reminder: Growth Hacks",
+                body: "Starting in 1 hour. Don't miss out.",
+                date: new Date('2026-01-14'),
+                time: '4:00pm',
+                status: 'scheduled'
+            },
+            {
+                id: '13',
+                type: 'blog',
+                title: "Why Founders Burn Out (and how to avoid it)",
+                body: "Key takeaways from our latest podcast episode.",
+                date: new Date('2026-01-14'),
+                time: '6:00pm',
+                status: 'draft'
+            },
+            {
+                id: '14',
+                type: 'linkedin',
+                title: "Late Night Coding Session 💻",
+                body: "Building the future, one line at a time.",
+                date: new Date('2026-01-14'),
+                time: '10:00pm',
+                status: 'scheduled',
+                thumbnail: 'https://images.unsplash.com/photo-1555099962-4199c345e5dd?auto=format&fit=crop&q=80&w=400'
             }
         ];
     };
@@ -175,14 +226,14 @@ export default function ContentCalendar() {
     };
 
     const isToday = (date: Date) => {
-        const today = new Date('2025-12-23T00:00:00'); // Mocking 'Today' as Dec 23 for the screenshot accuracy
+        const today = new Date('2026-01-10T00:00:00'); // Mocking 'Today' as Jan 10, 2026
         return date.getDate() === today.getDate() &&
             date.getMonth() === today.getMonth() &&
             date.getFullYear() === today.getFullYear();
     };
 
     return (
-        <div className="bg-zinc-50/5 text-zinc-900 dark:text-zinc-100 rounded-[32px] p-6 animate-fade-in w-full overflow-hidden">
+        <div className="bg-zinc-50/5 text-zinc-900 dark:text-zinc-100 rounded-[32px] p-6 animate-fade-in w-full h-full flex flex-col overflow-hidden">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                 <div className="flex items-center gap-4">
@@ -216,7 +267,7 @@ export default function ContentCalendar() {
             </div>
 
             {/* Calendar Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-5 divide-y md:divide-y-0 md:divide-x divide-zinc-800 border border-zinc-800 bg-[#18181B] rounded-xl overflow-hidden min-h-[600px]">
+            <div className="flex-1 grid grid-cols-1 md:grid-cols-5 divide-y md:divide-y-0 md:divide-x divide-zinc-800 border border-zinc-800 bg-[#18181B] rounded-xl overflow-hidden">
                 {weekDays.map((dayDate, index) => {
                     const dayEvents = events.filter(e =>
                         e.date.getDate() === dayDate.getDate() &&
@@ -242,7 +293,7 @@ export default function ContentCalendar() {
                             </div>
 
                             {/* Events List */}
-                            <div className={`flex-1 p-3 space-y-3 ${isCurrentDay ? 'bg-zinc-900/10' : ''}`}>
+                            <div className={`flex-1 p-3 space-y-3 overflow-y-auto scrollbar-hide ${isCurrentDay ? 'bg-zinc-900/10' : ''}`}>
                                 {dayEvents.map(event => (
                                     <div key={event.id} className="bg-white rounded-xl p-0 overflow-hidden group hover:ring-2 hover:ring-indigo-500/50 transition-all border border-zinc-200/50">
                                         {/* Card Header area */}

@@ -21,7 +21,6 @@ export default function HomePage() {
     <div className="bg-[#0A0A0A] min-h-screen">
       <HeroSection
         onSignupClick={() => navigate('/signup')}
-        onSeeHowItWorks={scrollToHowItWorks}
       />
 
       {/* Visual divider/transition */}

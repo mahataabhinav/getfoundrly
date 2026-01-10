@@ -74,10 +74,10 @@ export default function HomeSection({ onNavigate }: { onNavigate?: (tab: string)
       {/* Simplified Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">
+          <h1 className="text-5xl font-bold text-white tracking-tight">
             {getWelcomeMessage()}
           </h1>
-          <p className="text-zinc-400 mt-1">
+          <p className="text-zinc-400 mt-2 text-xl">
             Here's what's happening with your content strategy today.
           </p>
         </div>
@@ -107,26 +107,26 @@ export default function HomeSection({ onNavigate }: { onNavigate?: (tab: string)
 
       {/* Quick Create Tools */}
       <div>
-        <div className="flex items-center justify-between mb-4 px-2">
-          <h2 className="text-xl font-bold text-white">Quick Create</h2>
+        <div className="flex items-center justify-between mb-6 px-2">
+          <h2 className="text-3xl font-bold text-white">Quick Create</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {quickActions.map((action) => (
             <button
               key={action.title}
-              className="w-full bg-[#18181B] rounded-[24px] p-6 border border-white/5 hover:border-[#CCFF00]/50 hover:bg-[#27272A] transition-all group text-left relative overflow-hidden"
+              className="w-full bg-[#18181B] rounded-[32px] p-8 border border-white/5 hover:border-[#CCFF00]/50 hover:bg-[#27272A] transition-all group text-left relative overflow-hidden"
               onClick={() => onNavigate?.('Create')}
             >
-              <div className="absolute right-0 top-0 w-32 h-32 bg-gradient-to-br from-transparent to-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+              <div className="absolute right-0 top-0 w-40 h-40 bg-gradient-to-br from-transparent to-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
 
               <div className="relative z-10 flex items-center justify-between">
                 <div>
-                  <div className="text-3xl mb-3">{action.preview}</div>
-                  <h3 className="text-lg font-bold text-white">{action.title}</h3>
-                  <p className="text-zinc-500 text-sm mt-1">{action.type}</p>
+                  <div className="text-4xl mb-4">{action.preview}</div>
+                  <h3 className="text-2xl font-bold text-white">{action.title}</h3>
+                  <p className="text-zinc-500 text-lg mt-1">{action.type}</p>
                 </div>
-                <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-[#CCFF00] group-hover:text-black transition-all">
-                  <ArrowRight className="w-5 h-5" />
+                <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-[#CCFF00] group-hover:text-black transition-all">
+                  <ArrowRight className="w-6 h-6" />
                 </div>
               </div>
             </button>

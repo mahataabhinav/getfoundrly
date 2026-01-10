@@ -14,6 +14,7 @@ import FAQPage from './pages/resources/FAQPage';
 import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
 import AuthCallback from './pages/AuthCallback';
+import JoinWaitlistPage from './pages/JoinWaitlistPage';
 import { supabase } from './lib/supabase';
 
 function AppContent() {
@@ -132,6 +133,7 @@ function AppContent() {
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/careers" element={<AboutPage />} />
         <Route path="/auth/linkedin/callback" element={<AuthCallback />} />
+        <Route path="/join-waitlist" element={<JoinWaitlistPage />} />
       </Routes>
 
       {!isDashboard && !isAuthPage && <Footer />}

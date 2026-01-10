@@ -34,17 +34,17 @@ export default function TopNav({ activeTab, onTabChange }: TopNavProps) {
   const tabs = ['Home', 'Create', 'Analyze', 'Grow', 'BrandDNA'];
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0F0F11]/80 backdrop-blur-xl border-b border-white/5 h-[73px]">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0F0F11]/80 backdrop-blur-xl border-b border-white/5 h-24">
       <div className="px-6 h-full flex items-center">
         <div className="flex items-center justify-between w-full">
-          <Logo variant="light" iconSize={28} showWordmark={true} />
+          <Logo variant="light" iconSize={36} showWordmark={true} />
 
           <div className="hidden md:flex items-center gap-1">
             {tabs.map((tab) => (
               <button
                 key={tab}
                 onClick={() => onTabChange(tab)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab
+                className={`px-6 py-3 rounded-xl text-lg font-medium transition-all ${activeTab === tab
                   ? 'bg-[#CCFF00] text-black shadow-[0_0_20px_rgba(204,255,0,0.2)]'
                   : 'text-zinc-400 hover:text-white hover:bg-white/5'
                   }`}

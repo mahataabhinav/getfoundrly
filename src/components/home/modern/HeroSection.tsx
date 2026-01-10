@@ -1,10 +1,9 @@
-
 import { motion } from 'framer-motion';
-import { ArrowRight, Play, Sparkles } from 'lucide-react';
+import { ArrowRight, Sparkles } from 'lucide-react';
 
 import ProductDemoAnimation from './ProductDemoAnimation';
 
-export default function HeroSection({ onSignupClick, onSeeHowItWorks }: { onSignupClick: () => void; onSeeHowItWorks: () => void }) {
+export default function HeroSection({ onSignupClick }: { onSignupClick: () => void }) {
 
     return (
         <div className="relative min-h-[90vh] flex items-center overflow-hidden bg-[#0A0A0A] text-white">
@@ -34,24 +33,24 @@ export default function HeroSection({ onSignupClick, onSeeHowItWorks }: { onSign
                 <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:100px_100px] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,black,transparent)]"></div>
             </div>
 
-            <div className="container mx-auto px-4 relative z-10 pt-20 pb-20">
+            <div className="w-full px-4 md:px-12 relative z-10 pt-6 pb-6 max-w-[1920px] mx-auto">
                 <div className="grid lg:grid-cols-2 gap-12 items-center">
                     <div className="text-center lg:text-left">
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.6 }}
-                            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 mb-8 backdrop-blur-sm"
+                            className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-white/5 border border-white/10 mb-10 backdrop-blur-sm scale-125 origin-left"
                         >
-                            <Sparkles className="w-4 h-4 text-purple-400" />
-                            <span className="text-sm font-medium text-purple-200">The Future of Founder Brand Building</span>
+                            <Sparkles className="w-5 h-5 text-purple-400" />
+                            <span className="text-base font-medium text-purple-200">The Future of Founder Brand Building</span>
                         </motion.div>
 
                         <motion.h1
                             initial={{ opacity: 0, y: 30 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8, delay: 0.2 }}
-                            className="text-5xl md:text-7xl font-bold tracking-tight mb-8 bg-clip-text text-transparent bg-gradient-to-b from-white via-white to-white/60"
+                            className="text-7xl md:text-9xl font-bold tracking-tight mb-10 bg-clip-text text-transparent bg-gradient-to-b from-white via-white to-white/60 leading-[0.9]"
                         >
                             Your AI Co-Founder for <br />
                             <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">Brand and Visibility</span>
@@ -61,7 +60,7 @@ export default function HeroSection({ onSignupClick, onSeeHowItWorks }: { onSign
                             initial={{ opacity: 0, y: 30 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8, delay: 0.4 }}
-                            className="text-xl text-gray-400 mb-10 max-w-xl mx-auto lg:mx-0 leading-relaxed"
+                            className="text-3xl text-gray-400 mb-14 max-w-3xl mx-auto lg:mx-0 leading-relaxed"
                         >
                             Foundrly extracts your BrandDNA and uses it to help you create content, analyze performance, and grow your brand on autopilot.
                         </motion.p>
@@ -70,33 +69,33 @@ export default function HeroSection({ onSignupClick, onSeeHowItWorks }: { onSign
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8, delay: 0.6 }}
-                            className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4"
+                            className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-6"
                         >
                             <button
                                 onClick={onSignupClick}
-                                className="group relative px-8 py-4 bg-white text-black rounded-full font-semibold text-lg hover:bg-gray-100 transition-all shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)] hover:shadow-[0_0_60px_-15px_rgba(255,255,255,0.5)] overflow-hidden w-full sm:w-auto"
+                                className="group relative px-12 py-6 bg-white text-black rounded-full font-bold text-2xl hover:bg-gray-100 transition-all shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)] hover:shadow-[0_0_60px_-15px_rgba(255,255,255,0.5)] overflow-hidden w-full sm:w-auto"
                             >
-                                <span className="relative z-10 flex items-center justify-center gap-2">
+                                <span className="relative z-10 flex items-center justify-center gap-3">
                                     Start Free Trial
-                                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                    <ArrowRight className="w-7 h-7 group-hover:translate-x-1 transition-transform" />
                                 </span>
                                 <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/0 via-indigo-500/10 to-indigo-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
                             </button>
                             <button
-                                onClick={onSeeHowItWorks}
-                                className="px-8 py-4 bg-white/5 border border-white/10 text-white rounded-full font-semibold text-lg hover:bg-white/10 transition-all backdrop-blur-sm flex items-center justify-center gap-2 w-full sm:w-auto"
+                                onClick={() => window.location.href = '/join-waitlist'}
+                                className="px-12 py-6 bg-white/5 border border-white/10 text-white rounded-full font-bold text-2xl hover:bg-white/10 transition-all backdrop-blur-sm flex items-center justify-center gap-3 w-full sm:w-auto"
                             >
-                                <Play className="w-5 h-5 fill-current" />
-                                Watch Demo
+                                <Sparkles className="w-7 h-7 fill-current" />
+                                Join Waitlist
                             </button>
                         </motion.div>
                     </div>
 
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
+                        animate={{ opacity: 1, scale: 1.35 }}
                         transition={{ duration: 1, delay: 0.4 }}
-                        className="relative hidden lg:block"
+                        className="relative hidden lg:block origin-center ml-10 translate-x-10"
                     >
                         {/* Abstract background blobs for the video container */}
                         <div className="absolute -top-20 -right-20 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl -z-10 animate-pulse" />

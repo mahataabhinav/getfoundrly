@@ -4,6 +4,7 @@ import LinkedInPostGenerator from './LinkedInPostGenerator';
 import InstagramAdGenerator from './InstagramAdGenerator';
 import NewsletterGenerator from './NewsletterGenerator';
 import BlogPostGenerator from './BlogPostGenerator';
+import ContentCalendar from './ContentCalendar';
 
 export default function CreateSection() {
   const [isLinkedInModalOpen, setIsLinkedInModalOpen] = useState(false);
@@ -37,35 +38,71 @@ export default function CreateSection() {
         <p className="text-zinc-400">AI-powered branded content from your website URL</p>
       </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {contentTools.map((tool) => {
-          const Icon = tool.icon;
-          const isLinkedIn = tool.title === 'LinkedIn Posts';
-          const isInstagram = tool.title === 'Instagram Ads';
-          return (
-            <div
-              key={tool.title}
-              className="group bg-[#18181B] rounded-2xl p-6 border border-white/5 hover:border-white/10 hover:shadow-xl hover:scale-[1.02] transition-all cursor-pointer"
-            >
-              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${tool.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                <Icon className="w-6 h-6 text-white" />
+      <div className="bg-gradient-to-br from-[#18181B] to-[#27272A] rounded-2xl p-6 border border-white/5">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+          <h3 className="text-xl font-semibold text-white whitespace-nowrap">How It Works</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full ml-4">
+            <div className="flex items-center gap-3">
+              <div className="w-6 h-6 rounded-full bg-[#CCFF00] text-black flex items-center justify-center text-sm font-bold flex-shrink-0">
+                1
               </div>
-              <h3 className="font-semibold text-white mb-1">{tool.title}</h3>
-              <p className="text-sm text-zinc-400 mb-4">{tool.description}</p>
-              <button
-                onClick={() => {
-                  if (isLinkedIn) setIsLinkedInModalOpen(true);
-                  if (isInstagram) setIsInstagramModalOpen(true);
-                  if (tool.title === 'Newsletters') setIsNewsletterModalOpen(true);
-                  if (tool.title === 'Blog Posts') setIsBlogPostModalOpen(true);
-                }}
-                className="w-full bg-white/10 text-white py-2 rounded-lg text-sm font-medium hover:bg-white/20 transition-all border border-white/5"
-              >
-                Generate
-              </button>
+              <p className="text-sm text-zinc-300">Enter your website URL or upload brand guidelines</p>
             </div>
-          );
-        })}
+            <div className="flex items-center gap-3">
+              <div className="w-6 h-6 rounded-full bg-[#CCFF00] text-black flex items-center justify-center text-sm font-bold flex-shrink-0">
+                2
+              </div>
+              <p className="text-sm text-zinc-300">Choose your content format and target platform</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-6 h-6 rounded-full bg-[#CCFF00] text-black flex items-center justify-center text-sm font-bold flex-shrink-0">
+                3
+              </div>
+              <p className="text-sm text-zinc-300">AI generates on-brand content in seconds</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+        {/* Left Column: Tools */}
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {contentTools.map((tool) => {
+              const Icon = tool.icon;
+              const isLinkedIn = tool.title === 'LinkedIn Posts';
+              const isInstagram = tool.title === 'Instagram Ads';
+              return (
+                <div
+                  key={tool.title}
+                  className="group bg-[#18181B] rounded-2xl p-6 border border-white/5 hover:border-white/10 hover:shadow-xl hover:scale-[1.02] transition-all cursor-pointer"
+                >
+                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${tool.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                    <Icon className="w-6 h-6 text-white" />
+                  </div>
+                  <h3 className="font-semibold text-white mb-1">{tool.title}</h3>
+                  <p className="text-sm text-zinc-400 mb-4">{tool.description}</p>
+                  <button
+                    onClick={() => {
+                      if (isLinkedIn) setIsLinkedInModalOpen(true);
+                      if (isInstagram) setIsInstagramModalOpen(true);
+                      if (tool.title === 'Newsletters') setIsNewsletterModalOpen(true);
+                      if (tool.title === 'Blog Posts') setIsBlogPostModalOpen(true);
+                    }}
+                    className="w-full bg-white/10 text-white py-2 rounded-lg text-sm font-medium hover:bg-white/20 transition-all border border-white/5"
+                  >
+                    Generate
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Right Column: Calendar */}
+        <div className="h-full min-h-0">
+          <ContentCalendar />
+        </div>
       </div>
 
       <LinkedInPostGenerator
@@ -88,31 +125,10 @@ export default function CreateSection() {
         onClose={() => setIsBlogPostModalOpen(false)}
       />
 
-      <div className="bg-gradient-to-br from-[#18181B] to-[#27272A] rounded-2xl p-8 border border-white/5">
-        <div className="max-w-2xl">
-          <h3 className="text-xl font-semibold text-white mb-3">How It Works</h3>
-          <div className="space-y-3 text-zinc-300">
-            <div className="flex items-start gap-3">
-              <div className="w-6 h-6 rounded-full bg-[#CCFF00] text-black flex items-center justify-center text-sm font-bold flex-shrink-0">
-                1
-              </div>
-              <p>Enter your website URL or upload brand guidelines</p>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="w-6 h-6 rounded-full bg-[#CCFF00] text-black flex items-center justify-center text-sm font-bold flex-shrink-0">
-                2
-              </div>
-              <p>Choose your content format and target platform</p>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="w-6 h-6 rounded-full bg-[#CCFF00] text-black flex items-center justify-center text-sm font-bold flex-shrink-0">
-                3
-              </div>
-              <p>AI generates on-brand content in seconds</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      <BlogPostGenerator
+        isOpen={isBlogPostModalOpen}
+        onClose={() => setIsBlogPostModalOpen(false)}
+      />
     </div>
   );
 }
