@@ -8,6 +8,8 @@ interface UpcomingPost {
     date: string;
     time: string;
     thumbnail?: string;
+    mediaType?: 'image' | 'video';
+    previewText?: string;
     color: string;
 }
 
@@ -16,53 +18,59 @@ const posts: UpcomingPost[] = [
         id: '1',
         title: "Weekend recharging 🔋",
         type: 'instagram',
-        date: 'Jan 10',
+        date: 'Jan 17',
         time: '10:00 AM',
-        thumbnail: 'https://images.unsplash.com/photo-1517865288-978fcb780652?auto=format&fit=crop&q=80&w=400',
+        thumbnail: '/mock-photo-1.png',
+        mediaType: 'image',
         color: '[#E4405F]'
     },
     {
         id: '4',
         title: "The Agentic AI Revolution is Here",
         type: 'linkedin',
-        date: 'Jan 12',
+        date: 'Jan 19',
         time: '9:00 AM',
-        thumbnail: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&q=80&w=400',
+        thumbnail: '/mock-video-3.mp4',
+        mediaType: 'video',
         color: '[#0077B5]'
     },
     {
         id: '5',
         title: "Community Update: New Features Live",
         type: 'email',
-        date: 'Jan 12',
+        date: 'Jan 19',
         time: '11:00 AM',
+        previewText: "Hey Team! 🚀 We've just shipped the new analytics dashboard. You can now track your cross-platform growth in real-time. Plus, scheduling for Instagram Reels is finally here! Check it out and let us know what you think.",
         color: '[#EA4335]'
     },
     {
         id: '6',
         title: "Office Tour - New HQ",
         type: 'instagram',
-        date: 'Jan 12',
+        date: 'Jan 19',
         time: '1:00 PM',
-        thumbnail: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=400',
+        thumbnail: '/mock-photo-2.png',
+        mediaType: 'image',
         color: '[#E4405F]'
     },
     {
         id: '8',
         title: "3 Tips for Better Design",
         type: 'instagram',
-        date: 'Jan 13',
+        date: 'Jan 20',
         time: '10:00 AM',
-        thumbnail: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&q=80&w=400',
+        thumbnail: '/mock-video-instagram.mp4',
+        mediaType: 'video',
         color: '[#E4405F]'
     },
     {
         id: '9',
         title: "Customer Success Story: Acme Corp",
         type: 'linkedin',
-        date: 'Jan 13',
+        date: 'Jan 20',
         time: '3:00 PM',
-        thumbnail: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&q=80&w=400',
+        thumbnail: '/mock-video-2.mp4',
+        mediaType: 'video',
         color: '[#0077B5]'
     },
 ];
@@ -116,7 +124,7 @@ export default function UpcomingCarousel() {
                 {posts.map((post) => (
                     <div
                         key={post.id}
-                        className="snap-start min-w-[400px] bg-[#18181B] border border-white/5 rounded-[32px] p-8 hover:border-[#CCFF00]/30 transition-all group/card cursor-pointer relative overflow-hidden"
+                        className="snap-start min-w-[400px] bg-[#18181B] border border-white/5 rounded-[32px] p-8 hover:border-[#CCFF00]/30 transition-all group/card cursor-pointer relative overflow-hidden flex flex-col justify-between"
                     >
                         <div className={`absolute top-0 left-0 w-1 h-full bg-${post.color.startsWith('[') ? '' : post.color}`} style={{ backgroundColor: post.color.startsWith('[') ? post.color.replace('[', '').replace(']', '') : '' }} />
 
@@ -139,8 +147,31 @@ export default function UpcomingCarousel() {
                             </h3>
 
                             {post.thumbnail && (
-                                <div className="rounded-2xl overflow-hidden h-48 w-full mt-4 relative">
-                                    <img src={post.thumbnail} alt="" className="w-full h-full object-cover opacity-80 group-hover/card:opacity-100 transition-opacity" />
+                                <div className="rounded-2xl overflow-hidden h-48 w-full mt-4 relative group/media">
+                                    {post.mediaType === 'video' ? (
+                                        <video
+                                            src={post.thumbnail}
+                                            className="w-full h-full object-cover opacity-80 group-hover/card:opacity-100 transition-opacity"
+                                            autoPlay
+                                            muted
+                                            loop
+                                            playsInline
+                                        />
+                                    ) : (
+                                        <img
+                                            src={post.thumbnail}
+                                            alt=""
+                                            className="w-full h-full object-cover opacity-80 group-hover/card:opacity-100 transition-opacity"
+                                        />
+                                    )}
+                                </div>
+                            )}
+
+                            {post.previewText && !post.thumbnail && (
+                                <div className="h-48 w-full mt-4 p-4 rounded-2xl bg-zinc-900/50 border border-white/5">
+                                    <p className="text-sm text-zinc-400 leading-relaxed font-medium line-clamp-6">
+                                        {post.previewText}
+                                    </p>
                                 </div>
                             )}
                         </div>

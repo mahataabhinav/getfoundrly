@@ -10,17 +10,13 @@ import FinalCTA from '../components/home/FinalCTA';
 export default function HomePage() {
   const navigate = useNavigate();
 
-  const scrollToHowItWorks = () => {
-    const element = document.getElementById('how-it-works');
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  };
+
 
   return (
     <div className="bg-[#0A0A0A] min-h-screen">
       <HeroSection
         onSignupClick={() => navigate('/signup')}
+        onWaitlistClick={() => navigate('/join-waitlist')}
       />
 
       {/* Visual divider/transition */}

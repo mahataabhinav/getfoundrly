@@ -26,8 +26,8 @@ export default function InstagramAdGenerator({ isOpen, onClose }: InstagramAdGen
   const [extractedBrandDNA, setExtractedBrandDNA] = useState<BrandDNA | null>(null);
 
   const [brandData, setBrandData] = useState({
-    name: '',
-    website: '',
+    name: 'Seven Oaks Coffee',
+    website: 'https://sevenoakscoffee.com/',
     tone: 'Professional & Engaging',
     colors: ['#1A1A1A', '#4A90E2', '#F5F5F5'],
     keywords: ['Innovation', 'Growth', 'Results'],
@@ -36,8 +36,8 @@ export default function InstagramAdGenerator({ isOpen, onClose }: InstagramAdGen
   const [selectedAdType, setSelectedAdType] = useState('');
   const [preferences, setPreferences] = useState({
     goal: 'Awareness',
-    audience: '',
-    brandMessage: '',
+    audience: 'Coffee Enthusiasts',
+    brandMessage: 'Showcase our signature Guatemala Antigua blend - smooth, chocolatey notes, medium roast. Perfect for both espresso and drip. Highlight the unique sourcing and flavor profile.',
     tone: 'Bold',
     cta: 'Learn More'
   });
@@ -231,7 +231,7 @@ export default function InstagramAdGenerator({ isOpen, onClose }: InstagramAdGen
       // 2. Generate Video if Video Type selected (Mock Logic)
       if (selectedAdType.includes('video') || selectedAdType === 'ugc-testimonial') {
         try {
-          await new Promise(resolve => setTimeout(resolve, 20000)); // Simulate 20s generation delay
+          await new Promise(resolve => setTimeout(resolve, 7000)); // Simulate 7s generation delay
           const mockVideoUrl = '/mock-video-instagram.mp4';
           setAdContent(prev => ({ ...prev, videoUrl: mockVideoUrl, imageUrl: '' }));
         } catch (vidError: any) {
@@ -668,8 +668,8 @@ export default function InstagramAdGenerator({ isOpen, onClose }: InstagramAdGen
                                 <button
                                   onClick={() => updateCaptionSelection('short')}
                                   className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${selectedCaptionType === 'short'
-                                      ? 'bg-white text-[#1A1A1A] shadow-sm'
-                                      : 'text-gray-500 hover:text-gray-700'
+                                    ? 'bg-white text-[#1A1A1A] shadow-sm'
+                                    : 'text-gray-500 hover:text-gray-700'
                                     }`}
                                 >
                                   Short
@@ -677,8 +677,8 @@ export default function InstagramAdGenerator({ isOpen, onClose }: InstagramAdGen
                                 <button
                                   onClick={() => updateCaptionSelection('medium')}
                                   className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${selectedCaptionType === 'medium'
-                                      ? 'bg-white text-[#1A1A1A] shadow-sm'
-                                      : 'text-gray-500 hover:text-gray-700'
+                                    ? 'bg-white text-[#1A1A1A] shadow-sm'
+                                    : 'text-gray-500 hover:text-gray-700'
                                     }`}
                                 >
                                   Medium
@@ -686,8 +686,8 @@ export default function InstagramAdGenerator({ isOpen, onClose }: InstagramAdGen
                                 <button
                                   onClick={() => updateCaptionSelection('long')}
                                   className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${selectedCaptionType === 'long'
-                                      ? 'bg-white text-[#1A1A1A] shadow-sm'
-                                      : 'text-gray-500 hover:text-gray-700'
+                                    ? 'bg-white text-[#1A1A1A] shadow-sm'
+                                    : 'text-gray-500 hover:text-gray-700'
                                     }`}
                                 >
                                   Long

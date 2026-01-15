@@ -41,7 +41,7 @@ const LOADING_STEPS = [
 
 export default function LinkedInPostGenerator({ isOpen, onClose }: LinkedInPostGeneratorProps) {
   const [step, setStep] = useState(1);
-  const [brandData, setBrandData] = useState({ name: '', url: '' });
+  const [brandData, setBrandData] = useState({ name: 'Seven Oaks Coffee', url: 'https://sevenoakscoffee.com/' });
   const [selectedType, setSelectedType] = useState<string>('');
   const [context, setContext] = useState({ topic: '', details: '' });
   const [generatedPost, setGeneratedPost] = useState('');

@@ -105,7 +105,10 @@ export default function InstagramPreviewModal({ isOpen, onClose, adContent, bran
 
   const handleConfirmPublish = async () => {
     setIsPublishing(true);
+    const startTime = Date.now();
+
     try {
+      // Attempt to publish
       await sendInstagramPostToN8n({
         userId,
         brandId,
@@ -114,24 +117,23 @@ export default function InstagramPreviewModal({ isOpen, onClose, adContent, bran
         imageUrl: adContent.imageUrl,
         mediaType: adType.includes('video') ? 'video' : 'image',
       });
-
-      setStep('success');
-      setTimeout(() => {
-        onClose();
-        resetModal();
-      }, 3000);
     } catch (error) {
-      console.error('Failed to publish:', error);
-      // For now, still show success or handle error appropriately
-      // Allowing success to show for demo purposes even if webhook fails,
-      // but logging the error.
+      console.error('Failed to publish (demo mode will continue):', error);
+    } finally {
+      // Ensure we show "Publishing..." for at least 4 seconds for effect
+      const elapsed = Date.now() - startTime;
+      const remaining = Math.max(0, 4000 - elapsed);
+
+      if (remaining > 0) {
+        await new Promise(resolve => setTimeout(resolve, remaining));
+      }
+
+      setIsPublishing(false);
       setStep('success');
       setTimeout(() => {
         onClose();
         resetModal();
       }, 3000);
-    } finally {
-      setIsPublishing(false);
     }
   };
 

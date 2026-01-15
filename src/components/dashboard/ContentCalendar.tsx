@@ -22,66 +22,69 @@ interface CalendarEvent {
     thumbnail?: string;
     time: string;
     hasVideo?: boolean;
+    mediaType?: 'image' | 'video';
 }
 
 export default function ContentCalendar() {
-    // Start from Jan 10, 2026 as requested
-    const [startDate, setStartDate] = useState(new Date('2026-01-10T00:00:00'));
+    // Start from Jan 17, 2026 as requested
+    const [startDate, setStartDate] = useState(new Date('2026-01-17T00:00:00'));
 
     const generateMockEvents = (): CalendarEvent[] => {
         return [
-            // Jan 10 (Sat) - Weekend Vibes
+            // Jan 17 (Sat) - Weekend Vibes
             {
                 id: '1',
                 type: 'instagram',
                 title: "Weekend recharging 🔋",
                 body: "Sometimes the best productivity hack is stepping away. #FounderLife",
-                date: new Date('2026-01-10'),
+                date: new Date('2026-01-17'),
                 time: '10:00am',
                 status: 'scheduled',
-                thumbnail: 'https://images.unsplash.com/photo-1517865288-978fcb780652?auto=format&fit=crop&q=80&w=400',
-                hasVideo: true
+                thumbnail: '/mock-photo-1.png',
+                mediaType: 'image'
             },
             {
                 id: '2',
                 type: 'blog',
                 title: "2026 Tech Trends Recap",
                 body: "A quick look at what's shaping the industry as we kick off the year.",
-                date: new Date('2026-01-10'),
+                date: new Date('2026-01-17'),
                 time: '2:00pm',
                 status: 'published'
             },
 
-            // Jan 11 (Sun) - Prep for Week
+            // Jan 18 (Sun) - Prep for Week
             {
                 id: '3',
                 type: 'linkedin',
                 title: "Sunday Strategy Session",
                 body: "Planning the roadmap for Q1. What's your top priority this week?",
-                date: new Date('2026-01-11'),
+                date: new Date('2026-01-18'),
                 time: '4:00pm',
                 status: 'scheduled',
-                thumbnail: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=400'
+                thumbnail: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=400',
+                mediaType: 'image'
             },
 
-            // Jan 12 (Mon) - Motivation & Announcements
+            // Jan 19 (Mon) - Motivation & Announcements
             {
                 id: '4',
                 type: 'linkedin',
                 title: "The Agentic AI Revolution is Here",
                 body: "Why 2026 is the year AI agents officially replace static software.",
-                date: new Date('2026-01-12'),
+                date: new Date('2026-01-19'),
                 time: '9:00am',
                 status: 'scheduled',
-                thumbnail: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&q=80&w=400',
-                hasVideo: true
+                thumbnail: '/mock-video-3.mp4',
+                hasVideo: true,
+                mediaType: 'video'
             },
             {
                 id: '5',
                 type: 'email',
                 title: "Community Update: New Features Live",
                 body: "We just dropped the new dashboard. Check it out!",
-                date: new Date('2026-01-12'),
+                date: new Date('2026-01-19'),
                 time: '11:00am',
                 status: 'scheduled'
             },
@@ -90,19 +93,20 @@ export default function ContentCalendar() {
                 type: 'instagram',
                 title: "Office Tour - New HQ",
                 body: "A sneak peek at where the magic happens.",
-                date: new Date('2026-01-12'),
+                date: new Date('2026-01-19'),
                 time: '1:00pm',
                 status: 'scheduled',
-                thumbnail: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=400'
+                thumbnail: '/mock-photo-2.png',
+                mediaType: 'image'
             },
 
-            // Jan 13 (Tue) - Educational Content
+            // Jan 20 (Tue) - Educational Content
             {
                 id: '7',
                 type: 'blog',
                 title: "How to Build an Audience in 2026",
                 body: "The algorithms have changed. Here is the new playbook.",
-                date: new Date('2026-01-13'),
+                date: new Date('2026-01-20'),
                 time: '8:00am',
                 status: 'draft'
             },
@@ -111,40 +115,45 @@ export default function ContentCalendar() {
                 type: 'instagram',
                 title: "3 Tips for Better Design",
                 body: "Swipe through to see how we optimized our UI.",
-                date: new Date('2026-01-13'),
+                date: new Date('2026-01-20'),
                 time: '10:00am',
                 status: 'scheduled',
-                thumbnail: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&q=80&w=400'
+                thumbnail: '/mock-video-instagram.mp4',
+                hasVideo: true,
+                mediaType: 'video'
             },
             {
                 id: '9',
                 type: 'linkedin',
                 title: "Customer Success Story: Acme Corp",
                 body: "How Acme Corp scaled 10x using Foundrly.",
-                date: new Date('2026-01-13'),
+                date: new Date('2026-01-20'),
                 time: '3:00pm',
                 status: 'scheduled',
-                thumbnail: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&q=80&w=400'
+                thumbnail: '/mock-video-2.mp4',
+                hasVideo: true,
+                mediaType: 'video'
             },
 
-            // Jan 14 (Wed) - Viral/Fun Content
+            // Jan 21 (Wed) - Viral/Fun Content
             {
                 id: '10',
                 type: 'instagram',
                 title: "When the code works on the first try 🤯",
                 body: "Rare footage of a bug-free deploy.",
-                date: new Date('2026-01-14'),
+                date: new Date('2026-01-21'),
                 time: '12:00pm',
                 status: 'scheduled',
                 thumbnail: 'https://images.unsplash.com/photo-1531297461136-82lw8e2c0e8f?auto=format&fit=crop&q=80&w=400',
-                hasVideo: true
+                hasVideo: true,
+                mediaType: 'video'
             },
             {
                 id: '11',
                 type: 'linkedin',
                 title: "Poll: Remote or Office?",
                 body: "What is your team's policy in 2026?",
-                date: new Date('2026-01-14'),
+                date: new Date('2026-01-21'),
                 time: '2:00pm',
                 status: 'scheduled'
             },
@@ -153,7 +162,7 @@ export default function ContentCalendar() {
                 type: 'email',
                 title: "Webinar Reminder: Growth Hacks",
                 body: "Starting in 1 hour. Don't miss out.",
-                date: new Date('2026-01-14'),
+                date: new Date('2026-01-21'),
                 time: '4:00pm',
                 status: 'scheduled'
             },
@@ -162,7 +171,7 @@ export default function ContentCalendar() {
                 type: 'blog',
                 title: "Why Founders Burn Out (and how to avoid it)",
                 body: "Key takeaways from our latest podcast episode.",
-                date: new Date('2026-01-14'),
+                date: new Date('2026-01-21'),
                 time: '6:00pm',
                 status: 'draft'
             },
@@ -171,10 +180,11 @@ export default function ContentCalendar() {
                 type: 'linkedin',
                 title: "Late Night Coding Session 💻",
                 body: "Building the future, one line at a time.",
-                date: new Date('2026-01-14'),
+                date: new Date('2026-01-21'),
                 time: '10:00pm',
                 status: 'scheduled',
-                thumbnail: 'https://images.unsplash.com/photo-1555099962-4199c345e5dd?auto=format&fit=crop&q=80&w=400'
+                thumbnail: '/mock-photo-1.png',
+                mediaType: 'image'
             }
         ];
     };
@@ -313,23 +323,40 @@ export default function ContentCalendar() {
                                             {/* Media */}
                                             {event.thumbnail && (
                                                 <div className="mb-3 relative rounded-lg overflow-hidden aspect-square w-full">
-                                                    <img
-                                                        src={event.thumbnail}
-                                                        alt="Post media"
-                                                        className="w-full h-full object-cover"
-                                                    />
+                                                    {event.mediaType === 'video' ? (
+                                                        <video
+                                                            src={event.thumbnail}
+                                                            className="w-full h-full object-cover"
+                                                            muted
+                                                            loop
+                                                            playsInline
+                                                            onMouseOver={e => e.currentTarget.play()}
+                                                            onMouseOut={e => {
+                                                                e.currentTarget.pause();
+                                                                e.currentTarget.currentTime = 0;
+                                                            }}
+                                                        />
+                                                    ) : (
+                                                        <img
+                                                            src={event.thumbnail}
+                                                            alt="Post media"
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                    )}
+
                                                     {event.hasVideo && (
-                                                        <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/10 transition-colors">
-                                                            <div className="w-10 h-10 rounded-full bg-white/30 backdrop-blur-md flex items-center justify-center">
+                                                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                                            <div className="bg-black/20 absolute inset-0 group-hover:bg-transparent transition-colors"></div>
+                                                            <div className="w-10 h-10 rounded-full bg-white/30 backdrop-blur-md flex items-center justify-center z-10">
                                                                 <Play className="w-5 h-5 text-white fill-white" />
                                                             </div>
-                                                            <div className="absolute bottom-2 right-2 bg-black/70 px-1.5 py-0.5 rounded text-[10px] text-white font-medium">
+                                                            <div className="absolute bottom-2 right-2 bg-black/70 px-1.5 py-0.5 rounded text-[10px] text-white font-medium z-10">
                                                                 00:07
                                                             </div>
                                                         </div>
                                                     )}
                                                     {/* AI overlay on image */}
-                                                    <div className="absolute top-2 right-2 flex gap-1">
+                                                    <div className="absolute top-2 right-2 flex gap-1 z-10">
                                                         <div className="bg-black/60 backdrop-blur-md rounded-full p-1 border border-white/10">
                                                             <div className="w-3 h-3 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-full" />
                                                         </div>
