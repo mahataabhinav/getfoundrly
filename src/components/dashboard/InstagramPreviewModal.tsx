@@ -6,6 +6,7 @@ import { sendInstagramPostToN8n } from '../../lib/n8n-webhook';
 interface InstagramPreviewModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onComplete?: () => void;
   adContent: {
     caption: string;
     cta: string;
@@ -18,7 +19,7 @@ interface InstagramPreviewModalProps {
   brandId: string;
 }
 
-export default function InstagramPreviewModal({ isOpen, onClose, adContent, brandName, adType, userId, brandId }: InstagramPreviewModalProps) {
+export default function InstagramPreviewModal({ isOpen, onClose, onComplete, adContent, brandName, adType, userId, brandId }: InstagramPreviewModalProps) {
   const [step, setStep] = useState<'preview' | 'connect' | 'schedule' | 'confirmPublish' | 'success'>('preview');
   const [instagramEmail, setInstagramEmail] = useState('');
   const [isConnected, setIsConnected] = useState(false);
@@ -95,15 +96,43 @@ export default function InstagramPreviewModal({ isOpen, onClose, adContent, bran
     }, 1000);
   };
 
-  const handlePublishNow = () => {
-    if (isConnected) {
-      setStep('confirmPublish');
-    } else {
-      setStep('connect');
+  const [publishStepIndex, setPublishStepIndex] = useState(0);
+
+  const publishSteps = [
+    "Compressing video for Reels...",
+    "Uploading to Instagram Media Library...",
+    "Verifying Aspect Ratio...",
+    "Finalizing Post..."
+  ];
+
+  const handlePublishNow = async () => {
+    // Simulating direct publish without connection check for demo
+    setIsPublishing(true);
+    setPublishStepIndex(0);
+
+    // Iterate through steps with delays
+    for (let i = 0; i < publishSteps.length; i++) {
+      setPublishStepIndex(i);
+      // Random delay between 1.5s and 2.5s for realism
+      await new Promise(resolve => setTimeout(resolve, 1500 + Math.random() * 1000));
     }
+
+    setIsPublishing(false);
+    setStep('success');
+
+    // Reset after success message is shown
+    setTimeout(() => {
+      if (onComplete) {
+        onComplete();
+      } else {
+        onClose();
+      }
+      resetModal();
+    }, 3000);
   };
 
   const handleConfirmPublish = async () => {
+    // Kept for compatibility if we want to revive the full flow later
     setIsPublishing(true);
     const startTime = Date.now();
 
@@ -131,7 +160,11 @@ export default function InstagramPreviewModal({ isOpen, onClose, adContent, bran
       setIsPublishing(false);
       setStep('success');
       setTimeout(() => {
-        onClose();
+        if (onComplete) {
+          onComplete();
+        } else {
+          onClose();
+        }
         resetModal();
       }, 3000);
     }
@@ -144,6 +177,8 @@ export default function InstagramPreviewModal({ isOpen, onClose, adContent, bran
       resetModal();
     }, 3000);
   };
+  // ... (rest of the file until the button)
+
 
   const resetModal = () => {
     setStep('preview');
@@ -155,6 +190,52 @@ export default function InstagramPreviewModal({ isOpen, onClose, adContent, bran
   };
 
   if (!isOpen) return null;
+
+
+  if (isPublishing) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-md">
+        <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 text-center animate-scale-in">
+          <div className="w-20 h-20 mx-auto mb-8 relative">
+            <div className="absolute inset-0 rounded-full border-4 border-gray-100"></div>
+            <div className="absolute inset-0 rounded-full border-4 border-[#CCFF00] border-t-transparent animate-spin"></div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Instagram className="w-8 h-8 text-pink-600" />
+            </div>
+          </div>
+
+          <h2 className="text-xl font-bold text-[#1A1A1A] mb-6">Publishing to Instagram</h2>
+
+          <div className="space-y-4 text-left max-w-xs mx-auto mb-8">
+            {publishSteps.map((stepLabel, index) => (
+              <div key={index} className="flex items-center gap-3 transition-all duration-300">
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 flex-shrink-0 transition-colors duration-300 ${index < publishStepIndex
+                  ? 'bg-green-500 border-green-500 text-white'
+                  : index === publishStepIndex
+                    ? 'border-[#CCFF00] text-[#CCFF00] animate-pulse'
+                    : 'border-gray-200 text-gray-300'
+                  }`}>
+                  {index < publishStepIndex ? (
+                    <Check className="w-3.5 h-3.5" />
+                  ) : (
+                    <div className={`w-2 h-2 rounded-full ${index === publishStepIndex ? 'bg-[#CCFF00]' : 'bg-gray-200'}`} />
+                  )}
+                </div>
+                <span className={`text-sm font-medium transition-colors duration-300 ${index <= publishStepIndex ? 'text-gray-800' : 'text-gray-400'
+                  }`}>
+                  {stepLabel}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex justify-center">
+            {/* RobotChatbot removed */}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (step === 'success') {
     return (
@@ -733,14 +814,7 @@ export default function InstagramPreviewModal({ isOpen, onClose, adContent, bran
             </div>
           </div>
 
-          <div className="flex justify-center">
-            <div className="relative">
-              <RobotChatbot size={60} animate={true} gesture="thinking" />
-              <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-gray-200 whitespace-nowrap">
-                <p className="text-xs text-gray-700">Ready to launch? Let's make it happen!</p>
-              </div>
-            </div>
-          </div>
+
 
           <div className="flex gap-3 max-w-2xl mx-auto">
             <button
@@ -763,9 +837,17 @@ export default function InstagramPreviewModal({ isOpen, onClose, adContent, bran
             </button>
             <button
               onClick={handlePublishNow}
-              className="flex-1 bg-[#1A1A1A] text-white py-3 px-6 rounded-xl font-medium hover:bg-gray-800 transition-all hover:shadow-lg"
+              disabled={isPublishing}
+              className="flex-1 bg-[#1A1A1A] text-white py-3 px-6 rounded-xl font-medium hover:bg-gray-800 transition-all hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              Publish Now
+              {isPublishing ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>Publishing...</span>
+                </>
+              ) : (
+                'Publish Now'
+              )}
             </button>
           </div>
         </div>

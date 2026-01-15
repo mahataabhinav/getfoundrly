@@ -40,9 +40,45 @@ export default function AnalyzeSection() {
     { date: 'Jan 5', followers: 12800 },
     { date: 'Jan 10', followers: 13500 },
     { date: 'Jan 15', followers: 14200 },
-    { date: 'Jan 20', followers: 15100 },
-    { date: 'Jan 25', followers: 16800 },
-    { date: 'Jan 30', followers: 18542 },
+    { date: 'Jan 17', followers: 14500 },
+  ];
+
+  const mockPreviousContent = [
+    {
+      id: '1',
+      content: "Why most founders fail at storytelling (and how to fix it)",
+      date: 'Jan 16, 2026',
+      status: 'Published',
+      metrics: { impressions: '12.4k', likes: 842, comments: 124 }
+    },
+    {
+      id: '2',
+      content: "The 3 tools we used to scale to $10k MRR in 30 days 🚀",
+      date: 'Jan 14, 2026',
+      status: 'Published',
+      metrics: { impressions: '8.5k', likes: 650, comments: 89 }
+    },
+    {
+      id: '3',
+      content: "Behind the scenes: Our roadmap for Q1 2026",
+      date: 'Jan 12, 2026',
+      status: 'Published',
+      metrics: { impressions: '5.2k', likes: 420, comments: 56 }
+    },
+    {
+      id: '4',
+      content: "Join me for a live AMA this Friday! #FounderLife",
+      date: 'Jan 10, 2026',
+      status: 'Published',
+      metrics: { impressions: '3.1k', likes: 210, comments: 34 }
+    },
+    {
+      id: '5',
+      content: "New Feature Alert: AI-powered Analytics is here 🤖",
+      date: 'Jan 08, 2026',
+      status: 'Published',
+      metrics: { impressions: '15.8k', likes: 1205, comments: 245 }
+    }
   ];
 
   const mockDemographics = [
@@ -373,6 +409,47 @@ export default function AnalyzeSection() {
               </div>
             ))}
           </div>
+        </div>
+      </div>
+
+      {/* Previous Content Section */}
+      <div className="bg-[#18181B] rounded-3xl p-8 border border-white/5">
+        <h3 className="font-bold text-white mb-6">Previous Content Performance</h3>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="text-left border-b border-white/5">
+                <th className="pb-4 text-xs font-bold text-zinc-500 uppercase tracking-wider w-1/2">Post Content</th>
+                <th className="pb-4 text-xs font-bold text-zinc-500 uppercase tracking-wider">Date Posted</th>
+                <th className="pb-4 text-xs font-bold text-zinc-500 uppercase tracking-wider">Status</th>
+                <th className="pb-4 text-xs font-bold text-zinc-500 uppercase tracking-wider text-right">Metrics</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {mockPreviousContent.map((post) => (
+                <tr key={post.id} className="group hover:bg-white/5 transition-colors">
+                  <td className="py-4 pr-6">
+                    <p className="text-white text-sm font-medium line-clamp-1 group-hover:text-[#CCFF00] transition-colors">{post.content}</p>
+                  </td>
+                  <td className="py-4">
+                    <p className="text-zinc-400 text-sm">{post.date}</p>
+                  </td>
+                  <td className="py-4">
+                    <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-500 border border-green-500/20">
+                      {post.status}
+                    </span>
+                  </td>
+                  <td className="py-4 text-right">
+                    <div className="flex items-center justify-end gap-4 text-xs text-zinc-400">
+                      <span className="flex items-center gap-1"><Eye className="w-3.5 h-3.5" /> {post.metrics.impressions}</span>
+                      <span className="flex items-center gap-1"><TrendingUp className="w-3.5 h-3.5" /> {post.metrics.likes}</span>
+                      <span className="flex items-center gap-1"><MousePointerClick className="w-3.5 h-3.5" /> {post.metrics.comments}</span>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

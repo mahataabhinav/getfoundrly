@@ -257,16 +257,17 @@ function InstagramFlow() {
       </div>
 
       {/* Preview */}
-      <div className="bg-[#1A1A1A] rounded-2xl border border-white/10 flex items-center justify-center bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] overflow-hidden p-8 h-[600px] lg:h-auto">
+      {/* Preview */}
+      <div className="bg-[#1A1A1A] rounded-2xl border border-white/10 overflow-hidden h-[600px] lg:h-auto relative">
         {/* iPhone Frame */}
-        <div className="relative w-[320px] h-[650px] bg-black rounded-[3rem] border-[8px] border-[#2a2a2a] shadow-2xl ring-1 ring-white/10 shrink-0">
+        <div className="relative w-full h-full bg-black border-[8px] border-[#2a2a2a] shadow-2xl overflow-hidden">
           {/* Dynamic Island */}
           <div className="absolute top-4 left-1/2 -translate-x-1/2 w-32 h-8 bg-black rounded-full z-50 flex items-center justify-center border border-[#1a1a1a]">
             <div className="w-20 h-full rounded-full bg-black"></div>
           </div>
 
           {/* Screen Content */}
-          <div className="w-full h-full rounded-[2.5rem] overflow-hidden relative bg-gray-900 mask-image:radial-gradient(white, black)">
+          <div className="w-full h-full relative bg-gray-900">
             {/* Mock Screen */}
             <div className="absolute inset-0 bg-gray-900">
               <div className="w-full h-full bg-gradient-to-br from-indigo-900 to-purple-900 opacity-50"></div>
@@ -274,15 +275,15 @@ function InstagramFlow() {
                 <span className="text-white font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2"><div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div> Preview</span>
               </div>
               {/* Overlay UI */}
-              <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 to-transparent z-20">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-6 h-6 rounded-full bg-indigo-500 border border-white/50"></div>
-                  <div className="text-xs font-bold text-white shadow-black drop-shadow-md">foundrly_app</div>
-                  <button className="text-[10px] bg-white/20 hover:bg-white/30 backdrop-blur-md px-2 py-0.5 rounded border border-white/20 text-white font-medium">Follow</button>
+              <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/90 via-black/50 to-transparent z-20">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-8 h-8 rounded-full bg-indigo-500 border border-white/50"></div>
+                  <div className="text-sm font-bold text-white shadow-black drop-shadow-md">foundrly_app</div>
+                  <button className="text-xs bg-white/20 hover:bg-white/30 backdrop-blur-md px-3 py-1 rounded-lg border border-white/20 text-white font-medium">Follow</button>
                 </div>
-                <div className="space-y-1 mb-2 text-white/90 text-sm leading-tight text-shadow-sm">
+                <div className="space-y-2 mb-4 text-white/90 text-base leading-tight text-shadow-sm max-w-lg">
                   <p>When you realize AI can do your job better... 😅 <span className="text-blue-400">#AI</span> <span className="text-blue-400">#FutureOfWork</span></p>
-                  <div className="flex items-center gap-1 text-[10px] opacity-70 mt-1">
+                  <div className="flex items-center gap-2 text-xs opacity-70 mt-2">
                     <span className="w-3 h-3 bg-white/20 rounded-sm inline-block"></span>
                     Original Audio - foundrly_app
                   </div>
@@ -298,10 +299,19 @@ function InstagramFlow() {
                 playsInline
               />
               {/* Side Buttons */}
-              <div className="absolute bottom-16 right-2 space-y-3">
-                <div className="w-8 h-8 rounded-full bg-white/10 backdrop-blur"></div>
-                <div className="w-8 h-8 rounded-full bg-white/10 backdrop-blur"></div>
-                <div className="w-8 h-8 rounded-full bg-white/10 backdrop-blur"></div>
+              <div className="absolute bottom-24 right-4 space-y-4">
+                <div className="flex flex-col items-center gap-1">
+                  <div className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center border border-white/10 text-white">❤️</div>
+                  <span className="text-xs font-bold text-white">42.5K</span>
+                </div>
+                <div className="flex flex-col items-center gap-1">
+                  <div className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center border border-white/10 text-white">💬</div>
+                  <span className="text-xs font-bold text-white">1.2K</span>
+                </div>
+                <div className="flex flex-col items-center gap-1">
+                  <div className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center border border-white/10 text-white">✈️</div>
+                  <span className="text-xs font-bold text-white">Share</span>
+                </div>
               </div>
             </div>
           </div>
