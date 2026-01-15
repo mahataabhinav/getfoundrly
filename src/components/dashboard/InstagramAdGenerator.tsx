@@ -61,6 +61,23 @@ export default function InstagramAdGenerator({ isOpen, onClose }: InstagramAdGen
     getUser();
   }, []);
 
+  // Reset state when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setStep(1);
+      setShowPreview(false);
+      setAdContent({
+        caption: '',
+        cta: '',
+        videoUrl: '',
+        imageUrl: ''
+      });
+      setIsGenerating(false);
+      setGenerationError(null);
+      // Keep brand data populated for convenience
+    }
+  }, [isOpen]);
+
   const adTypes = [
     {
       id: 'video-reel',
@@ -553,7 +570,7 @@ export default function InstagramAdGenerator({ isOpen, onClose }: InstagramAdGen
                 {isGenerating ? (
                   <div className="flex flex-col items-center justify-center py-20">
                     <RefreshCw className="w-12 h-12 text-[#1A1A1A] animate-spin mb-4" />
-                    <h3 className="text-xl font-semibold mb-2">Generating Media with OpenAI Sora...</h3>
+                    <h3 className="text-xl font-semibold mb-2">Generating Media...</h3>
                     <p className="text-gray-500">Creating a custom video reel for your brand.</p>
                   </div>
                 ) : (
@@ -716,6 +733,10 @@ export default function InstagramAdGenerator({ isOpen, onClose }: InstagramAdGen
       <InstagramPreviewModal
         isOpen={showPreview}
         onClose={() => setShowPreview(false)}
+        onComplete={() => {
+          setShowPreview(false);
+          onClose(); // Close the entire generator, returning to Create screen
+        }}
         adContent={adContent}
         brandName={brandData.name}
         adType={selectedAdType}

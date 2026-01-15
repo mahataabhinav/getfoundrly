@@ -5,19 +5,20 @@
  * creation, updates, versioning, and provenance tracking.
  */
 
-import { 
-  createBrandDNA, 
-  getBrandDNA as getBrandDNAFromDB, 
+import {
+  createBrandDNA,
+  getBrandDNA as getBrandDNAFromDB,
   updateBrandDNAByBrandId,
   getBrandDNAList,
   getBrandDNAVersions,
   getBrand,
+  updateBrand,
 } from './database';
 import { extractBrandDNA } from './brand-extractor';
-import type { 
-  BrandDNA, 
-  BrandDNAData, 
-  BrandDNAProvenance, 
+import type {
+  BrandDNA,
+  BrandDNAData,
+  BrandDNAProvenance,
   BrandDNAVersion,
   BrandDNAUpdate,
 } from '../types/database';
@@ -57,6 +58,14 @@ export async function createBrandDNAFromExtraction(
     versions: [],
     last_crawled_at: new Date().toISOString(),
   });
+
+  // Save logo to brand if found
+  if (dnaData.visual_identity?.logos && dnaData.visual_identity.logos.length > 0) {
+    const logoUrl = dnaData.visual_identity.logos[0].url;
+    if (logoUrl) {
+      await updateBrand(brandId, { logo_url: logoUrl });
+    }
+  }
 
   return brandDNA;
 }
@@ -107,6 +116,14 @@ export async function reCrawlBrandDNA(
     last_crawled_at: new Date().toISOString(),
     status: 'needs_review', // Mark as needs review after re-crawl
   });
+
+  // Save logo to brand if found (update existing)
+  if (newDnaData.visual_identity?.logos && newDnaData.visual_identity.logos.length > 0) {
+    const logoUrl = newDnaData.visual_identity.logos[0].url;
+    if (logoUrl) {
+      await updateBrand(brandId, { logo_url: logoUrl });
+    }
+  }
 
   return {
     brandDNA: updated,

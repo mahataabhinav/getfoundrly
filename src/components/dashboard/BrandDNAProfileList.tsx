@@ -13,7 +13,7 @@ export default function BrandDNAProfileList({
   onSelectProfile,
   onCreateNew
 }: BrandDNAProfileListProps) {
-  const [profiles, setProfiles] = useState<(BrandDNA & { brands?: { name: string; website_url: string } })[]>([]);
+  const [profiles, setProfiles] = useState<(BrandDNA & { brands?: { name: string; website_url: string; logo_url?: string } })[]>([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
@@ -156,6 +156,9 @@ export default function BrandDNAProfileList({
             const websiteUrl = Array.isArray(brandsData)
               ? (brandsData[0]?.website_url || '')
               : (brandsData?.website_url || '');
+            const logoUrl = Array.isArray(brandsData)
+              ? (brandsData[0]?.logo_url || '')
+              : (brandsData?.logo_url || '');
 
             return (
               <div
@@ -208,7 +211,14 @@ export default function BrandDNAProfileList({
                   onClick={() => onSelectProfile(profile.brand_id)}
                   className="w-full text-left"
                 >
-                  <div className="flex items-start justify-between mb-4 pr-8">
+                  <div className="flex items-center gap-4 mb-4 pr-8">
+                    <div className="w-12 h-12 rounded-full bg-zinc-800 flex-shrink-0 border border-white/10 overflow-hidden flex items-center justify-center">
+                      {logoUrl ? (
+                        <img src={logoUrl} alt={brandName} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-xl font-bold text-zinc-500">{brandName.charAt(0).toUpperCase()}</span>
+                      )}
+                    </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-white truncate group-hover:text-[#CCFF00] transition-colors">
                         {brandName}

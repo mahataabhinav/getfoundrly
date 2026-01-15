@@ -531,7 +531,7 @@ export async function getBrandDNAById(id: string): Promise<BrandDNA | null> {
   return data;
 }
 
-export async function getBrandDNAList(userId: string): Promise<(BrandDNA & { brands?: { name: string; website_url: string } })[]> {
+export async function getBrandDNAList(userId: string): Promise<(BrandDNA & { brands?: { name: string; website_url: string; logo_url?: string } })[]> {
   const { data, error } = await supabase
     .from('brand_dna')
     .select('*')
@@ -547,7 +547,7 @@ export async function getBrandDNAList(userId: string): Promise<(BrandDNA & { bra
         const brand = await getBrand(dna.brand_id);
         return {
           ...dna,
-          brands: brand ? { name: brand.name, website_url: brand.website_url } : undefined,
+          brands: brand ? { name: brand.name, website_url: brand.website_url, logo_url: brand.logo_url } : undefined,
         };
       } catch {
         return { ...dna, brands: undefined };
