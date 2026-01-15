@@ -16,9 +16,10 @@ export default function HeaderEnhanced({ scrollY, onLoginClick, onSignupClick }:
 
   const isScrolled = scrollY > 20;
   const isHome = location.pathname === '/';
+  const isWaitlist = location.pathname === '/join-waitlist';
 
-  // Use dark theme (white text) ONLY on Home page when NOT scrolled
-  const useDarkTheme = isHome && !isScrolled;
+  // Use dark theme (white text) on Home or Waitlist page when NOT scrolled
+  const useDarkTheme = (isHome || isWaitlist) && !isScrolled;
 
   const productMenuItems = {
     create: [

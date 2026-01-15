@@ -180,12 +180,16 @@ function LinkedInPost({ variant }: { variant: 'before' | 'after' }) {
                     </p>
                     <p className="text-xs text-indigo-600 font-medium">#BuildInPublic #StartupLife #AI #Growth</p>
                 </div>
-                {/* Carousel/Visual mock */}
-                <div className="w-full h-48 bg-gradient-to-r from-indigo-50 to-purple-50 relative flex items-center justify-center overflow-hidden">
-                    <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1661956602116-aa6865609028?auto=format&fit=crop&q=80&w=800')] bg-cover bg-center opacity-90 hover:scale-105 transition-transform duration-700"></div>
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
-                        <span className="text-white font-bold text-lg">From Zero to Authority 📈</span>
-                    </div>
+                {/* Video Content */}
+                <div className="w-full h-64 bg-black relative group">
+                    <video
+                        src="/mock-video.mp4"
+                        className="w-full h-full object-cover"
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                    />
                 </div>
                 {/* Stats */}
                 <div className="px-4 py-2 border-b border-gray-100 flex items-center justify-between text-xs text-gray-500">
@@ -202,26 +206,43 @@ function LinkedInPost({ variant }: { variant: 'before' | 'after' }) {
             </div>
         );
     }
-    // Variant: Before
+    // Variant: Before (Same template, basic content)
     return (
-        <div className="w-full max-w-sm md:max-w-md bg-white rounded-xl shadow border border-gray-200 opacity-80 filter grayscale-[20%] transform scale-95 md:scale-100 transition-transform origin-center">
+        <div className="w-full max-w-sm md:max-w-md bg-white rounded-xl shadow-2xl overflow-hidden transform scale-95 md:scale-100 transition-transform origin-center">
+            {/* Header */}
             <div className="p-4 flex items-start gap-3 border-b border-gray-100">
-                <div className="w-10 h-10 rounded-full bg-gray-200"></div>
+                <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold text-sm">AM</div>
                 <div className="flex-1">
-                    <div className="w-24 h-4 bg-gray-200 rounded mb-1"></div>
-                    <div className="w-16 h-3 bg-gray-100 rounded"></div>
+                    <h3 className="font-bold text-gray-900 text-sm">Abhinav Mahata</h3>
+                    <p className="text-xs text-gray-500">Founder @ Foundrly • 2h • <Globe className="w-3 h-3 inline ml-0.5" /></p>
                 </div>
+                <MoreHorizontal className="w-5 h-5 text-gray-400" />
             </div>
-            <div className="p-4">
-                <div className="w-full h-3 bg-gray-200 rounded mb-2"></div>
-                <div className="w-3/4 h-3 bg-gray-200 rounded mb-4"></div>
-                <p className="text-sm text-gray-500 mb-4">Just launched a new feature. Check link in bio.</p>
-                <div className="w-full h-40 bg-gray-100 rounded flex items-center justify-center text-gray-300 text-sm border-2 border-dashed border-gray-200">
-                    Image_placeholder.jpg
-                </div>
+            {/* Content (Basic) */}
+            <div className="p-4 pb-2">
+                <p className="text-sm text-gray-800 leading-relaxed mb-3">
+                    We launched a new coffee roast today.<br />
+                    It tastes really good.<br />
+                    Check the link in bio to buy some.
+                </p>
             </div>
-            <div className="px-4 py-3 border-t border-gray-100 flex gap-4 text-gray-400">
-                <span className="flex items-center gap-1 text-xs"><Heart className="w-3 h-3" /> 2</span>
+            {/* Visual (Basic Text-as-Image) */}
+            <div className="w-full h-64 bg-blue-100 flex items-center justify-center text-center p-8">
+                <span className="text-3xl font-bold text-blue-900 font-serif leading-tight">
+                    NEW<br />COFFEE<br />ALERT
+                </span>
+            </div>
+            {/* Stats (Low) */}
+            <div className="px-4 py-2 border-b border-gray-100 flex items-center justify-between text-xs text-gray-500">
+                <span className="flex items-center gap-1">👍 2</span>
+                <span>0 comments</span>
+            </div>
+            {/* Actions */}
+            <div className="px-2 py-1 flex justify-between">
+                <button className="flex items-center gap-2 px-3 py-3 rounded hover:bg-gray-100 text-gray-600 text-xs font-semibold"><Heart className="w-4 h-4" /> Like</button>
+                <button className="flex items-center gap-2 px-3 py-3 rounded hover:bg-gray-100 text-gray-600 text-xs font-semibold"><MessageCircle className="w-4 h-4" /> Comment</button>
+                <button className="flex items-center gap-2 px-3 py-3 rounded hover:bg-gray-100 text-gray-600 text-xs font-semibold"><Share2 className="w-4 h-4" /> Share</button>
+                <button className="flex items-center gap-2 px-3 py-3 rounded hover:bg-gray-100 text-gray-600 text-xs font-semibold"><Send className="w-4 h-4" /> Send</button>
             </div>
         </div>
     );
@@ -233,7 +254,14 @@ function InstagramPost({ variant }: { variant: 'before' | 'after' }) {
             <div className="w-[300px] bg-black rounded-3xl overflow-hidden shadow-2xl border border-gray-800 text-white transform scale-95 md:scale-100 origin-center relative">
                 {/* Reel Video BG Simulation */}
                 <div className="absolute inset-0 bg-gradient-to-b from-gray-900 to-black">
-                    <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&q=80&w=600')] bg-cover bg-center opacity-80"></div>
+                    <video
+                        src="/mock-video-instagram.mp4"
+                        className="w-full h-full object-cover opacity-80"
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                    />
                     <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/90"></div>
                 </div>
 
@@ -283,37 +311,50 @@ function InstagramPost({ variant }: { variant: 'before' | 'after' }) {
     }
     // Variant Before
     return (
-        <div className="w-[300px] bg-white rounded-3xl overflow-hidden shadow border border-gray-200 text-black transform scale-95 md:scale-100 origin-center h-[500px] flex flex-col">
-            <div className="p-3 border-b border-gray-100 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-gray-200"></div>
-                    <div className="h-3 w-20 bg-gray-200 rounded"></div>
-                </div>
-                <MoreHorizontal className="w-5 h-5 text-gray-400" />
+        <div className="w-[300px] bg-black rounded-3xl overflow-hidden shadow-2xl border border-gray-800 text-white transform scale-95 md:scale-100 origin-center relative">
+            {/* Background (Static/Basic Gradient) */}
+            <div className="absolute inset-0 bg-gradient-to-br from-pink-200 to-purple-200 flex items-center justify-center p-8">
+                <span className="text-4xl font-extrabold text-purple-900/50 -rotate-12">
+                    #VIBES
+                </span>
             </div>
 
-            <div className="flex-1 bg-gray-100 flex items-center justify-center relative overflow-hidden">
-                {/* Dull mock image */}
-                <img
-                    src="https://images.unsplash.com/photo-1526726538690-5cbf956ae2fd?q=80&w=600&auto=format&fit=crop"
-                    alt="Generic Lifestyle"
-                    className="w-full h-full object-cover opacity-70 grayscale-[50%]"
-                />
-                <div className="absolute inset-0 bg-yellow-900/10 mix-blend-multiply pointer-events-none"></div>
-            </div>
-
-            <div className="p-3">
-                <div className="flex gap-4 mb-2">
-                    <Heart className="w-6 h-6 text-gray-400" />
-                    <MessageCircle className="w-6 h-6 text-gray-400" />
-                    <Send className="w-6 h-6 text-gray-400" />
+            {/* UI Overlay (Same Template) */}
+            <div className="relative h-[500px] flex flex-col justify-between p-4 z-10">
+                <div className="flex items-center justify-between">
+                    <div className="text-sm font-bold drop-shadow-md">Reels</div>
                 </div>
-                <div className="text-xs font-bold text-gray-900 mb-1">3 likes</div>
-                <p className="text-xs text-gray-500">
-                    <span className="font-bold text-gray-900 mr-1">user123</span>
-                    Check out my link.
-                </p>
-                <div className="text-[10px] text-gray-400 mt-1 uppercase">2 DAYS AGO</div>
+
+                <div className="flex flex-col gap-3">
+                    {/* Side Actions */}
+                    <div className="absolute bottom-20 right-2 flex flex-col items-center gap-4 opacity-50">
+                        <div className="flex flex-col items-center gap-1">
+                            <Heart className="w-6 h-6 text-white" />
+                            <span className="text-xs font-bold">12</span>
+                        </div>
+                        <div className="flex flex-col items-center gap-1">
+                            <MessageCircle className="w-6 h-6" />
+                            <span className="text-xs font-bold">0</span>
+                        </div>
+                        <div className="flex flex-col items-center gap-1">
+                            <Send className="w-6 h-6" />
+                        </div>
+                        <div className="flex flex-col items-center gap-1">
+                            <MoreHorizontal className="w-6 h-6" />
+                        </div>
+                    </div>
+
+                    {/* Caption */}
+                    <div className="pr-12">
+                        <div className="flex items-center gap-2 mb-2">
+                            <div className="w-8 h-8 rounded-full bg-gray-700 border border-white/20"></div>
+                            <span className="font-semibold text-sm text-gray-400">foundrly_ai</span>
+                        </div>
+                        <p className="text-sm text-gray-400 line-clamp-2 leading-snug">
+                            Coffee time.
+                        </p>
+                    </div>
+                </div>
             </div>
         </div>
     );

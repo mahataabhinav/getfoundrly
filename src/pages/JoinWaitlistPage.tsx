@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { ArrowLeft, Sparkles, Send } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 export default function JoinWaitlistPage() {
-    const navigate = useNavigate();
+
     const [formData, setFormData] = useState({ name: '', email: '' });
     const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
     const [errorMsg, setErrorMsg] = useState('');
@@ -32,20 +32,20 @@ export default function JoinWaitlistPage() {
     };
 
     return (
-        <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col relative overflow-hidden">
+        <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col relative overflow-hidden pt-24">
             {/* Background Gradients */}
             <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-purple-600/20 rounded-full blur-[120px] pointer-events-none" />
             <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-blue-600/20 rounded-full blur-[120px] pointer-events-none" />
 
             {/* Nav */}
             <nav className="p-6 relative z-10">
-                <button
-                    onClick={() => navigate('/')}
+                <Link
+                    to="/"
                     className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
                 >
                     <ArrowLeft className="w-5 h-5" />
                     Back to Home
-                </button>
+                </Link>
             </nav>
 
             {/* Content */}
@@ -81,12 +81,12 @@ export default function JoinWaitlistPage() {
                             <p className="text-gray-300 text-lg mb-6">
                                 Thanks for trusting us. We'll slide into your inbox the moment we drop. Get excited!
                             </p>
-                            <button
-                                onClick={() => navigate('/')}
+                            <Link
+                                to="/"
                                 className="text-white font-medium hover:text-green-400 transition-colors"
                             >
                                 Back to Home →
-                            </button>
+                            </Link>
                         </motion.div>
                     ) : (
                         <motion.form

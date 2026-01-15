@@ -3,7 +3,7 @@ import { ArrowRight, Sparkles } from 'lucide-react';
 
 import ProductDemoAnimation from './ProductDemoAnimation';
 
-export default function HeroSection({ onSignupClick }: { onSignupClick: () => void }) {
+export default function HeroSection({ onSignupClick, onWaitlistClick }: { onSignupClick: () => void; onWaitlistClick: () => void }) {
 
     return (
         <div className="relative min-h-[90vh] flex items-center overflow-hidden bg-[#0A0A0A] text-white">
@@ -82,7 +82,7 @@ export default function HeroSection({ onSignupClick }: { onSignupClick: () => vo
                                 <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/0 via-indigo-500/10 to-indigo-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
                             </button>
                             <button
-                                onClick={() => window.location.href = '/join-waitlist'}
+                                onClick={onWaitlistClick}
                                 className="px-12 py-6 bg-white/5 border border-white/10 text-white rounded-full font-bold text-2xl hover:bg-white/10 transition-all backdrop-blur-sm flex items-center justify-center gap-3 w-full sm:w-auto"
                             >
                                 <Sparkles className="w-7 h-7 fill-current" />
@@ -95,7 +95,7 @@ export default function HeroSection({ onSignupClick }: { onSignupClick: () => vo
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1.35 }}
                         transition={{ duration: 1, delay: 0.4 }}
-                        className="relative hidden lg:block origin-center ml-10 translate-x-10"
+                        className="relative hidden lg:block origin-center w-full"
                     >
                         {/* Abstract background blobs for the video container */}
                         <div className="absolute -top-20 -right-20 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl -z-10 animate-pulse" />
