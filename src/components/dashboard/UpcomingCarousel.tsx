@@ -30,7 +30,7 @@ const posts: UpcomingPost[] = [
         type: 'linkedin',
         date: 'Jan 19',
         time: '9:00 AM',
-        thumbnail: '/mock-video-3.mp4',
+        thumbnail: '/mock-video-3.1.mp4',
         mediaType: 'video',
         color: '[#0077B5]'
     },

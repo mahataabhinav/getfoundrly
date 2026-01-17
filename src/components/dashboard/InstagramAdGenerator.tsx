@@ -37,7 +37,7 @@ export default function InstagramAdGenerator({ isOpen, onClose }: InstagramAdGen
   const [preferences, setPreferences] = useState({
     goal: 'Awareness',
     audience: 'Coffee Enthusiasts',
-    brandMessage: 'Showcase our signature Guatemala Antigua blend - smooth, chocolatey notes, medium roast. Perfect for both espresso and drip. Highlight the unique sourcing and flavor profile.',
+    brandMessage: 'Create a Stranger Things–style Instagram reel for Seven Oaks Coffee.\nMake it fun, slightly mysterious, and focused on great coffee vibes.',
     tone: 'Bold',
     cta: 'Learn More'
   });
@@ -212,37 +212,73 @@ export default function InstagramAdGenerator({ isOpen, onClose }: InstagramAdGen
 
     try {
       // 1. Generate Advanced Captions
-      try {
-        const captionResult = await generateInstagramCaptions({
-          brandName: brandData.name,
-          brandWebsite: brandData.website,
-          industry: brandProfile.industry,
-          location: undefined,
-          postType: selectedAdType.includes('video') ? 'Reel' : 'Image Post',
-          topic: preferences.goal + ' for ' + preferences.audience,
-          keyPoints: preferences.brandMessage,
-          targetAudience: preferences.audience,
-          brandVoice: brandData.tone,
-          brandProfile: brandProfile
+      // Check for Seven Oaks Coffee demo case to use specific stranger things caption
+      if (brandData.name === 'Seven Oaks Coffee') {
+        await new Promise(resolve => setTimeout(resolve, 1500)); // Slight delay for realism
+
+        const demoCaptionText = `👀✨ Something strange is brewing…
+Dark vibes ⚡
+Bold coffee ☕
+Zero fear 😈
+
+Seven Oaks Coffee 🌿
+Fuel for late nights 🌙 and curious minds 🌀`;
+
+        const demoHashtags = {
+          tier1: ['#SevenOaksCoffee', '#CoffeeReels'],
+          tier2: ['#CoffeeVibes', '#CafeCulture'],
+          tier3: ['#LocalCoffee', '#CoffeeLovers'],
+          tier4: ['#GenZMarketing', '#SmallBusinessLove']
+        };
+
+        setCaptionVariations({
+          short: demoCaptionText,
+          medium: demoCaptionText,
+          long: demoCaptionText
         });
+        setCaptionHashtags(demoHashtags);
 
-        setCaptionVariations(captionResult.captions);
-        setCaptionHashtags(captionResult.hashtags);
-
-        // Default to medium
-        const defaultCaption = captionResult.captions.medium + '\n\n' + captionResult.hashtags.tier1.join(' ') + ' ' + captionResult.hashtags.tier2.join(' ');
+        const fullCaption = demoCaptionText + '\n\n#SevenOaksCoffee #CoffeeReels #CoffeeVibes #CafeCulture #LocalCoffee #CoffeeLovers #GenZMarketing #SmallBusinessLove';
 
         setAdContent(prev => ({
           ...prev,
-          caption: defaultCaption,
+          caption: fullCaption,
           cta: preferences.cta
         }));
 
-      } catch (captionErr) {
-        console.error("Caption generation failed", captionErr);
-        // Fallback to basic logic if AI fails
-        const baseCaption = `🚀 ${preferences.brandMessage || 'Check this out!'} \n\n👉 ${preferences.cta} link in bio!`;
-        setAdContent(prev => ({ ...prev, caption: baseCaption, cta: preferences.cta }));
+      } else {
+        try {
+          const captionResult = await generateInstagramCaptions({
+            brandName: brandData.name,
+            brandWebsite: brandData.website,
+            industry: brandProfile.industry,
+            location: undefined,
+            postType: selectedAdType.includes('video') ? 'Reel' : 'Image Post',
+            topic: preferences.goal + ' for ' + preferences.audience,
+            keyPoints: preferences.brandMessage,
+            targetAudience: preferences.audience,
+            brandVoice: brandData.tone,
+            brandProfile: brandProfile
+          });
+
+          setCaptionVariations(captionResult.captions);
+          setCaptionHashtags(captionResult.hashtags);
+
+          // Default to medium
+          const defaultCaption = captionResult.captions.medium + '\n\n' + captionResult.hashtags.tier1.join(' ') + ' ' + captionResult.hashtags.tier2.join(' ');
+
+          setAdContent(prev => ({
+            ...prev,
+            caption: defaultCaption,
+            cta: preferences.cta
+          }));
+
+        } catch (captionErr) {
+          console.error("Caption generation failed", captionErr);
+          // Fallback to basic logic if AI fails
+          const baseCaption = `🚀 ${preferences.brandMessage || 'Check this out!'} \n\n👉 ${preferences.cta} link in bio!`;
+          setAdContent(prev => ({ ...prev, caption: baseCaption, cta: preferences.cta }));
+        }
       }
 
       // 2. Generate Video if Video Type selected (Mock Logic)

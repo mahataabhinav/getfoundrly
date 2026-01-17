@@ -75,7 +75,7 @@ export default function ContentCalendar() {
                 date: new Date('2026-01-19'),
                 time: '9:00am',
                 status: 'scheduled',
-                thumbnail: '/mock-video-3.mp4',
+                thumbnail: '/mock-video-3.1.mp4',
                 hasVideo: true,
                 mediaType: 'video'
             },
@@ -144,7 +144,7 @@ export default function ContentCalendar() {
                 date: new Date('2026-01-21'),
                 time: '12:00pm',
                 status: 'scheduled',
-                thumbnail: 'https://images.unsplash.com/photo-1531297461136-82lw8e2c0e8f?auto=format&fit=crop&q=80&w=400',
+                thumbnail: '/mock-video-4.mp4',
                 hasVideo: true,
                 mediaType: 'video'
             },
