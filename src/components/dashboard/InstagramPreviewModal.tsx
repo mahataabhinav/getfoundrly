@@ -437,13 +437,14 @@ export default function InstagramPreviewModal({ isOpen, onClose, onComplete, adC
 
                   <div className="bg-gradient-to-br from-purple-100 via-pink-100 to-orange-100 aspect-square flex items-center justify-center">
                     {adType.includes('video') ? (
-                      <div className="text-center">
-                        <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center mx-auto mb-3 shadow-lg">
-                          <div className="w-0 h-0 border-t-[12px] border-t-transparent border-l-[20px] border-l-gray-800 border-b-[12px] border-b-transparent ml-1" />
-                        </div>
-                        <p className="text-sm font-medium text-gray-700">Video Ad</p>
-                        <p className="text-xs text-gray-500 mt-1">Tap to play</p>
-                      </div>
+                      <video
+                        src={adContent.videoUrl}
+                        className="w-full h-full object-cover"
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                      />
                     ) : (
                       <div className="text-center">
                         <ImageIcon className="w-16 h-16 text-pink-600 mx-auto mb-3" />

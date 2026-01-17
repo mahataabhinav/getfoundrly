@@ -99,11 +99,14 @@ export default function InstagramAdEditor({ isOpen, onClose, adContent, onSave, 
               <h3 className="font-semibold text-[#1A1A1A] mb-4">Ad Preview</h3>
               <div className="bg-gradient-to-br from-purple-100 to-pink-100 rounded-xl aspect-[9/16] flex items-center justify-center">
                 {content.videoUrl ? (
-                  <div className="text-center">
-                    <Video className="w-16 h-16 text-purple-600 mx-auto mb-4" />
-                    <p className="text-sm text-gray-700 font-medium">Video Content</p>
-                    <p className="text-xs text-gray-600 mt-1">Reel-style vertical video</p>
-                  </div>
+                  <video
+                    src={content.videoUrl}
+                    className="w-full h-full object-cover"
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                  />
                 ) : (
                   <div className="text-center">
                     <ImageIcon className="w-16 h-16 text-pink-600 mx-auto mb-4" />
@@ -181,11 +184,10 @@ export default function InstagramAdEditor({ isOpen, onClose, adContent, onSave, 
                         <RobotChatbot size={32} animate={false} gesture="idle" />
                       )}
                       <div
-                        className={`max-w-[80%] px-4 py-3 rounded-xl ${
-                          chat.role === 'user'
+                        className={`max-w-[80%] px-4 py-3 rounded-xl ${chat.role === 'user'
                             ? 'bg-[#1A1A1A] text-white'
                             : 'bg-white border border-gray-200 text-gray-800'
-                        }`}
+                          }`}
                       >
                         <p className="text-sm">{chat.message}</p>
                       </div>

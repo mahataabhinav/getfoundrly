@@ -43,7 +43,10 @@ export default function LinkedInPostGenerator({ isOpen, onClose }: LinkedInPostG
   const [step, setStep] = useState(1);
   const [brandData, setBrandData] = useState({ name: 'Seven Oaks Coffee', url: 'https://sevenoakscoffee.com/' });
   const [selectedType, setSelectedType] = useState<string>('');
-  const [context, setContext] = useState({ topic: '', details: '' });
+  const [context, setContext] = useState({
+    topic: 'Announce the grand opening of our new Leander drive-thru location on January 19, 2026. Emphasize convenience, same quality coffee, and drive-thru exclusive drinks.',
+    details: 'Professional, warm, and community-focused tone. Target local professionals, commuters, families, and small-business supporters in and around Leander, TX. The goal is to build excitement and awareness for the new location while reinforcing that speed does not compromise quality. Visuals should be clean, modern, and consistently branded with SEVEN OAKS COFFEE (spelled exactly), using brand colors, logo presence, and drive-thru–focused imagery.'
+  });
   const [generatedPost, setGeneratedPost] = useState('');
   const [generatedContent, setGeneratedContent] = useState<LinkedInPostContent | null>(null);
   const [isRegenerating, setIsRegenerating] = useState(false);
@@ -527,7 +530,9 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
       const mockVideo: GeneratedVideo = {
         id: `mock_vid_${Date.now()}`,
         url: '/mock-video.mp4',
-        prompt: generatedContent?.videoPrompt || generatedContent?.imagePrompts?.primary || "Professional brand video",
+        prompt: typeof generatedContent?.videoPrompt === 'string'
+          ? generatedContent.videoPrompt
+          : generatedContent?.videoPrompt?.description || generatedContent?.imagePrompts?.primary || "Professional brand video",
         thumbnailUrl: '', // Browser will generate preview from video file
         metadata: {
           duration: "15s",
@@ -789,7 +794,10 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
     setStep(1);
     setBrandData({ name: '', url: '' });
     setSelectedType('');
-    setContext({ topic: '', details: '' });
+    setContext({
+      topic: 'Announce the grand opening of our new Leander drive-thru location on January 19, 2026. Emphasize convenience, same quality coffee, and drive-thru exclusive drinks.',
+      details: 'Professional, warm, and community-focused tone. Target local professionals, commuters, families, and small-business supporters in and around Leander, TX. The goal is to build excitement and awareness for the new location while reinforcing that speed does not compromise quality. Visuals should be clean, modern, and consistently branded with SEVEN OAKS COFFEE (spelled exactly), using brand colors, logo presence, and drive-thru–focused imagery.'
+    });
     setGeneratedPost('');
     setGeneratedContent(null);
     setBrandProfile(null);
@@ -1340,7 +1348,7 @@ What's your biggest visibility challenge right now? Drop it in the comments 👇
                         {isGeneratingVideos ? (
                           <div className="flex flex-col items-center justify-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-200">
                             <Loader2 className="w-8 h-8 text-[#1A1A1A] animate-spin mb-3" />
-                            <p className="text-sm text-gray-600 font-medium">Creating video with Sora...</p>
+                            <p className="text-sm text-gray-600 font-medium">Generating Videos</p>
                             <p className="text-xs text-gray-400 mt-1">This might take a few moments</p>
                           </div>
                         ) : videoGenerationError ? (

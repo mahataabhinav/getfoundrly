@@ -165,3 +165,46 @@
     width: var(--target-width, 100%);
   }
 }
+
+@keyframes wave {
+
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  25% {
+    transform: rotate(-10deg);
+  }
+
+  75% {
+    transform: rotate(10deg);
+  }
+}
+
+.animate-wave {
+  animation: wave 2s ease-in-out infinite;
+  display: inline-block;
+  transform-origin: 70% 70%;
+}
+
+@keyframes robotWave {
+
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  25% {
+    transform: rotate(-5deg);
+  }
+
+  75% {
+    transform: rotate(5deg);
+  }
+}
+
+.animate-robot-wave {
+  animation: robotWave 3s ease-in-out infinite;
+  transform-origin: center bottom;
+}
