@@ -539,11 +539,25 @@ Extract what you can infer, but mark confidence lower since this is inferred rat
     };
   } catch (error: any) {
     console.error('Error extracting BrandDNA:', error);
+
+    // Check for API key errors
     if (error?.status === 401) {
       throw new Error('Invalid OpenAI API key. Please check your .env file.');
-    } else if (error?.status === 429) {
-      throw new Error('OpenAI API rate limit exceeded. Please try again later.');
     }
+
+    // Check for billing/quota errors (429 with insufficient_quota)
+    else if (error?.status === 429) {
+      const errorType = error?.error?.type || error?.type;
+      const errorCode = error?.error?.code || error?.code;
+
+      // Distinguish between quota and rate limit errors
+      if (errorType === 'insufficient_quota' || errorCode === 'insufficient_quota') {
+        throw new Error('BILLING_ERROR: OpenAI API credits exceeded. Please add credits to your OpenAI account at https://platform.openai.com/settings/organization/billing');
+      } else {
+        throw new Error('OpenAI API rate limit exceeded. Please try again in a few moments.');
+      }
+    }
+
     // If it's a website fetch error, provide a more helpful message
     if (error?.message?.includes('Unable to fetch website content') || error?.message?.includes('fetch website')) {
       throw new Error('Could not fetch website content (CORS restrictions). BrandDNA will be created with inferred data based on the website name and URL. You can edit and complete it manually in the BrandDNA section.');

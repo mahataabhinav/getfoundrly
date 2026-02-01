@@ -8,7 +8,10 @@ import CreateSection from '../components/dashboard/CreateSection';
 import AnalyzeSection from '../components/dashboard/AnalyzeSection';
 import GrowSection from '../components/dashboard/GrowSection';
 import BrandDNASection from '../components/dashboard/BrandDNASection';
+import OnboardingWelcome from '../components/dashboard/OnboardingWelcome';
 import { supabase } from '../lib/supabase';
+import { checkUserOnboardingStatus } from '../lib/onboarding';
+import type { OnboardingStatus } from '../lib/onboarding';
 
 
 interface DashboardProps {
@@ -19,6 +22,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [activeTab, setActiveTab] = useState('Home');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [onboardingStatus, setOnboardingStatus] = useState<OnboardingStatus | null>(null);
 
   useEffect(() => {
     checkSession();
@@ -31,6 +35,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       if (!session) {
         onLogout();
       } else {
+        // Check onboarding status
+        const status = await checkUserOnboardingStatus(session.user.id);
+        setOnboardingStatus(status);
         setLoading(false);
       }
     } catch (error) {
@@ -39,15 +46,33 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     }
   };
 
+  const handleOnboardingComplete = async () => {
+    // Re-check onboarding status after completion
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const status = await checkUserOnboardingStatus(session.user.id);
+        setOnboardingStatus(status);
+      }
+    } catch (error) {
+      console.error('Error refreshing onboarding status:', error);
+    }
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/20 flex items-center justify-center">
+      <div className="min-h-screen bg-[#0F0F11] flex items-center justify-center">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-gray-200 border-t-gray-800 rounded-full animate-spin mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <div className="w-12 h-12 border-4 border-white/10 border-t-[#CCFF00] rounded-full animate-spin mx-auto"></div>
+          <p className="mt-4 text-zinc-400">Loading...</p>
         </div>
       </div>
     );
+  }
+
+  // Show onboarding for first-time users
+  if (onboardingStatus && !onboardingStatus.hasCompletedOnboarding) {
+    return <OnboardingWelcome onComplete={handleOnboardingComplete} />;
   }
 
   const renderContent = () => {

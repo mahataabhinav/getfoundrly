@@ -92,7 +92,7 @@ export default function HomeSection({ onNavigate }: { onNavigate?: (tab: string)
       </div>
 
       {/* Content Calendar Section */}
-      <UpcomingCarousel />
+      <UpcomingCarousel onNavigate={onNavigate} />
       <div className="pt-6">
         <PerformanceWidget />
       </div>
