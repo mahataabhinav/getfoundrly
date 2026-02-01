@@ -15,8 +15,235 @@ const openai = apiKey ? new OpenAI({
   apiKey: apiKey,
   dangerouslyAllowBrowser: true,
 }) : null;
-import type { Brand } from '../types/database';
 import type { BrandDNAData, BrandDNAProvenance } from '../types/database';
+
+/**
+ * Helper: Extract social media links from Firecrawl data
+ */
+function extractSocialLinks(links: string[], metadata: Record<string, any>): Record<string, string> {
+  const socialLinks: Record<string, string> = {};
+
+  const patterns = {
+    twitter: /(?:twitter\.com|x\.com)\/([a-zA-Z0-9_]+)/i,
+    linkedin: /linkedin\.com\/(company|in)\/([a-zA-Z0-9-]+)/i,
+    instagram: /instagram\.com\/([a-zA-Z0-9_.]+)/i,
+    youtube: /youtube\.com\/(c|channel|user)\/([a-zA-Z0-9_-]+)/i,
+    facebook: /facebook\.com\/([a-zA-Z0-9.]+)/i,
+  };
+
+  // Check metadata first (more reliable)
+  if (metadata.openGraph) {
+    Object.entries(patterns).forEach(([platform]) => {
+      const ogKey = `og:${platform}:url`;
+      if (metadata.openGraph[ogKey]) {
+        socialLinks[platform] = metadata.openGraph[ogKey];
+      }
+    });
+  }
+
+  // Extract from links
+  links.forEach(link => {
+    Object.entries(patterns).forEach(([platform, pattern]) => {
+      if (!socialLinks[platform] && pattern.test(link)) {
+        socialLinks[platform] = link;
+      }
+    });
+  });
+
+  return socialLinks;
+}
+
+/**
+ * Helper: Find logo images from Firecrawl images
+ */
+function findLogoImages(images: Array<{ url: string; alt?: string }>): Array<{ url: string; variant: 'dark' | 'light' | 'default'; format: 'svg' | 'png' }> {
+  const logos: Array<{ url: string; variant: 'dark' | 'light' | 'default'; format: 'svg' | 'png' }> = [];
+
+  images.forEach(img => {
+    const url = img.url.toLowerCase();
+    const alt = (img.alt || '').toLowerCase();
+
+    // Look for logo indicators in URL or alt text
+    if (url.includes('logo') || alt.includes('logo') ||
+        url.includes('brand') || alt.includes('brand') ||
+        url.includes('icon') && (url.includes('company') || url.includes('site'))) {
+
+      // Determine variant
+      let variant: 'dark' | 'light' | 'default' = 'default';
+      if (url.includes('dark') || alt.includes('dark')) variant = 'dark';
+      else if (url.includes('light') || alt.includes('light')) variant = 'light';
+
+      // Determine format
+      const format: 'svg' | 'png' = url.includes('.svg') ? 'svg' : 'png';
+
+      logos.push({ url: img.url, variant, format });
+    }
+  });
+
+  return logos;
+}
+
+/**
+ * Helper: Extract metrics from markdown content
+ */
+function extractMetrics(markdown: string): Array<{ label: string; value: string; source_url?: string }> {
+  const metrics: Array<{ label: string; value: string; source_url?: string }> = [];
+
+  // Common metric patterns: "10K+ users", "$1M+ ARR", "500+ companies"
+  const metricPatterns = [
+    /(\d+(?:,\d{3})*(?:\.\d+)?[KMB]?\+?)\s+(users|customers|companies|downloads|stars|followers|members)/gi,
+    /\$(\d+(?:,\d{3})*(?:\.\d+)?[KMB]?\+?)\s+(revenue|ARR|MRR|funding|raised)/gi,
+    /(\d+(?:,\d{3})*(?:\.\d+)?%?\+?)\s+(growth|increase|satisfaction|rating)/gi,
+  ];
+
+  metricPatterns.forEach(pattern => {
+    const matches = markdown.matchAll(pattern);
+    for (const match of matches) {
+      metrics.push({
+        label: match[2] || 'Metric',
+        value: match[1],
+      });
+    }
+  });
+
+  return metrics.slice(0, 5); // Limit to top 5 metrics
+}
+
+/**
+ * Helper: Extract testimonials from markdown
+ */
+function extractTestimonials(markdown: string): Array<{ quote: string; attribution: string; source_url?: string }> {
+  const testimonials: Array<{ quote: string; attribution: string; source_url?: string }> = [];
+
+  // Look for quoted text followed by attribution
+  const quotePattern = /[""]([^""]{20,200})[""]\s*[-–—]\s*([A-Z][a-zA-Z\s.]+(?:,\s*[A-Z][a-zA-Z\s]+)?)/g;
+
+  const matches = markdown.matchAll(quotePattern);
+  for (const match of matches) {
+    testimonials.push({
+      quote: match[1].trim(),
+      attribution: match[2].trim(),
+    });
+  }
+
+  return testimonials.slice(0, 3); // Limit to top 3
+}
+
+/**
+ * Helper: Create provenance entries for Firecrawl-only extraction
+ */
+function createFirecrawlProvenance(
+  dnaData: BrandDNAData,
+  sourceUrl: string,
+  trustScore: number
+): BrandDNAProvenance[] {
+  const provenance: BrandDNAProvenance[] = [];
+  const now = new Date().toISOString();
+
+  const addProvenance = (data: any, basePath: string) => {
+    if (typeof data === 'object' && data !== null && !Array.isArray(data)) {
+      Object.keys(data).forEach(key => {
+        const fieldPath = basePath ? `${basePath}.${key}` : key;
+        const value = data[key];
+
+        if (value !== null && value !== undefined) {
+          if (typeof value === 'object' && !Array.isArray(value)) {
+            addProvenance(value, fieldPath);
+          } else if (Array.isArray(value) && value.length > 0) {
+            provenance.push({
+              field: fieldPath,
+              source_url: sourceUrl,
+              last_updated: now,
+              trust_score: trustScore,
+              extraction_method: 'auto',
+            });
+          } else if (typeof value === 'string' && value.trim() !== '') {
+            provenance.push({
+              field: fieldPath,
+              source_url: sourceUrl,
+              last_updated: now,
+              trust_score: trustScore,
+              extraction_method: 'auto',
+            });
+          }
+        }
+      });
+    }
+  };
+
+  addProvenance(dnaData, '');
+  return provenance;
+}
+
+/**
+ * Extract basic Brand DNA using only Firecrawl data (no OpenAI)
+ * Used as fallback when OpenAI is unavailable
+ */
+function extractBasicBrandDNAFromFirecrawl(
+  websiteName: string,
+  websiteUrl: string,
+  markdown: string,
+  metadata: Record<string, any>,
+  images: Array<{ url: string; alt?: string }>,
+  _videos: Array<{ url: string; title?: string }> // eslint-disable-line @typescript-eslint/no-unused-vars
+): { dnaData: BrandDNAData; provenance: BrandDNAProvenance[] } {
+
+  console.log('Extracting basic Brand DNA from Firecrawl data (OpenAI unavailable)...');
+
+  // Extract links from markdown
+  const linkMatches = markdown.matchAll(/\[([^\]]+)\]\(([^)]+)\)/g);
+  const links: string[] = [];
+  for (const match of linkMatches) {
+    links.push(match[2]);
+  }
+
+  const socialLinks = extractSocialLinks(links, metadata);
+  const logos = findLogoImages(images);
+  const metrics = extractMetrics(markdown);
+  const testimonials = extractTestimonials(markdown);
+
+  // Build basic Brand DNA structure
+  const dnaData: BrandDNAData = {
+    identity: {
+      official_name: websiteName,
+      domains: [new URL(websiteUrl).hostname],
+      tagline: metadata.description || metadata['og:description'] || '',
+      social_links: socialLinks,
+    },
+    voice: {
+      tone_descriptors: ['professional'], // Default, user can edit
+      examples: {},
+    },
+    messaging: {
+      value_props: [],
+    },
+    products: [],
+    audience: {
+      primary_segments: [],
+      personas: [],
+    },
+    proof: {
+      metrics: metrics.length > 0 ? metrics : [],
+      testimonials: testimonials.length > 0 ? testimonials : [],
+    },
+    visual_identity: {
+      logos: logos.length > 0 ? logos : [],
+      example_imagery: images.slice(0, 10).map(img => img.url),
+      color_palette: metadata.colors ? { hex_codes: { primary: metadata.colors[0] } } : {},
+    },
+    creative_guidelines: {},
+    seo: {
+      top_keywords: metadata.keywords ? metadata.keywords.slice(0, 5) : [],
+    },
+    competitive: {},
+    compliance: {},
+  };
+
+  // Create provenance with lower trust score (60% for Firecrawl-only)
+  const provenance = createFirecrawlProvenance(dnaData, websiteUrl, 60);
+
+  return { dnaData, provenance };
+}
 
 export interface BrandProfile {
   // Visual Identity
@@ -424,7 +651,11 @@ Note: We could not fetch the actual website content due to CORS restrictions. Pl
 Extract what you can infer, but mark confidence lower since this is inferred rather than extracted from actual content.`;
   }
 
+  // Try OpenAI extraction first, fall back to Firecrawl-only if OpenAI unavailable
   try {
+    if (!openai) {
+      throw new Error('OPENAI_UNAVAILABLE');
+    }
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
@@ -451,8 +682,8 @@ Extract what you can infer, but mark confidence lower since this is inferred rat
       // Merge Firecrawl images with extracted images (avoid duplicates)
       const existingUrls = new Set(extractedData.visual_identity.example_imagery);
       firecrawlImages.forEach(img => {
-        if (img.url && !existingUrls.has(img.url)) {
-          extractedData.visual_identity.example_imagery!.push(img.url);
+        if (img.url && !existingUrls.has(img.url) && extractedData.visual_identity?.example_imagery) {
+          extractedData.visual_identity.example_imagery.push(img.url);
         }
       });
     }
@@ -467,8 +698,8 @@ Extract what you can infer, but mark confidence lower since this is inferred rat
       }
       // Look for logo-like images (containing "logo" in URL or alt text)
       firecrawlImages.forEach(img => {
-        if (img.url && (img.url.toLowerCase().includes('logo') || img.alt?.toLowerCase().includes('logo'))) {
-          extractedData.visual_identity.logos!.push({
+        if (img.url && (img.url.toLowerCase().includes('logo') || img.alt?.toLowerCase().includes('logo')) && extractedData.visual_identity?.logos) {
+          extractedData.visual_identity.logos.push({
             url: img.url,
             variant: 'default',
             format: img.url.toLowerCase().includes('.svg') ? 'svg' : 'png',
@@ -480,10 +711,10 @@ Extract what you can infer, but mark confidence lower since this is inferred rat
     // Build provenance array with confidence scores
     const provenance: BrandDNAProvenance[] = [];
     const now = new Date().toISOString();
-    
+
     // Calculate confidence scores based on data presence and quality
-    const calculateConfidence = (field: any, path: string): number => {
-      if (!field || (Array.isArray(field) && field.length === 0) || 
+    const calculateConfidence = (field: any): number => {
+      if (!field || (Array.isArray(field) && field.length === 0) ||
           (typeof field === 'object' && Object.keys(field).length === 0)) {
         return 0;
       }
@@ -505,7 +736,7 @@ Extract what you can infer, but mark confidence lower since this is inferred rat
         Object.keys(data).forEach(key => {
           const fieldPath = basePath ? `${basePath}.${key}` : key;
           const value = data[key];
-          
+
           if (value !== null && value !== undefined) {
             if (typeof value === 'object' && !Array.isArray(value)) {
               addProvenance(value, fieldPath);
@@ -514,7 +745,7 @@ Extract what you can infer, but mark confidence lower since this is inferred rat
                 field: fieldPath,
                 source_url: websiteUrl,
                 last_updated: now,
-                trust_score: calculateConfidence(value, fieldPath),
+                trust_score: calculateConfidence(value),
                 extraction_method: 'auto',
               });
             } else if (typeof value === 'string' && value.trim() !== '') {
@@ -522,7 +753,7 @@ Extract what you can infer, but mark confidence lower since this is inferred rat
                 field: fieldPath,
                 source_url: websiteUrl,
                 last_updated: now,
-                trust_score: calculateConfidence(value, fieldPath),
+                trust_score: calculateConfidence(value),
                 extraction_method: 'auto',
               });
             }
@@ -533,24 +764,52 @@ Extract what you can infer, but mark confidence lower since this is inferred rat
 
     addProvenance(extractedData, '');
 
+    console.log('Brand DNA extraction successful using OpenAI + Firecrawl');
     return {
       dnaData: extractedData,
       provenance,
     };
-  } catch (error: any) {
-    console.error('Error extracting BrandDNA:', error);
 
-    // Check for API key errors
+  } catch (error: any) {
+    console.error('OpenAI extraction failed:', error);
+
+    // Check if this is a billing/quota error and we can fall back to Firecrawl-only
+    const isBillingError = error?.status === 429 &&
+      (error?.error?.type === 'insufficient_quota' || error?.error?.code === 'insufficient_quota');
+
+    const isOpenAIUnavailable = !openai || error?.message === 'OPENAI_UNAVAILABLE';
+
+    // If we have Firecrawl data and OpenAI failed due to billing/unavailability, use Firecrawl-only fallback
+    if ((isBillingError || isOpenAIUnavailable) && usedFirecrawl && hasContent) {
+      console.log('Falling back to Firecrawl-only extraction (OpenAI unavailable)');
+
+      const fallbackResult = extractBasicBrandDNAFromFirecrawl(
+        websiteName,
+        websiteUrl,
+        contentToAnalyze,
+        metadata,
+        firecrawlImages,
+        firecrawlVideos
+      );
+
+      // Add warning message to identity section
+      if (!fallbackResult.dnaData.identity) {
+        fallbackResult.dnaData.identity = {};
+      }
+
+      console.log('Basic Brand DNA extracted using Firecrawl only (30-40% complete)');
+      return fallbackResult;
+    }
+
+    // Otherwise, throw appropriate errors
     if (error?.status === 401) {
       throw new Error('Invalid OpenAI API key. Please check your .env file.');
     }
 
-    // Check for billing/quota errors (429 with insufficient_quota)
-    else if (error?.status === 429) {
+    if (error?.status === 429) {
       const errorType = error?.error?.type || error?.type;
       const errorCode = error?.error?.code || error?.code;
 
-      // Distinguish between quota and rate limit errors
       if (errorType === 'insufficient_quota' || errorCode === 'insufficient_quota') {
         throw new Error('BILLING_ERROR: OpenAI API credits exceeded. Please add credits to your OpenAI account at https://platform.openai.com/settings/organization/billing');
       } else {
@@ -558,10 +817,10 @@ Extract what you can infer, but mark confidence lower since this is inferred rat
       }
     }
 
-    // If it's a website fetch error, provide a more helpful message
     if (error?.message?.includes('Unable to fetch website content') || error?.message?.includes('fetch website')) {
       throw new Error('Could not fetch website content (CORS restrictions). BrandDNA will be created with inferred data based on the website name and URL. You can edit and complete it manually in the BrandDNA section.');
     }
+
     throw new Error(`Failed to extract BrandDNA: ${error?.message || 'Unknown error'}`);
   }
 }

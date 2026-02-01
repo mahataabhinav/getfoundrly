@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { getBrandsByUser, getConnectionsByBrand } from '../../lib/database';
+import { getBrandsByUser, getConnectionsByBrand, getBrandDNA } from '../../lib/database';
 import ConnectAccountsSection from './ConnectAccountsSection';
 import UpcomingCarousel from './UpcomingCarousel';
 import PerformanceWidget from './PerformanceWidget';
-import type { Connection } from '../../types/database';
+import BrandDNACompletionPrompt from './BrandDNACompletionPrompt';
+import type { Connection, BrandDNA } from '../../types/database';
 
 export default function HomeSection({ onNavigate }: { onNavigate?: (tab: string) => void }) {
   const [firstName, setFirstName] = useState<string>('');
   const [loadingUser, setLoadingUser] = useState(true);
   const [connections, setConnections] = useState<Connection[]>([]);
+  const [brandDNA, setBrandDNA] = useState<BrandDNA | null>(null);
 
   useEffect(() => {
     fetchUserData();
@@ -29,11 +31,15 @@ export default function HomeSection({ onNavigate }: { onNavigate?: (tab: string)
           setFirstName(firstNameExtracted);
         }
 
-        // Fetch Connections
+        // Fetch Connections and Brand DNA
         const brands = await getBrandsByUser(session.user.id);
         if (brands && brands.length > 0) {
           const brandConnections = await getConnectionsByBrand(brands[0].id);
           setConnections(brandConnections);
+
+          // Fetch Brand DNA to check completion status
+          const dna = await getBrandDNA(brands[0].id);
+          setBrandDNA(dna);
         }
       }
     } catch (error) {
@@ -90,6 +96,12 @@ export default function HomeSection({ onNavigate }: { onNavigate?: (tab: string)
           <span className="text-xs font-medium text-zinc-300">System Active</span>
         </div>
       </div>
+
+      {/* Brand DNA Completion Prompt (if incomplete) */}
+      <BrandDNACompletionPrompt
+        brandDNA={brandDNA}
+        onNavigateToBrandDNA={() => onNavigate?.('BrandDNA')}
+      />
 
       {/* Content Calendar Section */}
       <UpcomingCarousel onNavigate={onNavigate} />

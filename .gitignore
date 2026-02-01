@@ -25,3 +25,8 @@ dist-ssr
 .env.production
 *.key
 *.secret
+
+# WAT Framework
+.tmp/
+credentials.json
+token.json
