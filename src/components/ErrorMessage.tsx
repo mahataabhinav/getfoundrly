@@ -12,6 +12,9 @@ export default function ErrorMessage({ error, onRetry, onSkip, showSkip }: Error
   const isBillingError = error.includes('BILLING_ERROR') || error.includes('credits exceeded');
   const isRateLimitError = error.includes('rate limit');
   const isAuthError = error.includes('Invalid') || error.includes('API key');
+  const isTimeoutError = error.includes('timed out') || error.includes('took too long');
+  const isQuotaError = error.includes('quota') || error.includes('limit exceeded') || error.includes('API quota');
+  const isURLError = error.includes('URL') || error.includes('accessible') || error.includes('Failed to scrape');
 
   // Extract clean error message
   const cleanError = error.replace('BILLING_ERROR: ', '');
@@ -77,6 +80,49 @@ export default function ErrorMessage({ error, onRetry, onSkip, showSkip }: Error
                 Manage API Keys
                 <ExternalLink className="w-3 h-3" />
               </a>
+            </div>
+          )}
+
+          {/* Timeout error - show helpful actions */}
+          {isTimeoutError && (
+            <div className="space-y-2">
+              <p className="text-xs text-zinc-400">
+                The website took too long to respond. This could be due to:
+              </p>
+              <ul className="text-xs text-zinc-400 space-y-1 list-disc list-inside">
+                <li>Slow server response</li>
+                <li>Large website with many pages</li>
+                <li>Network connectivity issues</li>
+              </ul>
+              <p className="text-xs text-zinc-400">Try again in a moment.</p>
+            </div>
+          )}
+
+          {/* Quota error - show helpful actions */}
+          {isQuotaError && (
+            <div className="space-y-2">
+              <p className="text-xs text-zinc-400">
+                API usage limit reached. Possible solutions:
+              </p>
+              <ul className="text-xs text-zinc-400 space-y-1 list-disc list-inside">
+                <li>Wait an hour for quota reset</li>
+                <li>Upgrade your API plan</li>
+                <li>Check your usage dashboard</li>
+              </ul>
+            </div>
+          )}
+
+          {/* URL error - show helpful actions */}
+          {isURLError && (
+            <div className="space-y-2">
+              <p className="text-xs text-zinc-400">
+                Unable to access the website. Please verify:
+              </p>
+              <ul className="text-xs text-zinc-400 space-y-1 list-disc list-inside">
+                <li>The URL is correct and complete (include https://)</li>
+                <li>The website is publicly accessible</li>
+                <li>The website is not blocking automated access</li>
+              </ul>
             </div>
           )}
 

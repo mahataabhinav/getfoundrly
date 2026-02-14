@@ -8,6 +8,7 @@
 import OpenAI from 'openai';
 import { supabase } from './supabase';
 import { extractWebsiteData, isFirecrawlAvailable } from './firecrawl';
+import { extractColorsFromImages, filterBrandColors } from './color-extractor';
 
 // Get OpenAI client instance
 const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
@@ -16,6 +17,18 @@ const openai = apiKey ? new OpenAI({
   dangerouslyAllowBrowser: true,
 }) : null;
 import type { BrandDNAData, BrandDNAProvenance } from '../types/database';
+
+/**
+ * Helper: Wrap a promise with a timeout
+ */
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error('Request timed out')), timeoutMs)
+    ),
+  ]);
+}
 
 /**
  * Helper: Extract social media links from Firecrawl data
@@ -229,7 +242,37 @@ function extractBasicBrandDNAFromFirecrawl(
     visual_identity: {
       logos: logos.length > 0 ? logos : [],
       example_imagery: images.slice(0, 10).map(img => img.url),
-      color_palette: metadata.colors ? { hex_codes: { primary: metadata.colors[0] } } : {},
+      color_palette: (() => {
+        const extractedColors = metadata.colors || [];
+        const colorPalette: any = {};
+
+        if (extractedColors.length >= 3) {
+          colorPalette.primary = [extractedColors[0], extractedColors[1]];
+          colorPalette.secondary = [extractedColors[2]];
+          colorPalette.hex_codes = {
+            primary: extractedColors[0],
+            secondary: extractedColors[2],
+          };
+          if (extractedColors.length >= 4) {
+            colorPalette.accent = [extractedColors[3]];
+            colorPalette.hex_codes.accent = extractedColors[3];
+          }
+        } else if (extractedColors.length > 0) {
+          colorPalette.primary = [extractedColors[0]];
+          colorPalette.hex_codes = { primary: extractedColors[0] };
+          if (extractedColors.length >= 2) {
+            colorPalette.secondary = [extractedColors[1]];
+            colorPalette.hex_codes.secondary = extractedColors[1];
+          }
+        }
+
+        // Add reference to images for manual color picking
+        if (images.length > 0) {
+          colorPalette.reference_images = images.slice(0, 5).map(img => img.url);
+        }
+
+        return colorPalette;
+      })(),
     },
     creative_guidelines: {},
     seo: {
@@ -347,11 +390,14 @@ export async function extractBrandDNA(
   if (isFirecrawlAvailable()) {
     try {
       console.log('Using Firecrawl to extract website content...');
-      const firecrawlResult = await extractWebsiteData(websiteUrl, {
-        useCrawl: true, // Use crawl for comprehensive data
-        maxPages: 10,
-        maxDepth: 2,
-      });
+      const firecrawlResult = await withTimeout(
+        extractWebsiteData(websiteUrl, {
+          useCrawl: true, // Use crawl for comprehensive data
+          maxPages: 10,
+          maxDepth: 2,
+        }),
+        60000 // 60 second timeout
+      );
 
       if (firecrawlResult.success && firecrawlResult.markdown) {
         usedFirecrawl = true;
@@ -369,11 +415,43 @@ export async function extractBrandDNA(
         }
 
         console.log(`Firecrawl extraction successful: ${contentToAnalyze.length} chars, ${firecrawlImages.length} images, ${firecrawlVideos.length} videos`);
+
+        // Extract colors from images using pixel analysis (ColorThief)
+        if (firecrawlImages.length > 0) {
+          try {
+            console.log('Extracting colors from images using ColorThief...');
+            const { colors, colorFrequency } = await extractColorsFromImages(
+              firecrawlImages.map(img => img.url),
+              { maxImages: 5, colorsPerImage: 5, quality: 10 }
+            );
+            const brandColors = filterBrandColors(colors);
+            if (brandColors.length > 0) {
+              metadata.extracted_colors = brandColors.slice(0, 10);
+              metadata.color_frequency = Object.fromEntries(colorFrequency);
+              console.log(`Extracted ${brandColors.length} brand colors from images`);
+            }
+          } catch (colorError) {
+            console.warn('Color extraction failed, OpenAI will infer colors:', colorError);
+          }
+        }
       } else {
-        console.warn('Firecrawl extraction failed, falling back to standard method:', firecrawlResult.error);
+        // Specific error message for Firecrawl failure
+        const errorMsg = firecrawlResult.error || 'Unknown Firecrawl error';
+        console.warn('Firecrawl failed:', errorMsg);
+        throw new Error(`Failed to scrape website: ${errorMsg}`);
       }
-    } catch (firecrawlError) {
-      console.warn('Firecrawl error, falling back to standard method:', firecrawlError);
+    } catch (firecrawlError: any) {
+      // Enhanced error detection with specific messages
+      if (firecrawlError.message?.includes('timed out') || firecrawlError.message?.includes('Request timed out')) {
+        throw new Error('Website took too long to respond. Please try again or check if the URL is accessible.');
+      } else if (firecrawlError.message?.includes('quota') || firecrawlError.message?.includes('limit')) {
+        throw new Error('Firecrawl API quota exceeded. Please upgrade your Firecrawl plan or try again later.');
+      } else if (firecrawlError.message?.includes('Failed to scrape')) {
+        // Re-throw specific scrape errors
+        throw firecrawlError;
+      } else {
+        throw new Error(`Failed to scrape website: ${firecrawlError.message || 'Unknown error'}. Please ensure the URL is correct and accessible.`);
+      }
     }
   }
 
@@ -618,7 +696,20 @@ ${contentToAnalyze}`;
     if (usedFirecrawl) {
       if (firecrawlImages.length > 0) {
         userPrompt += `\n\nExtracted Images (${firecrawlImages.length}):\n${firecrawlImages.slice(0, 20).map((img, i) => `${i + 1}. ${img.url}${img.alt ? ` (alt: ${img.alt})` : ''}`).join('\n')}`;
-        userPrompt += '\n\nCRITICAL: Use these images to:\n- Extract ALL image URLs and store in visual_identity.example_imagery array\n- Analyze color palette from images (dominant colors)\n- Identify logo URLs and variants\n- Understand brand aesthetics and visual tone\n- Extract image style preferences (photography vs illustration, mood, filters)';
+        userPrompt += '\n\nCRITICAL: Use these images to:\n- Extract ALL image URLs and store in visual_identity.example_imagery array\n- Identify logo URLs and variants\n- Understand brand aesthetics and visual tone\n- Extract image style preferences (photography vs illustration, mood, filters)';
+
+        // Use pixel-extracted colors if available, otherwise fall back to OpenAI inference
+        if (metadata.extracted_colors && metadata.extracted_colors.length > 0) {
+          const extractedColors: string[] = metadata.extracted_colors;
+          userPrompt += `\n\nEXTRACTED BRAND COLORS (pixel analysis of website images - use these as PRIMARY source):`;
+          extractedColors.slice(0, 10).forEach((color: string, i: number) => {
+            const freq = metadata.color_frequency?.[color] || 1;
+            userPrompt += `\n${i + 1}. ${color} (frequency score: ${freq})`;
+          });
+          userPrompt += `\n\nIMPORTANT: These colors were extracted from actual website images using pixel analysis. Use them as the definitive brand colors.\n\nRequired color_palette structure:\n{\n  "primary": ["${extractedColors[0]}", "${extractedColors[1] || extractedColors[0]}"],\n  "secondary": [${extractedColors[2] ? `"${extractedColors[2]}"` : `"${extractedColors[0]}"`}],\n  "accent": [${extractedColors[3] ? `"${extractedColors[3]}"` : `"${extractedColors[1] || extractedColors[0]}"`}],\n  "hex_codes": {\n    "primary": "${extractedColors[0]}",\n    "secondary": "${extractedColors[2] || extractedColors[1] || extractedColors[0]}",\n    "accent": "${extractedColors[3] || extractedColors[1] || extractedColors[0]}"\n  }\n}`;
+        } else {
+          userPrompt += '\n\nCRITICAL COLOR EXTRACTION INSTRUCTIONS:\n\nAnalyze ALL provided images to extract the brand\'s color palette:\n1. Identify the 2-3 most prominent colors used in logos, headers, buttons\n2. Look for consistent color usage across multiple images\n3. Extract primary brand color (most dominant)\n4. Extract secondary colors (supporting colors)\n5. Extract accent colors (call-to-action, highlights)\n\nReturn colors in hex format: #RRGGBB\n\nNEVER return empty color_palette. Always provide at minimum:\n- primary: [array with 1-2 hex colors]\n- hex_codes: {primary: "#XXXXXX", secondary: "#XXXXXX"}';
+        }
       }
       
       if (firecrawlVideos.length > 0) {
@@ -657,19 +748,34 @@ Extract what you can infer, but mark confidence lower since this is inferred rat
       throw new Error('OPENAI_UNAVAILABLE');
     }
 
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      temperature: 0.3,
-      response_format: { type: 'json_object' },
-      max_tokens: 6000, // Increased for comprehensive extraction
-    });
+    const completion = await withTimeout(
+      openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        temperature: 0.3,
+        response_format: { type: 'json_object' },
+        max_tokens: 6000, // Increased for comprehensive extraction
+      }),
+      90000 // 90 second timeout for OpenAI
+    );
 
     const responseContent = completion.choices[0]?.message?.content || '{}';
-    const extractedData = JSON.parse(responseContent) as BrandDNAData;
+
+    let extractedData: BrandDNAData;
+    try {
+      extractedData = JSON.parse(responseContent);
+    } catch (parseError) {
+      console.error('Failed to parse OpenAI response:', responseContent);
+      throw new Error('OpenAI returned invalid JSON format. This might be a temporary issue. Please try again.');
+    }
+
+    // Validate structure
+    if (!extractedData || typeof extractedData !== 'object') {
+      throw new Error('OpenAI returned invalid Brand DNA structure. Please try again.');
+    }
 
     // Store Firecrawl images in visual_identity.example_imagery
     if (usedFirecrawl && firecrawlImages.length > 0) {
@@ -773,35 +879,7 @@ Extract what you can infer, but mark confidence lower since this is inferred rat
   } catch (error: any) {
     console.error('OpenAI extraction failed:', error);
 
-    // Check if this is a billing/quota error and we can fall back to Firecrawl-only
-    const isBillingError = error?.status === 429 &&
-      (error?.error?.type === 'insufficient_quota' || error?.error?.code === 'insufficient_quota');
-
-    const isOpenAIUnavailable = !openai || error?.message === 'OPENAI_UNAVAILABLE';
-
-    // If we have Firecrawl data and OpenAI failed due to billing/unavailability, use Firecrawl-only fallback
-    if ((isBillingError || isOpenAIUnavailable) && usedFirecrawl && hasContent) {
-      console.log('Falling back to Firecrawl-only extraction (OpenAI unavailable)');
-
-      const fallbackResult = extractBasicBrandDNAFromFirecrawl(
-        websiteName,
-        websiteUrl,
-        contentToAnalyze,
-        metadata,
-        firecrawlImages,
-        firecrawlVideos
-      );
-
-      // Add warning message to identity section
-      if (!fallbackResult.dnaData.identity) {
-        fallbackResult.dnaData.identity = {};
-      }
-
-      console.log('Basic Brand DNA extracted using Firecrawl only (30-40% complete)');
-      return fallbackResult;
-    }
-
-    // Otherwise, throw appropriate errors
+    // OpenAI is mandatory - provide clear error messages
     if (error?.status === 401) {
       throw new Error('Invalid OpenAI API key. Please check your .env file.');
     }
@@ -811,7 +889,7 @@ Extract what you can infer, but mark confidence lower since this is inferred rat
       const errorCode = error?.error?.code || error?.code;
 
       if (errorType === 'insufficient_quota' || errorCode === 'insufficient_quota') {
-        throw new Error('BILLING_ERROR: OpenAI API credits exceeded. Please add credits to your OpenAI account at https://platform.openai.com/settings/organization/billing');
+        throw new Error('BILLING_ERROR: OpenAI API credits exceeded. Please add credits to your OpenAI account to enable Brand DNA extraction.');
       } else {
         throw new Error('OpenAI API rate limit exceeded. Please try again in a few moments.');
       }
@@ -821,7 +899,8 @@ Extract what you can infer, but mark confidence lower since this is inferred rat
       throw new Error('Could not fetch website content (CORS restrictions). BrandDNA will be created with inferred data based on the website name and URL. You can edit and complete it manually in the BrandDNA section.');
     }
 
-    throw new Error(`Failed to extract BrandDNA: ${error?.message || 'Unknown error'}`);
+    // Generic error with OpenAI requirement message
+    throw new Error(`Failed to extract Brand DNA: ${error?.message || 'Unknown error'}. OpenAI is required for high-quality brand analysis. Please ensure your API key is valid and has credits available.`);
   }
 }
 
@@ -934,18 +1013,55 @@ function extractMetadata(html: string): Record<string, any> {
     metadata.openGraph = ogTags;
   }
   
-  // Extract colors from CSS or inline styles
+  // Enhanced color extraction from CSS and inline styles
   const colors: string[] = [];
+
+  // 1. Extract from inline styles
+  const elementsWithStyle = doc.querySelectorAll('[style]');
+  elementsWithStyle.forEach(el => {
+    const style = el.getAttribute('style') || '';
+    const colorMatches = style.match(/#[0-9A-Fa-f]{6}|#[0-9A-Fa-f]{3}|rgb\([^)]+\)|rgba\([^)]+\)|hsl\([^)]+\)/gi);
+    if (colorMatches) colors.push(...colorMatches);
+  });
+
+  // 2. Extract from <style> tags
   const styleSheets = doc.querySelectorAll('style');
   styleSheets.forEach(style => {
     const cssText = style.textContent || '';
-    const colorMatches = cssText.match(/#[0-9A-Fa-f]{6}|#[0-9A-Fa-f]{3}|rgb\([^)]+\)|rgba\([^)]+\)/g);
-    if (colorMatches) {
-      colors.push(...colorMatches);
-    }
+    const colorMatches = cssText.match(/#[0-9A-Fa-f]{6}|#[0-9A-Fa-f]{3}|rgb\([^)]+\)|rgba\([^)]+\)|hsl\([^)]+\)/gi);
+    if (colorMatches) colors.push(...colorMatches);
   });
-  if (colors.length > 0) {
-    metadata.colors = [...new Set(colors)];
+
+  // 3. Extract CSS variable values
+  const rootStyles = doc.querySelector(':root, html')?.getAttribute('style');
+  if (rootStyles) {
+    const varMatches = rootStyles.match(/--[^:]+:\s*(#[0-9A-Fa-f]{6}|rgb\([^)]+\)|hsl\([^)]+\))/gi);
+    if (varMatches) {
+      varMatches.forEach(match => {
+        const colorMatch = match.match(/#[0-9A-Fa-f]{6}|rgb\([^)]+\)|hsl\([^)]+\)/i);
+        if (colorMatch) colors.push(colorMatch[0]);
+      });
+    }
+  }
+
+  // Convert all to hex and deduplicate
+  const hexColors = colors.map(c => {
+    // Convert rgb/rgba to hex
+    if (c.toLowerCase().startsWith('rgb')) {
+      const rgb = c.match(/\d+/g)?.map(Number);
+      if (rgb && rgb.length >= 3) {
+        return `#${rgb.slice(0, 3).map(x => x.toString(16).padStart(2, '0')).join('')}`;
+      }
+    }
+    // Expand 3-digit hex to 6-digit
+    if (c.startsWith('#') && c.length === 4) {
+      return `#${c[1]}${c[1]}${c[2]}${c[2]}${c[3]}${c[3]}`;
+    }
+    return c.toLowerCase();
+  }).filter(Boolean);
+
+  if (hexColors.length > 0) {
+    metadata.colors = [...new Set(hexColors)];
   }
   
   return metadata;
@@ -1079,19 +1195,34 @@ ${contentToAnalyze}
 Extract the complete brand profile in JSON format.`;
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      temperature: 0.3, // Lower temperature for more consistent extraction
-      response_format: { type: 'json_object' },
-      max_tokens: 2000,
-    });
+    const completion = await withTimeout(
+      openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        temperature: 0.3, // Lower temperature for more consistent extraction
+        response_format: { type: 'json_object' },
+        max_tokens: 2000,
+      }),
+      90000 // 90 second timeout for OpenAI
+    );
 
     const responseContent = completion.choices[0]?.message?.content || '{}';
-    const brandProfile = JSON.parse(responseContent) as BrandProfile;
+
+    let brandProfile: BrandProfile;
+    try {
+      brandProfile = JSON.parse(responseContent);
+    } catch (parseError) {
+      console.error('Failed to parse OpenAI response:', responseContent);
+      throw new Error('OpenAI returned invalid JSON format. This might be a temporary issue. Please try again.');
+    }
+
+    // Validate structure
+    if (!brandProfile || typeof brandProfile !== 'object') {
+      throw new Error('OpenAI returned invalid brand profile structure. Please try again.');
+    }
 
     // Store raw content for reference
     brandProfile.rawContent = {

@@ -95,11 +95,20 @@ export default function OnboardingWelcome({ onComplete }: OnboardingWelcomeProps
     } catch (err: any) {
       console.error('Error creating Brand DNA:', err);
 
-      // Check if this is a billing error
-      const isBillingError = err.message?.includes('BILLING_ERROR');
+      // Check error type for better messaging
+      const isBillingError = err.message?.includes('BILLING_ERROR') || err.message?.includes('credits exceeded');
+      const isAPIKeyError = err.message?.includes('API key') || err.message?.includes('Invalid');
 
-      setError(err.message?.replace('BILLING_ERROR: ', '') || 'Failed to create Brand DNA. Please try again.');
-      setCanSkip(isBillingError); // Allow skip only for billing errors
+      let errorMessage = err.message?.replace('BILLING_ERROR: ', '') || 'Failed to create Brand DNA.';
+
+      if (isBillingError) {
+        errorMessage = 'OpenAI credits exceeded. Please add credits to your OpenAI account to enable Brand DNA extraction.';
+      } else if (isAPIKeyError) {
+        errorMessage = 'OpenAI API key is invalid or not configured. Please check your .env file.';
+      }
+
+      setError(errorMessage);
+      setCanSkip(false); // Never allow skip - OpenAI is mandatory
       setLoading(false);
       setCurrentLoadingStep(0);
     }

@@ -286,7 +286,7 @@ export default function BrandDNAProfileView({
                   {dnaData.visual_identity.logos.map((logo, idx) => (
                     <div key={idx} className="border border-gray-200 rounded-lg p-4 text-center">
                       <img src={logo.url} alt={`Logo ${logo.variant}`} className="max-h-24 mx-auto mb-2" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                      <p className="text-xs text-gray-600">{logo.variant} ({logo.format})</p>
+                      <p className="text-xs text-zinc-400">{logo.variant} ({logo.format})</p>
                     </div>
                   ))}
                 </div>
@@ -441,8 +441,8 @@ export default function BrandDNAProfileView({
                     <div className="grid grid-cols-3 gap-2 mt-2">
                       {Object.entries(perf.metrics).map(([metric, value]) => (
                         <div key={metric} className="text-center">
-                          <p className="text-xs text-gray-600">{metric}</p>
-                          <p className="text-sm font-semibold text-[#1A1A1A]">{value}</p>
+                          <p className="text-xs text-zinc-400">{metric}</p>
+                          <p className="text-sm font-semibold text-white">{value}</p>
                         </div>
                       ))}
                     </div>
@@ -464,7 +464,7 @@ export default function BrandDNAProfileView({
           </div>
         );
       default:
-        return <div className="text-gray-600">Section content coming soon...</div>;
+        return <div className="text-zinc-400">Section content coming soon...</div>;
     }
   };
 
@@ -592,7 +592,7 @@ function SectionField({
         )}
       </div>
       <div className="text-white mb-2">
-        {value || <span className="text-zinc-600 italic">Not set</span>}
+        {value || <span className="text-zinc-400 italic">Not set</span>}
       </div>
       {provenance && (
         <BrandDNAProvenance provenance={provenance} compact />

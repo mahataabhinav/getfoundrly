@@ -23,9 +23,9 @@ export default function BrandDNAPreview({
       <div className="border border-gray-200 rounded-xl p-6">
         <div className="flex items-center gap-2 mb-4">
           <div className="p-2 bg-gray-100 rounded-lg">
-            <Icon className="w-5 h-5 text-gray-700" />
+            <Icon className="w-5 h-5 text-zinc-400" />
           </div>
-          <h3 className="text-lg font-semibold text-[#1A1A1A]">{title}</h3>
+          <h3 className="text-lg font-semibold text-white">{title}</h3>
         </div>
         {content}
       </div>
@@ -43,7 +43,7 @@ export default function BrandDNAPreview({
     return (
       <div className="mb-4 last:mb-0">
         <div className="flex items-start justify-between mb-1">
-          <label className="text-sm font-medium text-gray-700">{label}</label>
+          <label className="text-sm font-medium text-zinc-400">{label}</label>
           {provenance && (
             <BrandDNAConfidenceBadge 
               trustScore={provenance.trust_score} 
@@ -51,7 +51,7 @@ export default function BrandDNAPreview({
             />
           )}
         </div>
-        <div className="text-[#1A1A1A]">
+        <div className="text-white">
           {Array.isArray(value) ? (
             <div className="flex flex-wrap gap-2">
               {value.map((item, idx) => (
@@ -103,7 +103,7 @@ export default function BrandDNAPreview({
   return (
     <div className={compact ? '' : 'p-6'}>
       {/* Status Info - show in compact mode too */}
-      <div className={`flex items-center gap-4 text-sm text-gray-600 mb-6 ${compact ? 'pb-4 border-b border-gray-200' : ''}`}>
+      <div className={`flex items-center gap-4 text-sm text-zinc-400 mb-6 ${compact ? 'pb-4 border-b border-gray-200' : ''}`}>
         <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
           brandDNA.status === 'complete' && brandDNA.completion_score >= 70
             ? 'bg-green-100 text-green-700'
@@ -144,7 +144,7 @@ export default function BrandDNAPreview({
               {renderField('Company Size', dnaData.identity.company_size, 'identity.company_size')}
               {dnaData.identity.social_links && Object.keys(dnaData.identity.social_links).length > 0 && (
                 <div className="mb-4">
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">Social Links</label>
+                  <label className="text-sm font-medium text-zinc-400 mb-2 block">Social Links</label>
                   <div className="flex flex-wrap gap-2">
                     {Object.entries(dnaData.identity.social_links).map(([platform, url]) => (
                       url && (
@@ -190,13 +190,13 @@ export default function BrandDNAPreview({
             <div className="space-y-3">
               {dnaData.messaging.value_props && dnaData.messaging.value_props.length > 0 && (
                 <div className="mb-4">
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">Value Propositions</label>
+                  <label className="text-sm font-medium text-zinc-400 mb-2 block">Value Propositions</label>
                   <div className="space-y-2">
                     {dnaData.messaging.value_props.map((prop, idx) => (
                       <div key={idx} className="p-3 bg-gray-50 rounded-lg">
-                        <p className="text-sm text-[#1A1A1A] mb-1">{prop.text}</p>
+                        <p className="text-sm text-gray-900 mb-1">{prop.text}</p>
                         {prop.proof && (
-                          <p className="text-xs text-gray-600">Proof: {prop.proof}</p>
+                          <p className="text-xs text-zinc-400">Proof: {prop.proof}</p>
                         )}
                         {prop.source && (
                           <a href={prop.source} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline">
@@ -220,8 +220,8 @@ export default function BrandDNAPreview({
             <div className="space-y-4">
               {dnaData.products.map((product, idx) => (
                 <div key={idx} className="p-4 bg-gray-50 rounded-lg">
-                  <h4 className="font-semibold text-[#1A1A1A] mb-2">{product.name}</h4>
-                  <p className="text-sm text-gray-600 mb-2">{product.description}</p>
+                  <h4 className="font-semibold text-gray-900 mb-2">{product.name}</h4>
+                  <p className="text-sm text-zinc-600 mb-2">{product.description}</p>
                   {product.pricing_model && (
                     <span className="inline-block px-2 py-1 bg-white rounded text-xs text-gray-700 mb-2">
                       {product.pricing_model}
@@ -229,10 +229,10 @@ export default function BrandDNAPreview({
                   )}
                   {product.differentiators && product.differentiators.length > 0 && (
                     <div className="mt-2">
-                      <p className="text-xs font-medium text-gray-700 mb-1">Differentiators:</p>
+                      <p className="text-xs font-medium text-zinc-600 mb-1">Differentiators:</p>
                       <div className="flex flex-wrap gap-1">
                         {product.differentiators.map((diff, diffIdx) => (
-                          <span key={diffIdx} className="px-2 py-0.5 bg-white rounded text-xs text-gray-600">
+                          <span key={diffIdx} className="px-2 py-0.5 bg-white rounded text-xs text-gray-700">
                             {diff}
                           </span>
                         ))}
@@ -251,7 +251,7 @@ export default function BrandDNAPreview({
             <div className="space-y-4">
               {dnaData.visual_identity.color_palette && (
                 <div className="mb-4">
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">Color Palette</label>
+                  <label className="text-sm font-medium text-zinc-400 mb-2 block">Color Palette</label>
                   {dnaData.visual_identity.color_palette.hex_codes && (
                     <div className="flex gap-2 flex-wrap">
                       {Object.entries(dnaData.visual_identity.color_palette.hex_codes).map(([name, color]) => (
@@ -260,7 +260,7 @@ export default function BrandDNAPreview({
                             className="w-12 h-12 rounded-lg border border-gray-200 shadow-sm"
                             style={{ backgroundColor: color as string }}
                           />
-                          <span className="text-xs text-gray-600">{name}</span>
+                          <span className="text-xs text-zinc-400">{name}</span>
                         </div>
                       ))}
                     </div>
@@ -280,11 +280,11 @@ export default function BrandDNAPreview({
               {renderField('Primary Segments', dnaData.audience.primary_segments, 'audience.primary_segments')}
               {dnaData.audience.personas && dnaData.audience.personas.length > 0 && (
                 <div className="mb-4">
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">Personas</label>
+                  <label className="text-sm font-medium text-zinc-400 mb-2 block">Personas</label>
                   <div className="space-y-3">
                     {dnaData.audience.personas.map((persona, idx) => (
                       <div key={idx} className="p-4 bg-gray-50 rounded-lg">
-                        <h4 className="font-semibold text-[#1A1A1A] mb-2">{persona.name} - {persona.role}</h4>
+                        <h4 className="font-semibold text-gray-900 mb-2">{persona.name} - {persona.role}</h4>
                         {renderField('Pain Points', persona.pain_points, `audience.personas.${idx}.pain_points`)}
                         {renderField('Goals', persona.goals, `audience.personas.${idx}.goals`)}
                         {renderField('Channels', persona.channels, `audience.personas.${idx}.channels`)}
@@ -304,12 +304,12 @@ export default function BrandDNAPreview({
             <div className="space-y-4">
               {dnaData.proof.metrics && dnaData.proof.metrics.length > 0 && (
                 <div className="mb-4">
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">Metrics</label>
+                  <label className="text-sm font-medium text-zinc-400 mb-2 block">Metrics</label>
                   <div className="grid grid-cols-2 gap-3">
                     {dnaData.proof.metrics.map((metric, idx) => (
                       <div key={idx} className="p-3 bg-gray-50 rounded-lg">
-                        <p className="text-xs text-gray-600">{metric.label}</p>
-                        <p className="text-lg font-semibold text-[#1A1A1A]">{metric.value}</p>
+                        <p className="text-xs text-zinc-600">{metric.label}</p>
+                        <p className="text-lg font-semibold text-gray-900">{metric.value}</p>
                       </div>
                     ))}
                   </div>
@@ -317,12 +317,12 @@ export default function BrandDNAPreview({
               )}
               {dnaData.proof.testimonials && dnaData.proof.testimonials.length > 0 && (
                 <div className="mb-4">
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">Testimonials</label>
+                  <label className="text-sm font-medium text-zinc-400 mb-2 block">Testimonials</label>
                   <div className="space-y-2">
                     {dnaData.proof.testimonials.slice(0, 3).map((testimonial, idx) => (
                       <div key={idx} className="p-3 bg-gray-50 rounded-lg">
-                        <p className="text-sm text-[#1A1A1A] italic mb-1">"{testimonial.quote}"</p>
-                        <p className="text-xs text-gray-600">— {testimonial.attribution}</p>
+                        <p className="text-sm text-gray-900 italic mb-1">"{testimonial.quote}"</p>
+                        <p className="text-xs text-zinc-500">— {testimonial.attribution}</p>
                       </div>
                     ))}
                   </div>
@@ -330,16 +330,16 @@ export default function BrandDNAPreview({
               )}
               {dnaData.proof.case_studies && dnaData.proof.case_studies.length > 0 && (
                 <div className="mb-4">
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">Case Studies</label>
+                  <label className="text-sm font-medium text-zinc-400 mb-2 block">Case Studies</label>
                   <div className="space-y-2">
                     {dnaData.proof.case_studies.slice(0, 2).map((caseStudy, idx) => (
                       <div key={idx} className="p-3 bg-gray-50 rounded-lg">
-                        <p className="text-xs font-medium text-gray-700 mb-1">Problem:</p>
-                        <p className="text-sm text-[#1A1A1A] mb-2">{caseStudy.problem}</p>
-                        <p className="text-xs font-medium text-gray-700 mb-1">Solution:</p>
-                        <p className="text-sm text-[#1A1A1A] mb-2">{caseStudy.solution}</p>
-                        <p className="text-xs font-medium text-gray-700 mb-1">Result:</p>
-                        <p className="text-sm text-[#1A1A1A]">{caseStudy.result}</p>
+                        <p className="text-xs font-medium text-zinc-600 mb-1">Problem:</p>
+                        <p className="text-sm text-gray-900 mb-2">{caseStudy.problem}</p>
+                        <p className="text-xs font-medium text-zinc-600 mb-1">Solution:</p>
+                        <p className="text-sm text-gray-900 mb-2">{caseStudy.solution}</p>
+                        <p className="text-xs font-medium text-zinc-600 mb-1">Result:</p>
+                        <p className="text-sm text-gray-900">{caseStudy.result}</p>
                       </div>
                     ))}
                   </div>
@@ -375,11 +375,11 @@ export default function BrandDNAPreview({
               {renderField('Negative Keywords', dnaData.seo.negative_keywords, 'seo.negative_keywords')}
               {dnaData.seo.suggested_hashtags && Object.keys(dnaData.seo.suggested_hashtags).length > 0 && (
                 <div className="mb-4">
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">Suggested Hashtags</label>
+                  <label className="text-sm font-medium text-zinc-400 mb-2 block">Suggested Hashtags</label>
                   <div className="space-y-2">
                     {Object.entries(dnaData.seo.suggested_hashtags).slice(0, 5).map(([keyword, hashtags]) => (
                       <div key={keyword} className="p-3 bg-gray-50 rounded-lg">
-                        <p className="text-xs font-medium text-gray-700 mb-1">{keyword}</p>
+                        <p className="text-xs font-medium text-zinc-400 mb-1">{keyword}</p>
                         <div className="flex flex-wrap gap-1">
                           {(hashtags as string[]).map((tag, idx) => (
                             <span key={idx} className="px-2 py-0.5 bg-white rounded text-xs text-gray-700">{tag}</span>
@@ -400,13 +400,13 @@ export default function BrandDNAPreview({
             <div className="space-y-3">
               {dnaData.competitive.top_competitors && dnaData.competitive.top_competitors.length > 0 && (
                 <div className="mb-4">
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">Top Competitors</label>
+                  <label className="text-sm font-medium text-zinc-400 mb-2 block">Top Competitors</label>
                   <div className="space-y-2">
                     {dnaData.competitive.top_competitors.map((competitor, idx) => (
                       <div key={idx} className="p-3 bg-gray-50 rounded-lg">
-                        <p className="text-sm font-medium text-[#1A1A1A] mb-1">{competitor.name}</p>
+                        <p className="text-sm font-medium text-gray-900 mb-1">{competitor.name}</p>
                         {competitor.differentiation && (
-                          <p className="text-xs text-gray-600">{competitor.differentiation}</p>
+                          <p className="text-xs text-zinc-400">{competitor.differentiation}</p>
                         )}
                       </div>
                     ))}
@@ -437,19 +437,19 @@ export default function BrandDNAPreview({
             <div className="space-y-3">
               {dnaData.interaction_history.post_performance && dnaData.interaction_history.post_performance.length > 0 && (
                 <div className="mb-4">
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">Post Performance</label>
+                  <label className="text-sm font-medium text-zinc-400 mb-2 block">Post Performance</label>
                   <div className="space-y-2">
                     {dnaData.interaction_history.post_performance.slice(0, 3).map((perf, idx) => (
                       <div key={idx} className="p-3 bg-gray-50 rounded-lg">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium text-gray-700">{perf.platform}</span>
-                          <span className="text-xs text-gray-500">{new Date(perf.date).toLocaleDateString()}</span>
+                          <span className="text-sm font-medium text-zinc-400">{perf.platform}</span>
+                          <span className="text-xs text-zinc-400">{new Date(perf.date).toLocaleDateString()}</span>
                         </div>
                         <div className="grid grid-cols-3 gap-2">
                           {Object.entries(perf.metrics).map(([metric, value]) => (
                             <div key={metric} className="text-center">
-                              <p className="text-xs text-gray-600">{metric}</p>
-                              <p className="text-sm font-semibold text-[#1A1A1A]">{String(value)}</p>
+                              <p className="text-xs text-zinc-400">{metric}</p>
+                              <p className="text-sm font-semibold text-gray-900">{String(value)}</p>
                             </div>
                           ))}
                         </div>
