@@ -33,13 +33,13 @@ export interface BrandProfile {
     fontStyle?: string;
     headingsStyle?: string;
   };
-  
+
   // Brand Identity
   mission?: string;
   values?: string[];
   brandTone?: string;
   brandVoice?: string;
-  
+
   // Business Context
   industry?: string;
   niche?: string;
@@ -50,16 +50,16 @@ export interface BrandProfile {
   };
   services?: string[];
   products?: string[];
-  
+
   // Website Metadata
   metaTitle?: string;
   metaDescription?: string;
   keywords?: string[];
-  
+
   // Competitive Intelligence
   competitors?: string[];
   positioning?: string;
-  
+
   // Contact Information
   contactInfo?: {
     email?: string;
@@ -71,11 +71,11 @@ export interface BrandProfile {
       facebook?: string;
     };
   };
-  
+
   // Visual Content
   imageThemes?: string[];
   visualStyle?: string;
-  
+
   // Video Content
   videoCues?: {
     tone?: string;
@@ -83,14 +83,14 @@ export interface BrandProfile {
     environment?: string;
     mood?: string;
   };
-  
+
   // Extracted Raw Data
   rawContent?: {
     html?: string;
     text?: string;
     metadata?: Record<string, any>;
   };
-  
+
   // Confidence scores for extraction (0-100)
   confidenceScores?: Record<string, number>;
 }
@@ -154,23 +154,23 @@ export async function extractBrandDNA(
   if (!usedFirecrawl) {
     try {
       // Try to fetch website content using standard method
-    htmlContent = await fetchWebsiteContent(websiteUrl);
-    textContent = extractTextFromHTML(htmlContent);
-    metadata = extractMetadata(htmlContent);
+      htmlContent = await fetchWebsiteContent(websiteUrl);
+      textContent = extractTextFromHTML(htmlContent);
+      metadata = extractMetadata(htmlContent);
 
-    // Chunk content if needed
-    const maxChunkSize = 15000;
-    contentToAnalyze = textContent.length > maxChunkSize 
-      ? textContent.substring(0, maxChunkSize) 
-      : textContent;
-    hasContent = contentToAnalyze.length > 50;
-  } catch (error) {
-    console.warn('Could not fetch website content, proceeding with URL-based extraction:', error);
-    // If fetching fails, we'll still try to extract using just the URL and name
-    // This allows OpenAI to make intelligent inferences
-    contentToAnalyze = `Website Name: ${websiteName}\nWebsite URL: ${websiteUrl}`;
-    metadata = { url: websiteUrl, name: websiteName };
-    hasContent = false;
+      // Chunk content if needed
+      const maxChunkSize = 15000;
+      contentToAnalyze = textContent.length > maxChunkSize
+        ? textContent.substring(0, maxChunkSize)
+        : textContent;
+      hasContent = contentToAnalyze.length > 50;
+    } catch (error) {
+      console.warn('Could not fetch website content, proceeding with URL-based extraction:', error);
+      // If fetching fails, we'll still try to extract using just the URL and name
+      // This allows OpenAI to make intelligent inferences
+      contentToAnalyze = `Website Name: ${websiteName}\nWebsite URL: ${websiteUrl}`;
+      metadata = { url: websiteUrl, name: websiteName };
+      hasContent = false;
     }
   }
 
@@ -376,7 +376,7 @@ IMPORTANT: If images or videos are provided in the content, use them to:
 
   // Build enhanced user prompt with Firecrawl data if available
   let userPrompt = '';
-  
+
   if (hasContent) {
     userPrompt = `Website Name: ${websiteName}
 Website URL: ${websiteUrl}
@@ -393,7 +393,7 @@ ${contentToAnalyze}`;
         userPrompt += `\n\nExtracted Images (${firecrawlImages.length}):\n${firecrawlImages.slice(0, 20).map((img, i) => `${i + 1}. ${img.url}${img.alt ? ` (alt: ${img.alt})` : ''}`).join('\n')}`;
         userPrompt += '\n\nCRITICAL: Use these images to:\n- Extract ALL image URLs and store in visual_identity.example_imagery array\n- Analyze color palette from images (dominant colors)\n- Identify logo URLs and variants\n- Understand brand aesthetics and visual tone\n- Extract image style preferences (photography vs illustration, mood, filters)';
       }
-      
+
       if (firecrawlVideos.length > 0) {
         userPrompt += `\n\nExtracted Videos (${firecrawlVideos.length}):\n${firecrawlVideos.slice(0, 10).map((vid, i) => `${i + 1}. ${vid.url}${vid.title ? ` (${vid.title})` : ''}`).join('\n')}`;
         userPrompt += '\n\nUse these videos to understand brand messaging, tone, and visual style.';
@@ -426,16 +426,37 @@ Extract what you can infer, but mark confidence lower since this is inferred rat
 
   try {
 
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      temperature: 0.3,
-      response_format: { type: 'json_object' },
-      max_tokens: 6000, // Increased for comprehensive extraction
-    });
+    let completion;
+
+    try {
+      completion = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        temperature: 0.3,
+        response_format: { type: 'json_object' },
+        max_tokens: 6000,
+      });
+    } catch (err: any) {
+      // If rate limit exceeded, try with gpt-4o-mini (cheaper and higher limits)
+      if (err?.status === 429) {
+        console.warn('GPT-4o rate limit exceeded, falling back to gpt-4o-mini...');
+        completion = await openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt },
+          ],
+          temperature: 0.3,
+          response_format: { type: 'json_object' },
+          max_tokens: 10000, // gpt-4o-mini supports higher output tokens
+        });
+      } else {
+        throw err;
+      }
+    }
 
     const responseContent = completion.choices[0]?.message?.content || '{}';
     const extractedData = JSON.parse(responseContent) as BrandDNAData;
@@ -480,11 +501,11 @@ Extract what you can infer, but mark confidence lower since this is inferred rat
     // Build provenance array with confidence scores
     const provenance: BrandDNAProvenance[] = [];
     const now = new Date().toISOString();
-    
+
     // Calculate confidence scores based on data presence and quality
     const calculateConfidence = (field: any, path: string): number => {
-      if (!field || (Array.isArray(field) && field.length === 0) || 
-          (typeof field === 'object' && Object.keys(field).length === 0)) {
+      if (!field || (Array.isArray(field) && field.length === 0) ||
+        (typeof field === 'object' && Object.keys(field).length === 0)) {
         return 0;
       }
       // Higher confidence if we used Firecrawl (comprehensive extraction)
@@ -505,7 +526,7 @@ Extract what you can infer, but mark confidence lower since this is inferred rat
         Object.keys(data).forEach(key => {
           const fieldPath = basePath ? `${basePath}.${key}` : key;
           const value = data[key];
-          
+
           if (value !== null && value !== undefined) {
             if (typeof value === 'object' && !Array.isArray(value)) {
               addProvenance(value, fieldPath);
@@ -566,7 +587,7 @@ async function fetchWebsiteContent(url: string): Promise<string> {
   // Try Supabase Edge Function first (preferred method)
   try {
     const { data: { session } } = await supabase.auth.getSession();
-    
+
     if (!session) {
       throw new Error('User not authenticated');
     }
@@ -594,11 +615,11 @@ async function fetchWebsiteContent(url: string): Promise<string> {
     const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(normalizedUrl)}`;
     const response = await fetch(proxyUrl);
     const data = await response.json();
-    
+
     if (data.contents) {
       return data.contents;
     }
-    
+
     throw new Error('Failed to fetch website content from proxy');
   } catch (fallbackError) {
     console.error('Fallback also failed:', fallbackError);
@@ -613,11 +634,11 @@ function extractTextFromHTML(html: string): string {
   // Create a temporary DOM element to parse HTML
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
-  
+
   // Remove script and style elements
   const scripts = doc.querySelectorAll('script, style, noscript');
   scripts.forEach(el => el.remove());
-  
+
   // Extract text content
   const body = doc.body || doc.documentElement;
   return body?.textContent || body?.innerText || '';
@@ -629,9 +650,9 @@ function extractTextFromHTML(html: string): string {
 function extractMetadata(html: string): Record<string, any> {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
-  
+
   const metadata: Record<string, any> = {};
-  
+
   // Extract meta tags
   const metaTags = doc.querySelectorAll('meta');
   metaTags.forEach(meta => {
@@ -641,13 +662,13 @@ function extractMetadata(html: string): Record<string, any> {
       metadata[name] = content;
     }
   });
-  
+
   // Extract title
   const title = doc.querySelector('title');
   if (title) {
     metadata.title = title.textContent;
   }
-  
+
   // Extract Open Graph tags
   const ogTags: Record<string, string> = {};
   doc.querySelectorAll('meta[property^="og:"]').forEach(meta => {
@@ -660,7 +681,7 @@ function extractMetadata(html: string): Record<string, any> {
   if (Object.keys(ogTags).length > 0) {
     metadata.openGraph = ogTags;
   }
-  
+
   // Extract colors from CSS or inline styles
   const colors: string[] = [];
   const styleSheets = doc.querySelectorAll('style');
@@ -674,7 +695,7 @@ function extractMetadata(html: string): Record<string, any> {
   if (colors.length > 0) {
     metadata.colors = [...new Set(colors)];
   }
-  
+
   return metadata;
 }
 
@@ -695,12 +716,12 @@ async function analyzeWithOpenAI(
   // Chunk the content if it's too long (OpenAI has token limits)
   const maxChunkSize = 10000; // characters
   const chunks: string[] = [];
-  
+
   if (textContent.length > maxChunkSize) {
     // Split into chunks by sentences
     const sentences = textContent.match(/[^.!?]+[.!?]+/g) || [];
     let currentChunk = '';
-    
+
     for (const sentence of sentences) {
       if (currentChunk.length + sentence.length > maxChunkSize) {
         chunks.push(currentChunk);
@@ -850,11 +871,11 @@ export async function extractBrandProfile(
   try {
     // Fetch website content
     const htmlContent = await fetchWebsiteContent(websiteUrl);
-    
+
     // Extract text and metadata
     const textContent = extractTextFromHTML(htmlContent);
     const metadata = extractMetadata(htmlContent);
-    
+
     // Analyze with OpenAI
     const brandProfile = await analyzeWithOpenAI(
       websiteName,
@@ -863,7 +884,7 @@ export async function extractBrandProfile(
       textContent,
       metadata
     );
-    
+
     return brandProfile;
   } catch (error: any) {
     console.error('Error extracting brand profile:', error);
@@ -879,12 +900,12 @@ export async function saveBrandProfile(
   brandProfile: BrandProfile
 ): Promise<void> {
   const { updateBrand } = await import('./database');
-  
+
   // Get existing metadata to preserve other data
   const { getBrand } = await import('./database');
   const existingBrand = await getBrand(brandId);
   const existingMetadata = existingBrand?.metadata || {};
-  
+
   await updateBrand(brandId, {
     metadata: {
       ...existingMetadata,
@@ -903,12 +924,12 @@ export async function saveBrandProfile(
  */
 export async function getCachedBrandProfile(brandId: string): Promise<BrandProfile | null> {
   const { getBrand } = await import('./database');
-  
+
   const brand = await getBrand(brandId);
   if (!brand || !brand.metadata?.brandProfile) {
     return null;
   }
-  
+
   return brand.metadata.brandProfile as BrandProfile;
 }
 
