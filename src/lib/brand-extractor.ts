@@ -5,17 +5,9 @@
  * using OpenAI for intelligent analysis and structuring.
  */
 
-import OpenAI from 'openai';
 import { supabase } from './supabase';
 import { extractWebsiteData, isFirecrawlAvailable } from './firecrawl';
 import { extractColorsFromImages, filterBrandColors } from './color-extractor';
-
-// Get OpenAI client instance
-const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
-const openai = apiKey ? new OpenAI({
-  apiKey: apiKey,
-  dangerouslyAllowBrowser: true,
-}) : null;
 import type { BrandDNAData, BrandDNAProvenance } from '../types/database';
 
 /**
@@ -373,10 +365,6 @@ export async function extractBrandDNA(
   websiteName: string,
   websiteUrl: string
 ): Promise<{ dnaData: BrandDNAData; provenance: BrandDNAProvenance[] }> {
-  if (!openai) {
-    throw new Error('OpenAI API key is not configured. Please add VITE_OPENAI_API_KEY to your .env file.');
-  }
-
   let htmlContent = '';
   let textContent = '';
   let metadata: Record<string, any> = {};
@@ -744,23 +732,31 @@ Extract what you can infer, but mark confidence lower since this is inferred rat
 
   // Try OpenAI extraction first, fall back to Firecrawl-only if OpenAI unavailable
   try {
-    if (!openai) {
-      throw new Error('OPENAI_UNAVAILABLE');
-    }
-
-    const completion = await withTimeout(
-      openai.chat.completions.create({
-        model: 'gpt-4o',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-        temperature: 0.3,
-        response_format: { type: 'json_object' },
-        max_tokens: 6000, // Increased for comprehensive extraction
+    const response = await withTimeout(
+      supabase.functions.invoke('ai-proxy', {
+        body: {
+          provider: 'openai',
+          endpoint: 'chat.completions',
+          payload: {
+            model: 'gpt-4o',
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: userPrompt },
+            ],
+            temperature: 0.3,
+            response_format: { type: 'json_object' },
+            max_tokens: 6000,
+          }
+        }
       }),
       90000 // 90 second timeout for OpenAI
     );
+
+    if (response.error) {
+      throw response.error;
+    }
+
+    const completion = response.data;
 
     const responseContent = completion.choices[0]?.message?.content || '{}';
 
@@ -1077,10 +1073,6 @@ async function analyzeWithOpenAI(
   textContent: string,
   metadata: Record<string, any>
 ): Promise<BrandProfile> {
-  if (!openai) {
-    throw new Error('OpenAI API key is not configured. Please add VITE_OPENAI_API_KEY to your .env file.');
-  }
-
   // Chunk the content if it's too long (OpenAI has token limits)
   const maxChunkSize = 10000; // characters
   const chunks: string[] = [];
@@ -1195,19 +1187,31 @@ ${contentToAnalyze}
 Extract the complete brand profile in JSON format.`;
 
   try {
-    const completion = await withTimeout(
-      openai.chat.completions.create({
-        model: 'gpt-4o',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-        temperature: 0.3, // Lower temperature for more consistent extraction
-        response_format: { type: 'json_object' },
-        max_tokens: 2000,
+    const response = await withTimeout(
+      supabase.functions.invoke('ai-proxy', {
+        body: {
+          provider: 'openai',
+          endpoint: 'chat.completions',
+          payload: {
+            model: 'gpt-4o',
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: userPrompt },
+            ],
+            temperature: 0.3,
+            response_format: { type: 'json_object' },
+            max_tokens: 2000,
+          }
+        }
       }),
       90000 // 90 second timeout for OpenAI
     );
+
+    if (response.error) {
+      throw response.error;
+    }
+
+    const completion = response.data;
 
     const responseContent = completion.choices[0]?.message?.content || '{}';
 

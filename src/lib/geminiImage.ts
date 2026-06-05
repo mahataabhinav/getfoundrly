@@ -10,8 +10,7 @@ import type { BrandProfile } from './brand-extractor';
 import type { GeneratedImage } from './asset-generator';
 import type { BrandDNA } from '../types/database';
 
-// Get API key from environment
-const apiKey = import.meta.env.VITE_BANANA_API_KEY;
+import { supabase } from './supabase';
 
 /**
  * Generate brand images using Google Gemini API
@@ -22,10 +21,6 @@ export async function generateBrandImages(
   brandName: string,
   brandDNA?: BrandDNA
 ): Promise<GeneratedImage[]> {
-  if (!apiKey) {
-    throw new Error('Gemini API key is not configured. Please add VITE_BANANA_API_KEY to your .env file.');
-  }
-
   // Extract post type from prompt context or default to 'linkedin'
   const postType = determinePostType(basePrompt);
 
@@ -41,7 +36,7 @@ export async function generateBrandImages(
 
     // Generate 3 variations in parallel
     const promises = strategies.map(async (strategy, index) => {
-      const imageData = await generateSingleImage(strategy.prompt, apiKey);
+      const imageData = await generateSingleImage(strategy.prompt);
       return {
         id: `gemini_img_${Date.now()}_${index}`,
         url: imageData.url,
@@ -86,37 +81,30 @@ export async function generateBrandImages(
 /**
  * Generate a single image using Gemini API
  */
-async function generateSingleImage(prompt: string, apiKey: string): Promise<{ url: string }> {
+async function generateSingleImage(prompt: string): Promise<{ url: string }> {
   try {
-    // Use Google Generative AI REST API with gemini-2.5-flash-image model
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${apiKey}`;
-
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: prompt,
+    const response = await supabase.functions.invoke('ai-proxy', {
+      body: {
+        provider: 'gemini',
+        endpoint: 'images.generate',
+        payload: {
+          contents: [{
+            parts: [{ text: prompt }]
           }],
-        }],
-        generationConfig: {
-          temperature: 0.9,
-          topK: 40,
-          topP: 0.95,
-        },
-      }),
+          generationConfig: {
+            temperature: 0.9,
+            topK: 40,
+            topP: 0.95,
+          }
+        }
+      }
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      const errorMessage = errorData.error?.message || `API request failed: ${response.statusText}`;
-      throw new Error(errorMessage);
+    if (response.error) {
+      throw response.error;
     }
 
-    const data = await response.json();
+    const data = response.data;
 
     // Extract image data from response
     const candidates = data.candidates || [];
