@@ -111,7 +111,7 @@ export default function AboutPage() {
             {/* Right Column - Graphics */}
             <div className="relative h-[500px] hidden lg:block">
               {/* Floating Cards Graphic */}
-              <motion.div 
+              <motion.div
                 animate={{ y: [0, -20, 0] }}
                 transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
                 className="absolute top-10 right-10 w-72 bg-white/60 backdrop-blur-xl border border-white/40 p-6 rounded-3xl shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] z-10"
@@ -135,7 +135,7 @@ export default function AboutPage() {
                 </div>
               </motion.div>
 
-              <motion.div 
+              <motion.div
                 animate={{ y: [0, 20, 0] }}
                 transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
                 className="absolute bottom-10 left-10 w-64 bg-white/60 backdrop-blur-xl border border-white/40 p-6 rounded-3xl shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] z-10"
@@ -240,7 +240,7 @@ export default function AboutPage() {
             {/* Left Column: Titles List */}
             <div className="space-y-4">
               {values.map((value, index) => (
-                <div 
+                <div
                   key={index}
                   onMouseEnter={() => setActiveValue(index)}
                   className={`cursor-pointer group p-6 rounded-3xl transition-all duration-300 border ${activeValue === index ? 'bg-white border-gray-200 shadow-md' : 'border-transparent hover:bg-white/60'}`}
@@ -262,14 +262,14 @@ export default function AboutPage() {
             {/* Right Column: Active Details */}
             <div className="sticky top-24 bg-white rounded-[40px] p-10 border border-gray-100 shadow-xl overflow-hidden min-h-[400px] flex flex-col justify-center relative">
               {/* Dynamic Abstract Background */}
-              <motion.div 
+              <motion.div
                 key={`bg-${activeValue}`}
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5 }}
                 className={`absolute -right-20 -top-20 w-64 h-64 rounded-full blur-[80px] bg-gradient-to-br ${values[activeValue].color} opacity-15`}
               />
-              <motion.div 
+              <motion.div
                 key={`bg2-${activeValue}`}
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -290,7 +290,7 @@ export default function AboutPage() {
                     return <ActiveIcon className="w-10 h-10 text-white" />;
                   })()}
                 </motion.div>
-                
+
                 <motion.div
                   key={`content-${activeValue}`}
                   initial={{ opacity: 0, x: 20 }}
