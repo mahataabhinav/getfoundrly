@@ -103,15 +103,15 @@ export default function BrandDNAPreview({
   return (
     <div className={compact ? '' : 'p-6'}>
       {/* Status Info - show in compact mode too */}
-      <div className={`flex items-center gap-4 text-sm text-gray-600 mb-6 ${compact ? 'pb-4 border-b border-gray-200' : ''}`}>
+      <div className={`flex items-center gap-4 text-sm text-gray-700 mb-6 ${compact ? 'pb-4 border-b border-gray-200' : ''}`}>
         <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-          brandDNA.status === 'complete' && brandDNA.completion_score >= 70
+          brandDNA.status === 'complete' && brandDNA.completion_score >= 50
             ? 'bg-green-100 text-green-700'
             : brandDNA.status === 'needs_review'
             ? 'bg-yellow-100 text-yellow-700'
             : 'bg-blue-100 text-blue-700'
         }`}>
-          {brandDNA.status === 'complete' && brandDNA.completion_score >= 70 ? (
+          {brandDNA.status === 'complete' && brandDNA.completion_score >= 50 ? (
             <CheckCircle2 className="w-3 h-3" />
           ) : brandDNA.status === 'needs_review' ? (
             <AlertCircle className="w-3 h-3" />
@@ -196,7 +196,7 @@ export default function BrandDNAPreview({
                       <div key={idx} className="p-3 bg-gray-50 rounded-lg">
                         <p className="text-sm text-[#1A1A1A] mb-1">{prop.text}</p>
                         {prop.proof && (
-                          <p className="text-xs text-gray-600">Proof: {prop.proof}</p>
+                          <p className="text-xs text-gray-700">Proof: {prop.proof}</p>
                         )}
                         {prop.source && (
                           <a href={prop.source} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline">
@@ -221,7 +221,7 @@ export default function BrandDNAPreview({
               {dnaData.products.map((product, idx) => (
                 <div key={idx} className="p-4 bg-gray-50 rounded-lg">
                   <h4 className="font-semibold text-[#1A1A1A] mb-2">{product.name}</h4>
-                  <p className="text-sm text-gray-600 mb-2">{product.description}</p>
+                  <p className="text-sm text-gray-700 mb-2">{product.description}</p>
                   {product.pricing_model && (
                     <span className="inline-block px-2 py-1 bg-white rounded text-xs text-gray-700 mb-2">
                       {product.pricing_model}
@@ -232,7 +232,7 @@ export default function BrandDNAPreview({
                       <p className="text-xs font-medium text-gray-700 mb-1">Differentiators:</p>
                       <div className="flex flex-wrap gap-1">
                         {product.differentiators.map((diff, diffIdx) => (
-                          <span key={diffIdx} className="px-2 py-0.5 bg-white rounded text-xs text-gray-600">
+                          <span key={diffIdx} className="px-2 py-0.5 bg-white rounded text-xs text-gray-700">
                             {diff}
                           </span>
                         ))}
@@ -260,7 +260,7 @@ export default function BrandDNAPreview({
                             className="w-12 h-12 rounded-lg border border-gray-200 shadow-sm"
                             style={{ backgroundColor: color as string }}
                           />
-                          <span className="text-xs text-gray-600">{name}</span>
+                          <span className="text-xs text-gray-700">{name}</span>
                         </div>
                       ))}
                     </div>
@@ -308,7 +308,7 @@ export default function BrandDNAPreview({
                   <div className="grid grid-cols-2 gap-3">
                     {dnaData.proof.metrics.map((metric, idx) => (
                       <div key={idx} className="p-3 bg-gray-50 rounded-lg">
-                        <p className="text-xs text-gray-600">{metric.label}</p>
+                        <p className="text-xs text-gray-700">{metric.label}</p>
                         <p className="text-lg font-semibold text-[#1A1A1A]">{metric.value}</p>
                       </div>
                     ))}
@@ -322,7 +322,7 @@ export default function BrandDNAPreview({
                     {dnaData.proof.testimonials.slice(0, 3).map((testimonial, idx) => (
                       <div key={idx} className="p-3 bg-gray-50 rounded-lg">
                         <p className="text-sm text-[#1A1A1A] italic mb-1">"{testimonial.quote}"</p>
-                        <p className="text-xs text-gray-600">— {testimonial.attribution}</p>
+                        <p className="text-xs text-gray-700">— {testimonial.attribution}</p>
                       </div>
                     ))}
                   </div>
@@ -406,7 +406,7 @@ export default function BrandDNAPreview({
                       <div key={idx} className="p-3 bg-gray-50 rounded-lg">
                         <p className="text-sm font-medium text-[#1A1A1A] mb-1">{competitor.name}</p>
                         {competitor.differentiation && (
-                          <p className="text-xs text-gray-600">{competitor.differentiation}</p>
+                          <p className="text-xs text-gray-700">{competitor.differentiation}</p>
                         )}
                       </div>
                     ))}
@@ -448,7 +448,7 @@ export default function BrandDNAPreview({
                         <div className="grid grid-cols-3 gap-2">
                           {Object.entries(perf.metrics).map(([metric, value]) => (
                             <div key={metric} className="text-center">
-                              <p className="text-xs text-gray-600">{metric}</p>
+                              <p className="text-xs text-gray-700">{metric}</p>
                               <p className="text-sm font-semibold text-[#1A1A1A]">{String(value)}</p>
                             </div>
                           ))}

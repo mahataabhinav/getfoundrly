@@ -8,6 +8,18 @@
 import OpenAI from 'openai';
 import { supabase } from './supabase';
 import { extractWebsiteData, isFirecrawlAvailable } from './firecrawl';
+import { extractBrandColors } from './color-extractor';
+
+const withTimeout = <T>(promise: Promise<T>, timeoutMs: number, errorMessage: string): Promise<T> => {
+  let timeoutHandle: NodeJS.Timeout;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutHandle = setTimeout(() => reject(new Error(errorMessage)), timeoutMs);
+  });
+  return Promise.race([
+    promise,
+    timeoutPromise
+  ]).finally(() => clearTimeout(timeoutHandle));
+};
 
 // Get OpenAI client instance
 const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
@@ -120,11 +132,15 @@ export async function extractBrandDNA(
   if (isFirecrawlAvailable()) {
     try {
       console.log('Using Firecrawl to extract website content...');
-      const firecrawlResult = await extractWebsiteData(websiteUrl, {
-        useCrawl: true, // Use crawl for comprehensive data
-        maxPages: 10,
-        maxDepth: 2,
-      });
+      const firecrawlResult = await withTimeout(
+        extractWebsiteData(websiteUrl, {
+          useCrawl: true, // Use crawl for comprehensive data
+          maxPages: 10,
+          maxDepth: 2,
+        }),
+        60000,
+        'Firecrawl extraction timed out after 60 seconds'
+      );
 
       if (firecrawlResult.success && firecrawlResult.markdown) {
         usedFirecrawl = true;
@@ -390,8 +406,20 @@ ${contentToAnalyze}`;
     // Add Firecrawl-specific information if available
     if (usedFirecrawl) {
       if (firecrawlImages.length > 0) {
+        try {
+          const extractedColors = await extractBrandColors(firecrawlImages.slice(0, 15).map(img => ({
+            url: img.url,
+            isLogo: img.url.toLowerCase().includes('logo') || img.alt?.toLowerCase().includes('logo')
+          })));
+          if (extractedColors.length > 0) {
+            userPrompt += `\n\nExtracted Brand Colors (AUTHORITATIVE):\n${extractedColors.map(c => c.hex).join(', ')}`;
+            userPrompt += '\n\nCRITICAL: Use these EXACT colors for the visual_identity.color_palette. These were extracted directly from the website images via ColorThief. Do not rely on industry stereotypes.';
+          }
+        } catch (colorError) {
+          console.warn('Color extraction failed:', colorError);
+        }
         userPrompt += `\n\nExtracted Images (${firecrawlImages.length}):\n${firecrawlImages.slice(0, 20).map((img, i) => `${i + 1}. ${img.url}${img.alt ? ` (alt: ${img.alt})` : ''}`).join('\n')}`;
-        userPrompt += '\n\nCRITICAL: Use these images to:\n- Extract ALL image URLs and store in visual_identity.example_imagery array\n- Analyze color palette from images (dominant colors)\n- Identify logo URLs and variants\n- Understand brand aesthetics and visual tone\n- Extract image style preferences (photography vs illustration, mood, filters)';
+        userPrompt += '\n\nCRITICAL: Use these images to:\n- Extract ALL image URLs and store in visual_identity.example_imagery array\n- Identify logo URLs and variants\n- Understand brand aesthetics and visual tone\n- Extract image style preferences (photography vs illustration, mood, filters)';
       }
 
       if (firecrawlVideos.length > 0) {
@@ -429,37 +457,51 @@ Extract what you can infer, but mark confidence lower since this is inferred rat
     let completion;
 
     try {
-      completion = await openai.chat.completions.create({
-        model: 'gpt-4o',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-        temperature: 0.3,
-        response_format: { type: 'json_object' },
-        max_tokens: 6000,
-      });
-    } catch (err: any) {
-      // If rate limit exceeded, try with gpt-4o-mini (cheaper and higher limits)
-      if (err?.status === 429) {
-        console.warn('GPT-4o rate limit exceeded, falling back to gpt-4o-mini...');
-        completion = await openai.chat.completions.create({
-          model: 'gpt-4o-mini',
+      completion = await withTimeout(
+        openai.chat.completions.create({
+          model: 'gpt-4o',
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt },
           ],
           temperature: 0.3,
           response_format: { type: 'json_object' },
-          max_tokens: 10000, // gpt-4o-mini supports higher output tokens
-        });
+          max_tokens: 6000,
+        }),
+        90000,
+        'OpenAI analysis timed out after 90 seconds'
+      );
+    } catch (err: any) {
+      // If rate limit exceeded, try with gpt-4o-mini (cheaper and higher limits)
+      if (err?.status === 429) {
+        console.warn('GPT-4o rate limit exceeded, falling back to gpt-4o-mini...');
+        completion = await withTimeout(
+          openai.chat.completions.create({
+            model: 'gpt-4o-mini',
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: userPrompt },
+            ],
+            temperature: 0.3,
+            response_format: { type: 'json_object' },
+            max_tokens: 10000,
+          }),
+          90000,
+          'OpenAI analysis timed out after 90 seconds'
+        );
       } else {
         throw err;
       }
     }
 
     const responseContent = completion.choices[0]?.message?.content || '{}';
-    const extractedData = JSON.parse(responseContent) as BrandDNAData;
+    let extractedData: BrandDNAData;
+    try {
+      extractedData = JSON.parse(responseContent) as BrandDNAData;
+    } catch (parseError) {
+      console.error('Failed to parse OpenAI response as JSON:', responseContent);
+      throw new Error('Failed to parse the extracted brand data. The AI returned an invalid format. Please try again.');
+    }
 
     // Store Firecrawl images in visual_identity.example_imagery
     if (usedFirecrawl && firecrawlImages.length > 0) {
@@ -473,7 +515,7 @@ Extract what you can infer, but mark confidence lower since this is inferred rat
       const existingUrls = new Set(extractedData.visual_identity.example_imagery);
       firecrawlImages.forEach(img => {
         if (img.url && !existingUrls.has(img.url)) {
-          extractedData.visual_identity.example_imagery!.push(img.url);
+          extractedData.visual_identity!.example_imagery!.push(img.url);
         }
       });
     }
@@ -489,7 +531,7 @@ Extract what you can infer, but mark confidence lower since this is inferred rat
       // Look for logo-like images (containing "logo" in URL or alt text)
       firecrawlImages.forEach(img => {
         if (img.url && (img.url.toLowerCase().includes('logo') || img.alt?.toLowerCase().includes('logo'))) {
-          extractedData.visual_identity.logos!.push({
+          extractedData.visual_identity!.logos!.push({
             url: img.url,
             variant: 'default',
             format: img.url.toLowerCase().includes('.svg') ? 'svg' : 'png',
@@ -503,7 +545,7 @@ Extract what you can infer, but mark confidence lower since this is inferred rat
     const now = new Date().toISOString();
 
     // Calculate confidence scores based on data presence and quality
-    const calculateConfidence = (field: any, path: string): number => {
+    const calculateConfidence = (field: any): number => {
       if (!field || (Array.isArray(field) && field.length === 0) ||
         (typeof field === 'object' && Object.keys(field).length === 0)) {
         return 0;
@@ -535,7 +577,7 @@ Extract what you can infer, but mark confidence lower since this is inferred rat
                 field: fieldPath,
                 source_url: websiteUrl,
                 last_updated: now,
-                trust_score: calculateConfidence(value, fieldPath),
+                trust_score: calculateConfidence(value),
                 extraction_method: 'auto',
               });
             } else if (typeof value === 'string' && value.trim() !== '') {
@@ -543,7 +585,7 @@ Extract what you can infer, but mark confidence lower since this is inferred rat
                 field: fieldPath,
                 source_url: websiteUrl,
                 last_updated: now,
-                trust_score: calculateConfidence(value, fieldPath),
+                trust_score: calculateConfidence(value),
                 extraction_method: 'auto',
               });
             }
@@ -565,9 +607,12 @@ Extract what you can infer, but mark confidence lower since this is inferred rat
     } else if (error?.status === 429) {
       throw new Error('OpenAI API rate limit exceeded. Please try again later.');
     }
-    // If it's a website fetch error, provide a more helpful message
+    // Catch timeouts
+    if (error?.message?.includes('timed out')) {
+      throw new Error(`Extraction timed out: ${error.message}. Please try again later.`);
+    }
     if (error?.message?.includes('Unable to fetch website content') || error?.message?.includes('fetch website')) {
-      throw new Error('Could not fetch website content (CORS restrictions). BrandDNA will be created with inferred data based on the website name and URL. You can edit and complete it manually in the BrandDNA section.');
+      throw new Error('Could not fetch website content. Please ensure the URL is accessible.');
     }
     throw new Error(`Failed to extract BrandDNA: ${error?.message || 'Unknown error'}`);
   }
