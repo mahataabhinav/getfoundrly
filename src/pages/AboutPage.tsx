@@ -330,7 +330,7 @@ export default function AboutPage() {
                       <img 
                         src={member.image} 
                         alt={`${member.name}`} 
-                        className="w-full h-full object-cover object-center" 
+                        className="w-full h-full object-cover object-top" 
                       />
                     </div>
                   ) : (
