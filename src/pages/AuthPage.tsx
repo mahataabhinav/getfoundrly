@@ -37,7 +37,8 @@ export default function AuthPage({ initialMode = 'login', onBack, onSuccess }: A
               name: formData.name,
               display_name: formData.name,
               full_name: formData.name
-            }
+            },
+            emailRedirectTo: `${window.location.origin}/dashboard`
           }
         });
 

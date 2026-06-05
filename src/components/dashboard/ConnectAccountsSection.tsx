@@ -13,12 +13,10 @@ interface ConnectAccountsSectionProps {
 }
 
 export default function ConnectAccountsSection({ connections, onConnect }: ConnectAccountsSectionProps) {
-    // Mock LinkedIn and Instagram as connected for visual demo
-    const connectedPlatforms = new Set([
-        'linkedin',
-        'instagram',
-        ...connections.map(c => c.platform.toLowerCase())
-    ]);
+    // Only show real connections from database
+    const connectedPlatforms = new Set(
+        connections.map(c => c.platform.toLowerCase())
+    );
 
     const platforms = [
         {

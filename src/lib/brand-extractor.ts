@@ -8,18 +8,7 @@
 import OpenAI from 'openai';
 import { supabase } from './supabase';
 import { extractWebsiteData, isFirecrawlAvailable } from './firecrawl';
-import { extractBrandColors } from './color-extractor';
-
-const withTimeout = <T>(promise: Promise<T>, timeoutMs: number, errorMessage: string): Promise<T> => {
-  let timeoutHandle: NodeJS.Timeout;
-  const timeoutPromise = new Promise<never>((_, reject) => {
-    timeoutHandle = setTimeout(() => reject(new Error(errorMessage)), timeoutMs);
-  });
-  return Promise.race([
-    promise,
-    timeoutPromise
-  ]).finally(() => clearTimeout(timeoutHandle));
-};
+import { extractColorsFromImages, filterBrandColors } from './color-extractor';
 
 // Get OpenAI client instance
 const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
@@ -27,8 +16,277 @@ const openai = apiKey ? new OpenAI({
   apiKey: apiKey,
   dangerouslyAllowBrowser: true,
 }) : null;
-import type { Brand } from '../types/database';
 import type { BrandDNAData, BrandDNAProvenance } from '../types/database';
+
+/**
+ * Helper: Wrap a promise with a timeout
+ */
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error('Request timed out')), timeoutMs)
+    ),
+  ]);
+}
+
+/**
+ * Helper: Extract social media links from Firecrawl data
+ */
+function extractSocialLinks(links: string[], metadata: Record<string, any>): Record<string, string> {
+  const socialLinks: Record<string, string> = {};
+
+  const patterns = {
+    twitter: /(?:twitter\.com|x\.com)\/([a-zA-Z0-9_]+)/i,
+    linkedin: /linkedin\.com\/(company|in)\/([a-zA-Z0-9-]+)/i,
+    instagram: /instagram\.com\/([a-zA-Z0-9_.]+)/i,
+    youtube: /youtube\.com\/(c|channel|user)\/([a-zA-Z0-9_-]+)/i,
+    facebook: /facebook\.com\/([a-zA-Z0-9.]+)/i,
+  };
+
+  // Check metadata first (more reliable)
+  if (metadata.openGraph) {
+    Object.entries(patterns).forEach(([platform]) => {
+      const ogKey = `og:${platform}:url`;
+      if (metadata.openGraph[ogKey]) {
+        socialLinks[platform] = metadata.openGraph[ogKey];
+      }
+    });
+  }
+
+  // Extract from links
+  links.forEach(link => {
+    Object.entries(patterns).forEach(([platform, pattern]) => {
+      if (!socialLinks[platform] && pattern.test(link)) {
+        socialLinks[platform] = link;
+      }
+    });
+  });
+
+  return socialLinks;
+}
+
+/**
+ * Helper: Find logo images from Firecrawl images
+ */
+function findLogoImages(images: Array<{ url: string; alt?: string }>): Array<{ url: string; variant: 'dark' | 'light' | 'default'; format: 'svg' | 'png' }> {
+  const logos: Array<{ url: string; variant: 'dark' | 'light' | 'default'; format: 'svg' | 'png' }> = [];
+
+  images.forEach(img => {
+    const url = img.url.toLowerCase();
+    const alt = (img.alt || '').toLowerCase();
+
+    // Look for logo indicators in URL or alt text
+    if (url.includes('logo') || alt.includes('logo') ||
+        url.includes('brand') || alt.includes('brand') ||
+        url.includes('icon') && (url.includes('company') || url.includes('site'))) {
+
+      // Determine variant
+      let variant: 'dark' | 'light' | 'default' = 'default';
+      if (url.includes('dark') || alt.includes('dark')) variant = 'dark';
+      else if (url.includes('light') || alt.includes('light')) variant = 'light';
+
+      // Determine format
+      const format: 'svg' | 'png' = url.includes('.svg') ? 'svg' : 'png';
+
+      logos.push({ url: img.url, variant, format });
+    }
+  });
+
+  return logos;
+}
+
+/**
+ * Helper: Extract metrics from markdown content
+ */
+function extractMetrics(markdown: string): Array<{ label: string; value: string; source_url?: string }> {
+  const metrics: Array<{ label: string; value: string; source_url?: string }> = [];
+
+  // Common metric patterns: "10K+ users", "$1M+ ARR", "500+ companies"
+  const metricPatterns = [
+    /(\d+(?:,\d{3})*(?:\.\d+)?[KMB]?\+?)\s+(users|customers|companies|downloads|stars|followers|members)/gi,
+    /\$(\d+(?:,\d{3})*(?:\.\d+)?[KMB]?\+?)\s+(revenue|ARR|MRR|funding|raised)/gi,
+    /(\d+(?:,\d{3})*(?:\.\d+)?%?\+?)\s+(growth|increase|satisfaction|rating)/gi,
+  ];
+
+  metricPatterns.forEach(pattern => {
+    const matches = markdown.matchAll(pattern);
+    for (const match of matches) {
+      metrics.push({
+        label: match[2] || 'Metric',
+        value: match[1],
+      });
+    }
+  });
+
+  return metrics.slice(0, 5); // Limit to top 5 metrics
+}
+
+/**
+ * Helper: Extract testimonials from markdown
+ */
+function extractTestimonials(markdown: string): Array<{ quote: string; attribution: string; source_url?: string }> {
+  const testimonials: Array<{ quote: string; attribution: string; source_url?: string }> = [];
+
+  // Look for quoted text followed by attribution
+  const quotePattern = /[""]([^""]{20,200})[""]\s*[-–—]\s*([A-Z][a-zA-Z\s.]+(?:,\s*[A-Z][a-zA-Z\s]+)?)/g;
+
+  const matches = markdown.matchAll(quotePattern);
+  for (const match of matches) {
+    testimonials.push({
+      quote: match[1].trim(),
+      attribution: match[2].trim(),
+    });
+  }
+
+  return testimonials.slice(0, 3); // Limit to top 3
+}
+
+/**
+ * Helper: Create provenance entries for Firecrawl-only extraction
+ */
+function createFirecrawlProvenance(
+  dnaData: BrandDNAData,
+  sourceUrl: string,
+  trustScore: number
+): BrandDNAProvenance[] {
+  const provenance: BrandDNAProvenance[] = [];
+  const now = new Date().toISOString();
+
+  const addProvenance = (data: any, basePath: string) => {
+    if (typeof data === 'object' && data !== null && !Array.isArray(data)) {
+      Object.keys(data).forEach(key => {
+        const fieldPath = basePath ? `${basePath}.${key}` : key;
+        const value = data[key];
+
+        if (value !== null && value !== undefined) {
+          if (typeof value === 'object' && !Array.isArray(value)) {
+            addProvenance(value, fieldPath);
+          } else if (Array.isArray(value) && value.length > 0) {
+            provenance.push({
+              field: fieldPath,
+              source_url: sourceUrl,
+              last_updated: now,
+              trust_score: trustScore,
+              extraction_method: 'auto',
+            });
+          } else if (typeof value === 'string' && value.trim() !== '') {
+            provenance.push({
+              field: fieldPath,
+              source_url: sourceUrl,
+              last_updated: now,
+              trust_score: trustScore,
+              extraction_method: 'auto',
+            });
+          }
+        }
+      });
+    }
+  };
+
+  addProvenance(dnaData, '');
+  return provenance;
+}
+
+/**
+ * Extract basic Brand DNA using only Firecrawl data (no OpenAI)
+ * Used as fallback when OpenAI is unavailable
+ */
+function extractBasicBrandDNAFromFirecrawl(
+  websiteName: string,
+  websiteUrl: string,
+  markdown: string,
+  metadata: Record<string, any>,
+  images: Array<{ url: string; alt?: string }>,
+  _videos: Array<{ url: string; title?: string }> // eslint-disable-line @typescript-eslint/no-unused-vars
+): { dnaData: BrandDNAData; provenance: BrandDNAProvenance[] } {
+
+  console.log('Extracting basic Brand DNA from Firecrawl data (OpenAI unavailable)...');
+
+  // Extract links from markdown
+  const linkMatches = markdown.matchAll(/\[([^\]]+)\]\(([^)]+)\)/g);
+  const links: string[] = [];
+  for (const match of linkMatches) {
+    links.push(match[2]);
+  }
+
+  const socialLinks = extractSocialLinks(links, metadata);
+  const logos = findLogoImages(images);
+  const metrics = extractMetrics(markdown);
+  const testimonials = extractTestimonials(markdown);
+
+  // Build basic Brand DNA structure
+  const dnaData: BrandDNAData = {
+    identity: {
+      official_name: websiteName,
+      domains: [new URL(websiteUrl).hostname],
+      tagline: metadata.description || metadata['og:description'] || '',
+      social_links: socialLinks,
+    },
+    voice: {
+      tone_descriptors: ['professional'], // Default, user can edit
+      examples: {},
+    },
+    messaging: {
+      value_props: [],
+    },
+    products: [],
+    audience: {
+      primary_segments: [],
+      personas: [],
+    },
+    proof: {
+      metrics: metrics.length > 0 ? metrics : [],
+      testimonials: testimonials.length > 0 ? testimonials : [],
+    },
+    visual_identity: {
+      logos: logos.length > 0 ? logos : [],
+      example_imagery: images.slice(0, 10).map(img => img.url),
+      color_palette: (() => {
+        const extractedColors = metadata.colors || [];
+        const colorPalette: any = {};
+
+        if (extractedColors.length >= 3) {
+          colorPalette.primary = [extractedColors[0], extractedColors[1]];
+          colorPalette.secondary = [extractedColors[2]];
+          colorPalette.hex_codes = {
+            primary: extractedColors[0],
+            secondary: extractedColors[2],
+          };
+          if (extractedColors.length >= 4) {
+            colorPalette.accent = [extractedColors[3]];
+            colorPalette.hex_codes.accent = extractedColors[3];
+          }
+        } else if (extractedColors.length > 0) {
+          colorPalette.primary = [extractedColors[0]];
+          colorPalette.hex_codes = { primary: extractedColors[0] };
+          if (extractedColors.length >= 2) {
+            colorPalette.secondary = [extractedColors[1]];
+            colorPalette.hex_codes.secondary = extractedColors[1];
+          }
+        }
+
+        // Add reference to images for manual color picking
+        if (images.length > 0) {
+          colorPalette.reference_images = images.slice(0, 5).map(img => img.url);
+        }
+
+        return colorPalette;
+      })(),
+    },
+    creative_guidelines: {},
+    seo: {
+      top_keywords: metadata.keywords ? metadata.keywords.slice(0, 5) : [],
+    },
+    competitive: {},
+    compliance: {},
+  };
+
+  // Create provenance with lower trust score (60% for Firecrawl-only)
+  const provenance = createFirecrawlProvenance(dnaData, websiteUrl, 60);
+
+  return { dnaData, provenance };
+}
 
 export interface BrandProfile {
   // Visual Identity
@@ -45,13 +303,13 @@ export interface BrandProfile {
     fontStyle?: string;
     headingsStyle?: string;
   };
-
+  
   // Brand Identity
   mission?: string;
   values?: string[];
   brandTone?: string;
   brandVoice?: string;
-
+  
   // Business Context
   industry?: string;
   niche?: string;
@@ -62,16 +320,16 @@ export interface BrandProfile {
   };
   services?: string[];
   products?: string[];
-
+  
   // Website Metadata
   metaTitle?: string;
   metaDescription?: string;
   keywords?: string[];
-
+  
   // Competitive Intelligence
   competitors?: string[];
   positioning?: string;
-
+  
   // Contact Information
   contactInfo?: {
     email?: string;
@@ -83,11 +341,11 @@ export interface BrandProfile {
       facebook?: string;
     };
   };
-
+  
   // Visual Content
   imageThemes?: string[];
   visualStyle?: string;
-
+  
   // Video Content
   videoCues?: {
     tone?: string;
@@ -95,14 +353,14 @@ export interface BrandProfile {
     environment?: string;
     mood?: string;
   };
-
+  
   // Extracted Raw Data
   rawContent?: {
     html?: string;
     text?: string;
     metadata?: Record<string, any>;
   };
-
+  
   // Confidence scores for extraction (0-100)
   confidenceScores?: Record<string, number>;
 }
@@ -138,8 +396,7 @@ export async function extractBrandDNA(
           maxPages: 10,
           maxDepth: 2,
         }),
-        60000,
-        'Firecrawl extraction timed out after 60 seconds'
+        60000 // 60 second timeout
       );
 
       if (firecrawlResult.success && firecrawlResult.markdown) {
@@ -158,11 +415,43 @@ export async function extractBrandDNA(
         }
 
         console.log(`Firecrawl extraction successful: ${contentToAnalyze.length} chars, ${firecrawlImages.length} images, ${firecrawlVideos.length} videos`);
+
+        // Extract colors from images using pixel analysis (ColorThief)
+        if (firecrawlImages.length > 0) {
+          try {
+            console.log('Extracting colors from images using ColorThief...');
+            const { colors, colorFrequency } = await extractColorsFromImages(
+              firecrawlImages.map(img => img.url),
+              { maxImages: 5, colorsPerImage: 5, quality: 10 }
+            );
+            const brandColors = filterBrandColors(colors);
+            if (brandColors.length > 0) {
+              metadata.extracted_colors = brandColors.slice(0, 10);
+              metadata.color_frequency = Object.fromEntries(colorFrequency);
+              console.log(`Extracted ${brandColors.length} brand colors from images`);
+            }
+          } catch (colorError) {
+            console.warn('Color extraction failed, OpenAI will infer colors:', colorError);
+          }
+        }
       } else {
-        console.warn('Firecrawl extraction failed, falling back to standard method:', firecrawlResult.error);
+        // Specific error message for Firecrawl failure
+        const errorMsg = firecrawlResult.error || 'Unknown Firecrawl error';
+        console.warn('Firecrawl failed:', errorMsg);
+        throw new Error(`Failed to scrape website: ${errorMsg}`);
       }
-    } catch (firecrawlError) {
-      console.warn('Firecrawl error, falling back to standard method:', firecrawlError);
+    } catch (firecrawlError: any) {
+      // Enhanced error detection with specific messages
+      if (firecrawlError.message?.includes('timed out') || firecrawlError.message?.includes('Request timed out')) {
+        throw new Error('Website took too long to respond. Please try again or check if the URL is accessible.');
+      } else if (firecrawlError.message?.includes('quota') || firecrawlError.message?.includes('limit')) {
+        throw new Error('Firecrawl API quota exceeded. Please upgrade your Firecrawl plan or try again later.');
+      } else if (firecrawlError.message?.includes('Failed to scrape')) {
+        // Re-throw specific scrape errors
+        throw firecrawlError;
+      } else {
+        throw new Error(`Failed to scrape website: ${firecrawlError.message || 'Unknown error'}. Please ensure the URL is correct and accessible.`);
+      }
     }
   }
 
@@ -170,23 +459,23 @@ export async function extractBrandDNA(
   if (!usedFirecrawl) {
     try {
       // Try to fetch website content using standard method
-      htmlContent = await fetchWebsiteContent(websiteUrl);
-      textContent = extractTextFromHTML(htmlContent);
-      metadata = extractMetadata(htmlContent);
+    htmlContent = await fetchWebsiteContent(websiteUrl);
+    textContent = extractTextFromHTML(htmlContent);
+    metadata = extractMetadata(htmlContent);
 
-      // Chunk content if needed
-      const maxChunkSize = 15000;
-      contentToAnalyze = textContent.length > maxChunkSize
-        ? textContent.substring(0, maxChunkSize)
-        : textContent;
-      hasContent = contentToAnalyze.length > 50;
-    } catch (error) {
-      console.warn('Could not fetch website content, proceeding with URL-based extraction:', error);
-      // If fetching fails, we'll still try to extract using just the URL and name
-      // This allows OpenAI to make intelligent inferences
-      contentToAnalyze = `Website Name: ${websiteName}\nWebsite URL: ${websiteUrl}`;
-      metadata = { url: websiteUrl, name: websiteName };
-      hasContent = false;
+    // Chunk content if needed
+    const maxChunkSize = 15000;
+    contentToAnalyze = textContent.length > maxChunkSize 
+      ? textContent.substring(0, maxChunkSize) 
+      : textContent;
+    hasContent = contentToAnalyze.length > 50;
+  } catch (error) {
+    console.warn('Could not fetch website content, proceeding with URL-based extraction:', error);
+    // If fetching fails, we'll still try to extract using just the URL and name
+    // This allows OpenAI to make intelligent inferences
+    contentToAnalyze = `Website Name: ${websiteName}\nWebsite URL: ${websiteUrl}`;
+    metadata = { url: websiteUrl, name: websiteName };
+    hasContent = false;
     }
   }
 
@@ -392,7 +681,7 @@ IMPORTANT: If images or videos are provided in the content, use them to:
 
   // Build enhanced user prompt with Firecrawl data if available
   let userPrompt = '';
-
+  
   if (hasContent) {
     userPrompt = `Website Name: ${websiteName}
 Website URL: ${websiteUrl}
@@ -406,22 +695,23 @@ ${contentToAnalyze}`;
     // Add Firecrawl-specific information if available
     if (usedFirecrawl) {
       if (firecrawlImages.length > 0) {
-        try {
-          const extractedColors = await extractBrandColors(firecrawlImages.slice(0, 15).map(img => ({
-            url: img.url,
-            isLogo: img.url.toLowerCase().includes('logo') || img.alt?.toLowerCase().includes('logo')
-          })));
-          if (extractedColors.length > 0) {
-            userPrompt += `\n\nExtracted Brand Colors (AUTHORITATIVE):\n${extractedColors.map(c => c.hex).join(', ')}`;
-            userPrompt += '\n\nCRITICAL: Use these EXACT colors for the visual_identity.color_palette. These were extracted directly from the website images via ColorThief. Do not rely on industry stereotypes.';
-          }
-        } catch (colorError) {
-          console.warn('Color extraction failed:', colorError);
-        }
         userPrompt += `\n\nExtracted Images (${firecrawlImages.length}):\n${firecrawlImages.slice(0, 20).map((img, i) => `${i + 1}. ${img.url}${img.alt ? ` (alt: ${img.alt})` : ''}`).join('\n')}`;
         userPrompt += '\n\nCRITICAL: Use these images to:\n- Extract ALL image URLs and store in visual_identity.example_imagery array\n- Identify logo URLs and variants\n- Understand brand aesthetics and visual tone\n- Extract image style preferences (photography vs illustration, mood, filters)';
-      }
 
+        // Use pixel-extracted colors if available, otherwise fall back to OpenAI inference
+        if (metadata.extracted_colors && metadata.extracted_colors.length > 0) {
+          const extractedColors: string[] = metadata.extracted_colors;
+          userPrompt += `\n\nEXTRACTED BRAND COLORS (pixel analysis of website images - use these as PRIMARY source):`;
+          extractedColors.slice(0, 10).forEach((color: string, i: number) => {
+            const freq = metadata.color_frequency?.[color] || 1;
+            userPrompt += `\n${i + 1}. ${color} (frequency score: ${freq})`;
+          });
+          userPrompt += `\n\nIMPORTANT: These colors were extracted from actual website images using pixel analysis. Use them as the definitive brand colors.\n\nRequired color_palette structure:\n{\n  "primary": ["${extractedColors[0]}", "${extractedColors[1] || extractedColors[0]}"],\n  "secondary": [${extractedColors[2] ? `"${extractedColors[2]}"` : `"${extractedColors[0]}"`}],\n  "accent": [${extractedColors[3] ? `"${extractedColors[3]}"` : `"${extractedColors[1] || extractedColors[0]}"`}],\n  "hex_codes": {\n    "primary": "${extractedColors[0]}",\n    "secondary": "${extractedColors[2] || extractedColors[1] || extractedColors[0]}",\n    "accent": "${extractedColors[3] || extractedColors[1] || extractedColors[0]}"\n  }\n}`;
+        } else {
+          userPrompt += '\n\nCRITICAL COLOR EXTRACTION INSTRUCTIONS:\n\nAnalyze ALL provided images to extract the brand\'s color palette:\n1. Identify the 2-3 most prominent colors used in logos, headers, buttons\n2. Look for consistent color usage across multiple images\n3. Extract primary brand color (most dominant)\n4. Extract secondary colors (supporting colors)\n5. Extract accent colors (call-to-action, highlights)\n\nReturn colors in hex format: #RRGGBB\n\nNEVER return empty color_palette. Always provide at minimum:\n- primary: [array with 1-2 hex colors]\n- hex_codes: {primary: "#XXXXXX", secondary: "#XXXXXX"}';
+        }
+      }
+      
       if (firecrawlVideos.length > 0) {
         userPrompt += `\n\nExtracted Videos (${firecrawlVideos.length}):\n${firecrawlVideos.slice(0, 10).map((vid, i) => `${i + 1}. ${vid.url}${vid.title ? ` (${vid.title})` : ''}`).join('\n')}`;
         userPrompt += '\n\nUse these videos to understand brand messaging, tone, and visual style.';
@@ -452,55 +742,39 @@ Note: We could not fetch the actual website content due to CORS restrictions. Pl
 Extract what you can infer, but mark confidence lower since this is inferred rather than extracted from actual content.`;
   }
 
+  // Try OpenAI extraction first, fall back to Firecrawl-only if OpenAI unavailable
   try {
-
-    let completion;
-
-    try {
-      completion = await withTimeout(
-        openai.chat.completions.create({
-          model: 'gpt-4o',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt },
-          ],
-          temperature: 0.3,
-          response_format: { type: 'json_object' },
-          max_tokens: 6000,
-        }),
-        90000,
-        'OpenAI analysis timed out after 90 seconds'
-      );
-    } catch (err: any) {
-      // If rate limit exceeded, try with gpt-4o-mini (cheaper and higher limits)
-      if (err?.status === 429) {
-        console.warn('GPT-4o rate limit exceeded, falling back to gpt-4o-mini...');
-        completion = await withTimeout(
-          openai.chat.completions.create({
-            model: 'gpt-4o-mini',
-            messages: [
-              { role: 'system', content: systemPrompt },
-              { role: 'user', content: userPrompt },
-            ],
-            temperature: 0.3,
-            response_format: { type: 'json_object' },
-            max_tokens: 10000,
-          }),
-          90000,
-          'OpenAI analysis timed out after 90 seconds'
-        );
-      } else {
-        throw err;
-      }
+    if (!openai) {
+      throw new Error('OPENAI_UNAVAILABLE');
     }
 
+    const completion = await withTimeout(
+      openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        temperature: 0.3,
+        response_format: { type: 'json_object' },
+        max_tokens: 6000, // Increased for comprehensive extraction
+      }),
+      90000 // 90 second timeout for OpenAI
+    );
+
     const responseContent = completion.choices[0]?.message?.content || '{}';
+
     let extractedData: BrandDNAData;
     try {
-      extractedData = JSON.parse(responseContent) as BrandDNAData;
+      extractedData = JSON.parse(responseContent);
     } catch (parseError) {
-      console.error('Failed to parse OpenAI response as JSON:', responseContent);
-      throw new Error('Failed to parse the extracted brand data. The AI returned an invalid format. Please try again.');
+      console.error('Failed to parse OpenAI response:', responseContent);
+      throw new Error('OpenAI returned invalid JSON format. This might be a temporary issue. Please try again.');
+    }
+
+    // Validate structure
+    if (!extractedData || typeof extractedData !== 'object') {
+      throw new Error('OpenAI returned invalid Brand DNA structure. Please try again.');
     }
 
     // Store Firecrawl images in visual_identity.example_imagery
@@ -514,8 +788,8 @@ Extract what you can infer, but mark confidence lower since this is inferred rat
       // Merge Firecrawl images with extracted images (avoid duplicates)
       const existingUrls = new Set(extractedData.visual_identity.example_imagery);
       firecrawlImages.forEach(img => {
-        if (img.url && !existingUrls.has(img.url)) {
-          extractedData.visual_identity!.example_imagery!.push(img.url);
+        if (img.url && !existingUrls.has(img.url) && extractedData.visual_identity?.example_imagery) {
+          extractedData.visual_identity.example_imagery.push(img.url);
         }
       });
     }
@@ -530,8 +804,8 @@ Extract what you can infer, but mark confidence lower since this is inferred rat
       }
       // Look for logo-like images (containing "logo" in URL or alt text)
       firecrawlImages.forEach(img => {
-        if (img.url && (img.url.toLowerCase().includes('logo') || img.alt?.toLowerCase().includes('logo'))) {
-          extractedData.visual_identity!.logos!.push({
+        if (img.url && (img.url.toLowerCase().includes('logo') || img.alt?.toLowerCase().includes('logo')) && extractedData.visual_identity?.logos) {
+          extractedData.visual_identity.logos.push({
             url: img.url,
             variant: 'default',
             format: img.url.toLowerCase().includes('.svg') ? 'svg' : 'png',
@@ -547,7 +821,7 @@ Extract what you can infer, but mark confidence lower since this is inferred rat
     // Calculate confidence scores based on data presence and quality
     const calculateConfidence = (field: any): number => {
       if (!field || (Array.isArray(field) && field.length === 0) ||
-        (typeof field === 'object' && Object.keys(field).length === 0)) {
+          (typeof field === 'object' && Object.keys(field).length === 0)) {
         return 0;
       }
       // Higher confidence if we used Firecrawl (comprehensive extraction)
@@ -596,25 +870,37 @@ Extract what you can infer, but mark confidence lower since this is inferred rat
 
     addProvenance(extractedData, '');
 
+    console.log('Brand DNA extraction successful using OpenAI + Firecrawl');
     return {
       dnaData: extractedData,
       provenance,
     };
+
   } catch (error: any) {
-    console.error('Error extracting BrandDNA:', error);
+    console.error('OpenAI extraction failed:', error);
+
+    // OpenAI is mandatory - provide clear error messages
     if (error?.status === 401) {
       throw new Error('Invalid OpenAI API key. Please check your .env file.');
-    } else if (error?.status === 429) {
-      throw new Error('OpenAI API rate limit exceeded. Please try again later.');
     }
-    // Catch timeouts
-    if (error?.message?.includes('timed out')) {
-      throw new Error(`Extraction timed out: ${error.message}. Please try again later.`);
+
+    if (error?.status === 429) {
+      const errorType = error?.error?.type || error?.type;
+      const errorCode = error?.error?.code || error?.code;
+
+      if (errorType === 'insufficient_quota' || errorCode === 'insufficient_quota') {
+        throw new Error('BILLING_ERROR: OpenAI API credits exceeded. Please add credits to your OpenAI account to enable Brand DNA extraction.');
+      } else {
+        throw new Error('OpenAI API rate limit exceeded. Please try again in a few moments.');
+      }
     }
+
     if (error?.message?.includes('Unable to fetch website content') || error?.message?.includes('fetch website')) {
-      throw new Error('Could not fetch website content. Please ensure the URL is accessible.');
+      throw new Error('Could not fetch website content (CORS restrictions). BrandDNA will be created with inferred data based on the website name and URL. You can edit and complete it manually in the BrandDNA section.');
     }
-    throw new Error(`Failed to extract BrandDNA: ${error?.message || 'Unknown error'}`);
+
+    // Generic error with OpenAI requirement message
+    throw new Error(`Failed to extract Brand DNA: ${error?.message || 'Unknown error'}. OpenAI is required for high-quality brand analysis. Please ensure your API key is valid and has credits available.`);
   }
 }
 
@@ -632,7 +918,7 @@ async function fetchWebsiteContent(url: string): Promise<string> {
   // Try Supabase Edge Function first (preferred method)
   try {
     const { data: { session } } = await supabase.auth.getSession();
-
+    
     if (!session) {
       throw new Error('User not authenticated');
     }
@@ -660,11 +946,11 @@ async function fetchWebsiteContent(url: string): Promise<string> {
     const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(normalizedUrl)}`;
     const response = await fetch(proxyUrl);
     const data = await response.json();
-
+    
     if (data.contents) {
       return data.contents;
     }
-
+    
     throw new Error('Failed to fetch website content from proxy');
   } catch (fallbackError) {
     console.error('Fallback also failed:', fallbackError);
@@ -679,11 +965,11 @@ function extractTextFromHTML(html: string): string {
   // Create a temporary DOM element to parse HTML
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
-
+  
   // Remove script and style elements
   const scripts = doc.querySelectorAll('script, style, noscript');
   scripts.forEach(el => el.remove());
-
+  
   // Extract text content
   const body = doc.body || doc.documentElement;
   return body?.textContent || body?.innerText || '';
@@ -695,9 +981,9 @@ function extractTextFromHTML(html: string): string {
 function extractMetadata(html: string): Record<string, any> {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
-
+  
   const metadata: Record<string, any> = {};
-
+  
   // Extract meta tags
   const metaTags = doc.querySelectorAll('meta');
   metaTags.forEach(meta => {
@@ -707,13 +993,13 @@ function extractMetadata(html: string): Record<string, any> {
       metadata[name] = content;
     }
   });
-
+  
   // Extract title
   const title = doc.querySelector('title');
   if (title) {
     metadata.title = title.textContent;
   }
-
+  
   // Extract Open Graph tags
   const ogTags: Record<string, string> = {};
   doc.querySelectorAll('meta[property^="og:"]').forEach(meta => {
@@ -726,21 +1012,58 @@ function extractMetadata(html: string): Record<string, any> {
   if (Object.keys(ogTags).length > 0) {
     metadata.openGraph = ogTags;
   }
-
-  // Extract colors from CSS or inline styles
+  
+  // Enhanced color extraction from CSS and inline styles
   const colors: string[] = [];
+
+  // 1. Extract from inline styles
+  const elementsWithStyle = doc.querySelectorAll('[style]');
+  elementsWithStyle.forEach(el => {
+    const style = el.getAttribute('style') || '';
+    const colorMatches = style.match(/#[0-9A-Fa-f]{6}|#[0-9A-Fa-f]{3}|rgb\([^)]+\)|rgba\([^)]+\)|hsl\([^)]+\)/gi);
+    if (colorMatches) colors.push(...colorMatches);
+  });
+
+  // 2. Extract from <style> tags
   const styleSheets = doc.querySelectorAll('style');
   styleSheets.forEach(style => {
     const cssText = style.textContent || '';
-    const colorMatches = cssText.match(/#[0-9A-Fa-f]{6}|#[0-9A-Fa-f]{3}|rgb\([^)]+\)|rgba\([^)]+\)/g);
-    if (colorMatches) {
-      colors.push(...colorMatches);
-    }
+    const colorMatches = cssText.match(/#[0-9A-Fa-f]{6}|#[0-9A-Fa-f]{3}|rgb\([^)]+\)|rgba\([^)]+\)|hsl\([^)]+\)/gi);
+    if (colorMatches) colors.push(...colorMatches);
   });
-  if (colors.length > 0) {
-    metadata.colors = [...new Set(colors)];
+
+  // 3. Extract CSS variable values
+  const rootStyles = doc.querySelector(':root, html')?.getAttribute('style');
+  if (rootStyles) {
+    const varMatches = rootStyles.match(/--[^:]+:\s*(#[0-9A-Fa-f]{6}|rgb\([^)]+\)|hsl\([^)]+\))/gi);
+    if (varMatches) {
+      varMatches.forEach(match => {
+        const colorMatch = match.match(/#[0-9A-Fa-f]{6}|rgb\([^)]+\)|hsl\([^)]+\)/i);
+        if (colorMatch) colors.push(colorMatch[0]);
+      });
+    }
   }
 
+  // Convert all to hex and deduplicate
+  const hexColors = colors.map(c => {
+    // Convert rgb/rgba to hex
+    if (c.toLowerCase().startsWith('rgb')) {
+      const rgb = c.match(/\d+/g)?.map(Number);
+      if (rgb && rgb.length >= 3) {
+        return `#${rgb.slice(0, 3).map(x => x.toString(16).padStart(2, '0')).join('')}`;
+      }
+    }
+    // Expand 3-digit hex to 6-digit
+    if (c.startsWith('#') && c.length === 4) {
+      return `#${c[1]}${c[1]}${c[2]}${c[2]}${c[3]}${c[3]}`;
+    }
+    return c.toLowerCase();
+  }).filter(Boolean);
+
+  if (hexColors.length > 0) {
+    metadata.colors = [...new Set(hexColors)];
+  }
+  
   return metadata;
 }
 
@@ -761,12 +1084,12 @@ async function analyzeWithOpenAI(
   // Chunk the content if it's too long (OpenAI has token limits)
   const maxChunkSize = 10000; // characters
   const chunks: string[] = [];
-
+  
   if (textContent.length > maxChunkSize) {
     // Split into chunks by sentences
     const sentences = textContent.match(/[^.!?]+[.!?]+/g) || [];
     let currentChunk = '';
-
+    
     for (const sentence of sentences) {
       if (currentChunk.length + sentence.length > maxChunkSize) {
         chunks.push(currentChunk);
@@ -872,19 +1195,34 @@ ${contentToAnalyze}
 Extract the complete brand profile in JSON format.`;
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      temperature: 0.3, // Lower temperature for more consistent extraction
-      response_format: { type: 'json_object' },
-      max_tokens: 2000,
-    });
+    const completion = await withTimeout(
+      openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        temperature: 0.3, // Lower temperature for more consistent extraction
+        response_format: { type: 'json_object' },
+        max_tokens: 2000,
+      }),
+      90000 // 90 second timeout for OpenAI
+    );
 
     const responseContent = completion.choices[0]?.message?.content || '{}';
-    const brandProfile = JSON.parse(responseContent) as BrandProfile;
+
+    let brandProfile: BrandProfile;
+    try {
+      brandProfile = JSON.parse(responseContent);
+    } catch (parseError) {
+      console.error('Failed to parse OpenAI response:', responseContent);
+      throw new Error('OpenAI returned invalid JSON format. This might be a temporary issue. Please try again.');
+    }
+
+    // Validate structure
+    if (!brandProfile || typeof brandProfile !== 'object') {
+      throw new Error('OpenAI returned invalid brand profile structure. Please try again.');
+    }
 
     // Store raw content for reference
     brandProfile.rawContent = {
@@ -916,11 +1254,11 @@ export async function extractBrandProfile(
   try {
     // Fetch website content
     const htmlContent = await fetchWebsiteContent(websiteUrl);
-
+    
     // Extract text and metadata
     const textContent = extractTextFromHTML(htmlContent);
     const metadata = extractMetadata(htmlContent);
-
+    
     // Analyze with OpenAI
     const brandProfile = await analyzeWithOpenAI(
       websiteName,
@@ -929,7 +1267,7 @@ export async function extractBrandProfile(
       textContent,
       metadata
     );
-
+    
     return brandProfile;
   } catch (error: any) {
     console.error('Error extracting brand profile:', error);
@@ -945,12 +1283,12 @@ export async function saveBrandProfile(
   brandProfile: BrandProfile
 ): Promise<void> {
   const { updateBrand } = await import('./database');
-
+  
   // Get existing metadata to preserve other data
   const { getBrand } = await import('./database');
   const existingBrand = await getBrand(brandId);
   const existingMetadata = existingBrand?.metadata || {};
-
+  
   await updateBrand(brandId, {
     metadata: {
       ...existingMetadata,
@@ -969,12 +1307,12 @@ export async function saveBrandProfile(
  */
 export async function getCachedBrandProfile(brandId: string): Promise<BrandProfile | null> {
   const { getBrand } = await import('./database');
-
+  
   const brand = await getBrand(brandId);
   if (!brand || !brand.metadata?.brandProfile) {
     return null;
   }
-
+  
   return brand.metadata.brandProfile as BrandProfile;
 }
 
