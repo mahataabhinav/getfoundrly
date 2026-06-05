@@ -57,7 +57,8 @@ export default function AboutPage() {
       color: "from-blue-500 to-blue-600",
       bgColor: "bg-blue-100",
       textColor: "text-blue-600",
-      email: "abhinav@getfoundrly.com"
+      email: "abhinav@getfoundrly.com",
+      image: "/team/abhinav.jpg"
     },
     {
       name: "Erin Grimes",
@@ -68,7 +69,8 @@ export default function AboutPage() {
       color: "from-purple-500 to-purple-600",
       bgColor: "bg-purple-100",
       textColor: "text-purple-600",
-      email: "erin@getfoundrly.com"
+      email: "erin@getfoundrly.com",
+      image: "/team/erin.jpg"
     },
     {
       name: "Jeff Fons",
@@ -79,7 +81,8 @@ export default function AboutPage() {
       color: "from-green-500 to-green-600",
       bgColor: "bg-green-100",
       textColor: "text-green-600",
-      email: "jeff@getfoundrly.com"
+      email: "jeff@getfoundrly.com",
+      image: "/team/jeff.jpg"
     }
   ];
 
@@ -322,9 +325,19 @@ export default function AboutPage() {
               <div key={index} className="group relative bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm transition-all h-[460px]">
                 {/* Default State (Clean) */}
                 <div className="absolute inset-0 p-8 flex flex-col items-center justify-center text-center transition-opacity duration-500 group-hover:opacity-0 bg-slate-50">
-                  <div className={`w-32 h-32 md:w-40 md:h-40 rounded-full ${member.bgColor} ${member.textColor} flex items-center justify-center mb-6`}>
-                    <span className="text-4xl md:text-5xl font-bold opacity-50">{member.initials}</span>
-                  </div>
+                  {member.image ? (
+                    <div className="w-32 h-32 md:w-40 md:h-40 rounded-full mb-6 overflow-hidden border-4 border-white shadow-md">
+                      <img 
+                        src={member.image} 
+                        alt={`${member.name}`} 
+                        className="w-full h-full object-cover object-top" 
+                      />
+                    </div>
+                  ) : (
+                    <div className={`w-32 h-32 md:w-40 md:h-40 rounded-full ${member.bgColor} ${member.textColor} flex items-center justify-center mb-6`}>
+                      <span className="text-4xl md:text-5xl font-bold opacity-50">{member.initials}</span>
+                    </div>
+                  )}
                   <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">{member.name}</h3>
                   <p className={`text-base md:text-lg font-medium ${member.textColor}`}>{member.title}</p>
                 </div>

@@ -1,4 +1,6 @@
-import ColorThief from 'colorthief';
+// @ts-expect-error - colorthief types are CommonJS but it works in ESM
+import * as ColorThiefPkg from 'colorthief';
+const ColorThiefClass = (ColorThiefPkg as any).default || ColorThiefPkg;
 
 /**
  * Extract dominant colors from image URLs using ColorThief pixel analysis.
@@ -14,7 +16,7 @@ export async function extractColorsFromImages(
 ): Promise<{ colors: string[]; colorFrequency: Map<string, number> }> {
   const { maxImages = 5, colorsPerImage = 5, quality = 10 } = options;
 
-  const colorThief = new ColorThief();
+  const colorThief = new ColorThiefClass();
   const colorFrequency = new Map<string, number>();
   const allColors: string[] = [];
 
