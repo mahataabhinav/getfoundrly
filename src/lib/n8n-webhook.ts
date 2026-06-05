@@ -7,6 +7,7 @@
  * Since we're using Firecrawl API directly (via MCP), n8n is not required for core functionality.
  * You can safely remove or disable these webhook calls if you don't need analytics.
  */
+import { supabase } from './supabase';
 
 interface WebsiteInputData {
   websiteName: string;
@@ -142,7 +143,6 @@ export async function sendPostToN8n(data: PublishToN8nPayload): Promise<void> {
       ...data,
       mediaType: data.mediaType || 'none',
       mediaUrls: data.mediaUrls || data.images || [],
-      // Ensure we send a simple imageUrl if available, or extract from array
       imageUrl: (data.mediaType === 'image' || !data.mediaType) ? (data.imageUrl || (data.mediaUrls && data.mediaUrls.length > 0 ? data.mediaUrls[0] : null)) : null,
       videoUrl: data.mediaType === 'video' ? (data.mediaUrls && data.mediaUrls.length > 0 ? data.mediaUrls[0] : null) : null,
       timestamp: new Date().toISOString(),
@@ -150,27 +150,22 @@ export async function sendPostToN8n(data: PublishToN8nPayload): Promise<void> {
     };
 
     console.log('Preparing to send post to n8n...');
-    console.log('Target URL:', webhookUrl);
-    console.log('Payload:', payload);
 
-    const response = await fetch(webhookUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
+    const response = await supabase.functions.invoke('n8n-proxy', {
+      body: {
+        action: 'linkedin-post',
+        payload
+      }
     });
 
-    if (!response.ok) {
-      // Try to get error details from response
-      const errorText = await response.text();
-      throw new Error(`N8N webhook failed: ${response.status} ${response.statusText} - ${errorText}`);
+    if (response.error) {
+      throw response.error;
     }
 
-    console.log('Post sent to n8n successfully');
+    console.log('Post sent to n8n successfully via proxy');
   } catch (error) {
     console.error('Failed to send post to n8n:', error);
-    throw error; // Rethrow to let the UI handle the error state
+    throw error;
   }
 }
 
@@ -227,34 +222,21 @@ export interface LinkedInAnalyticsResponse {
  * @returns Promise that resolves with analytics data
  */
 export async function fetchLinkedInAnalytics(data: LinkedInAnalyticsInput): Promise<LinkedInAnalyticsResponse> {
-  // Use the specific analytics webhook URL if defined, otherwise fall back to a default pattern or error
-  const analyticsWebhookUrl = "https://amahata96.app.n8n.cloud/webhook/linkedin-analytics";
-
   try {
-    console.log('Fetching analytics from n8n...');
+    console.log('Fetching analytics from n8n via proxy...');
 
-    // Create a timeout controller to abort if it takes too long (e.g., 30 seconds)
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
-
-    const response = await fetch(analyticsWebhookUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-      signal: controller.signal,
+    const response = await supabase.functions.invoke('n8n-proxy', {
+      body: {
+        action: 'linkedin-analytics',
+        payload: data
+      }
     });
 
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Analytics request failed: ${response.status} ${response.statusText} - ${errorText}`);
+    if (response.error) {
+      throw response.error;
     }
 
-    const result = await response.json();
-    return result;
+    return response.data;
   } catch (error) {
     console.error('Error fetching analytics:', error);
     throw error;
@@ -275,9 +257,6 @@ export interface PublishInstagramToN8nPayload {
  * Sends Instagram Ad content to n8n for publishing/scheduling
  */
 export async function sendInstagramPostToN8n(data: PublishInstagramToN8nPayload): Promise<void> {
-  // Placeholder URL - User needs to configure this in .env or we use a default test endpoint
-  const webhookUrl = import.meta.env.VITE_N8N_INSTAGRAM_WEBHOOK_URL || 'https://foundrly.app.n8n.cloud/webhook-test/instagram-post';
-
   try {
     const payload = {
       ...data,
@@ -286,24 +265,20 @@ export async function sendInstagramPostToN8n(data: PublishInstagramToN8nPayload)
       source: 'foundrly-app',
     };
 
-    console.log('Preparing to send Instagram post to n8n...');
-    console.log('Target URL:', webhookUrl);
-    console.log('Payload:', payload);
+    console.log('Preparing to send Instagram post to n8n via proxy...');
 
-    const response = await fetch(webhookUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
+    const response = await supabase.functions.invoke('n8n-proxy', {
+      body: {
+        action: 'instagram-post',
+        payload
+      }
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`N8N webhook failed: ${response.status} ${response.statusText} - ${errorText}`);
+    if (response.error) {
+      throw response.error;
     }
 
-    console.log('Instagram post sent to n8n successfully');
+    console.log('Instagram post sent to n8n successfully via proxy');
   } catch (error) {
     console.error('Failed to send Instagram post to n8n:', error);
     throw error;

@@ -5,7 +5,7 @@
  * Uses brand profile for personalization and caching for efficiency
  */
 
-import OpenAI from 'openai';
+import { supabase } from './supabase';
 import type { BrandProfile } from './brand-extractor';
 import { generateBrandImages as generateGeminiImages } from './geminiImage';
 import { generateBrandImages as generateSeedreamImages } from './seedreamImage';
@@ -14,13 +14,6 @@ export type { GeneratedVideo };
 
 // Session-based asset cache
 const ASSET_CACHE_PREFIX = 'foundrly_asset_cache_';
-
-// Get OpenAI client instance
-const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
-const openai = apiKey ? new OpenAI({
-  apiKey: apiKey,
-  dangerouslyAllowBrowser: true,
-}) : null;
 
 export interface GeneratedImage {
   id: string;
@@ -117,9 +110,6 @@ export async function generateImages(
     images = await generateImagesWithSeedream(options);
   } else {
     // Default to DALL-E
-    if (!openai) {
-      throw new Error('OpenAI API key is not configured. Please add VITE_OPENAI_API_KEY to your .env file.');
-    }
 
     // Build enhanced prompt using template
     const enhancedPrompt = buildImagePrompt(brandProfile, brandName, postType, topic, contextDetails, imagePrompt, provider);
@@ -140,16 +130,26 @@ export async function generateImages(
           variationPrompt = `${enhancedPrompt} - Alternative style: more dynamic and energetic`;
         }
 
-        const response = await openai.images.generate({
-          model: 'dall-e-3',
-          prompt: variationPrompt,
-          n: 1,
-          size: '1024x1024', // LinkedIn optimal size
-          quality: 'standard',
-          response_format: 'b64_json',
+        const response = await supabase.functions.invoke('ai-proxy', {
+          body: {
+            provider: 'openai',
+            endpoint: 'images.generate',
+            payload: {
+              model: 'dall-e-3',
+              prompt: variationPrompt,
+              n: 1,
+              size: '1024x1024',
+              quality: 'standard',
+              response_format: 'b64_json',
+            }
+          }
         });
 
-        const imageBase64 = response.data?.[0]?.b64_json;
+        if (response.error) {
+          throw response.error;
+        }
+
+        const imageBase64 = response.data?.data?.[0]?.b64_json;
         if (!imageBase64) {
           throw new Error(`Failed to generate image variation ${i + 1} (no data)`);
         }
@@ -204,10 +204,8 @@ export async function generateImagesWithGemini(
   } catch (error: any) {
     console.error('Error generating images with Gemini:', error);
     // Fallback to DALL-E if Gemini fails
-    if (openai) {
-      console.log('Falling back to DALL-E...');
-      return generateImages({ ...options, provider: 'dalle' });
-    }
+    console.log('Falling back to DALL-E...');
+    return generateImages({ ...options, provider: 'dalle' });
     throw error;
   }
 }
@@ -228,10 +226,8 @@ export async function generateImagesWithSeedream(
   } catch (error: any) {
     console.error('Error generating images with SeedDream:', error);
     // Fallback to DALL-E if SeedDream fails
-    if (openai) {
-      console.log('Falling back to DALL-E...');
-      return generateImages({ ...options, provider: 'dalle' });
-    }
+    console.log('Falling back to DALL-E...');
+    return generateImages({ ...options, provider: 'dalle' });
     throw error;
   }
 }
@@ -254,9 +250,6 @@ export async function generateVideo(
 export async function generateVideoScript(
   options: GenerateVideoOptions
 ): Promise<VideoScript> {
-  if (!openai) {
-    throw new Error('OpenAI API key is not configured. Please add VITE_OPENAI_API_KEY to your .env file.');
-  }
 
   const { brandProfile, postType, topic, contextDetails, targetDuration = '30s' } = options;
 
@@ -320,16 +313,28 @@ Return as JSON with this structure:
 }`;
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      temperature: 0.8,
-      response_format: { type: 'json_object' },
-      max_tokens: 2000,
+    const response = await supabase.functions.invoke('ai-proxy', {
+      body: {
+        provider: 'openai',
+        endpoint: 'chat.completions',
+        payload: {
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt },
+          ],
+          temperature: 0.8,
+          response_format: { type: 'json_object' },
+          max_tokens: 2000,
+        }
+      }
     });
+
+    if (response.error) {
+      throw response.error;
+    }
+
+    const completion = response.data;
 
     const responseContent = completion.choices[0]?.message?.content || '{}';
     const parsedContent = JSON.parse(responseContent);
